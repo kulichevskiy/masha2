@@ -1,5 +1,6 @@
 import { TopNav } from "./components/top-nav";
 import { MasonryGrid } from "./components/ui/masonry-grid";
+import { Footer } from "./components/footer";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <div className="mx-auto max-w-7xl w-full px-6 py-8">
         <MasonryGrid />
       </div>
+      <Footer />
     </div>
   );
 }
