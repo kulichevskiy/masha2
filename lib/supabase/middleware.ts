@@ -38,8 +38,8 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims()
   const user = data?.claims
 
-  if (!user && request.nextUrl.pathname.startsWith('/protected')) {
-    // Redirect to login only for protected pages
+  if (!user && request.nextUrl.pathname.startsWith('/admin')) {
+    // Redirect to login only for admin pages
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
