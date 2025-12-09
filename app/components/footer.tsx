@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Instagram, Mail } from "lucide-react"
+import { Instagram, Mail, User } from "lucide-react"
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -38,6 +38,13 @@ export function Footer() {
               className="text-gray-500 opacity-50 transition-opacity hover:opacity-100"
             >
               <Mail className="h-6 w-6" strokeWidth={1} />
+            </Link>
+            <Link
+              href="/auth/login"
+              aria-label="Login"
+              className="text-gray-500 opacity-50 transition-opacity hover:opacity-100"
+            >
+              <User className="h-6 w-6" strokeWidth={1} />
             </Link>
           </div>
 
