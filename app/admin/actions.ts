@@ -106,3 +106,45 @@ export async function deletePhoto(id: string) {
 
   revalidatePath('/admin')
 }
+
+export async function createPhotosFromUploads(storagePaths: string[]) {
+  const supabase = await createClient()
+
+  // Verify user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+
+  // Get the minimum position to place new photos at the top
+  const { data: minPositionData, error: minPositionError } = await supabase
+    .from('photos')
+    .select('position')
+    .order('position', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  // Start from position 0 if no photos exist, otherwise use minPosition - 1
+  const startPosition =
+    minPositionData?.position !== undefined && minPositionData.position !== null
+      ? minPositionData.position - 1
+      : 0
+
+  // Create photo records for each uploaded file
+  const photosToInsert = storagePaths.map((storagePath, index) => ({
+    storage_path: storagePath,
+    title: null,
+    description: null,
+    alt_text: storagePath.replace(/\.[^/.]+$/, ''), // Use filename without extension as default alt_text
+    position: startPosition - index, // Decrement to keep order (newest first)
+    is_visible: false, // New photos are hidden by default
+  }))
+
+  const { error } = await supabase.from('photos').insert(photosToInsert)
+
+  if (error) {
+    throw new Error(`Failed to create photo records: ${error.message}`)
+  }
+
+  revalidatePath('/admin')
+}

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { PhotosTable } from './components/photos-table'
+import { PhotoUploadDropzone } from './components/photo-upload-dropzone'
 import { LogoutButton } from '@/components/logout-button'
 
 export default async function AdminPage() {
@@ -37,6 +38,8 @@ export default async function AdminPage() {
           <LogoutButton />
         </div>
       </div>
+
+      <PhotoUploadDropzone />
 
       {photos && photos.length > 0 ? (
         <PhotosTable photos={photos} supabaseUrl={supabaseUrl} />
