@@ -13,10 +13,26 @@ export const formatBytes = (
 ) => {
   const k = 1000
   const dm = decimals < 0 ? 0 : decimals
-  const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  const sizes = ['байт', 'КБ', 'МБ', 'ГБ', 'ТБ', 'ПБ', 'ЭБ', 'ЗБ', 'ЙБ']
+  const sizeMap: Record<string, string> = {
+    'bytes': 'байт',
+    'KB': 'КБ',
+    'MB': 'МБ',
+    'GB': 'ГБ',
+    'TB': 'ТБ',
+    'PB': 'ПБ',
+    'EB': 'ЭБ',
+    'ZB': 'ЗБ',
+    'YB': 'ЙБ'
+  }
 
-  if (bytes === 0 || bytes === undefined) return size !== undefined ? `0 ${size}` : '0 bytes'
-  const i = size !== undefined ? sizes.indexOf(size) : Math.floor(Math.log(bytes) / Math.log(k))
+  if (bytes === 0 || bytes === undefined) {
+    if (size !== undefined) {
+      return `0 ${sizeMap[size] || size}`
+    }
+    return '0 байт'
+  }
+  const i = size !== undefined ? ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'].indexOf(size) : Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
 
@@ -88,7 +104,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
       <div className={cn('flex flex-row items-center gap-x-2 justify-center', className)}>
         <CheckCircle size={16} className="text-primary" />
         <p className="text-primary text-sm">
-          Successfully uploaded {files.length} file{files.length > 1 ? 's' : ''}
+          Успешно загружено {files.length} {files.length === 1 ? 'фотография' : files.length < 5 ? 'фотографии' : 'фотографий'}
         </p>
       </div>
     )
@@ -124,17 +140,17 @@ const DropzoneContent = ({ className }: { className?: string }) => {
                   {file.errors
                     .map((e) =>
                       e.message.startsWith('File is larger than')
-                        ? `File is larger than ${formatBytes(maxFileSize, 2)} (Size: ${formatBytes(file.size, 2)})`
+                        ? `Фотография больше чем ${formatBytes(maxFileSize, 2)} (Размер: ${formatBytes(file.size, 2)})`
                         : e.message
                     )
                     .join(', ')}
                 </p>
               ) : loading && !isSuccessfullyUploaded ? (
-                <p className="text-xs text-muted-foreground">Uploading file...</p>
+                <p className="text-xs text-muted-foreground">Загрузка фотографии...</p>
               ) : !!fileError ? (
-                <p className="text-xs text-destructive">Failed to upload: {fileError.message}</p>
+                <p className="text-xs text-destructive">Ошибка загрузки: {fileError.message}</p>
               ) : isSuccessfullyUploaded ? (
-                <p className="text-xs text-primary">Successfully uploaded file</p>
+                <p className="text-xs text-primary">Фотография успешно загружена</p>
               ) : (
                 <p className="text-xs text-muted-foreground">{formatBytes(file.size, 2)}</p>
               )}
@@ -155,8 +171,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
       })}
       {exceedMaxFiles && (
         <p className="text-sm text-left mt-2 text-destructive">
-          You may upload only up to {maxFiles} files, please remove {files.length - maxFiles} file
-          {files.length - maxFiles > 1 ? 's' : ''}.
+          Вы можете загрузить до {maxFiles} {maxFiles === 1 ? 'фотографии' : 'фотографий'}, пожалуйста удалите {files.length - maxFiles} {files.length - maxFiles === 1 ? 'фотографию' : files.length - maxFiles < 5 ? 'фотографии' : 'фотографий'}.
         </p>
       )}
       {files.length > 0 && !exceedMaxFiles && (
@@ -169,10 +184,10 @@ const DropzoneContent = ({ className }: { className?: string }) => {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading...
+                Загрузка...
               </>
             ) : (
-              <>Upload files</>
+              <>Загрузить фотографии</>
             )}
           </Button>
         </div>
@@ -192,23 +207,22 @@ const DropzoneEmptyState = ({ className }: { className?: string }) => {
     <div className={cn('flex flex-col items-center gap-y-2', className)}>
       <Upload size={20} className="text-muted-foreground" />
       <p className="text-sm">
-        Upload{!!maxFiles && maxFiles > 1 ? ` ${maxFiles}` : ''} file
-        {!maxFiles || maxFiles > 1 ? 's' : ''}
+        Загрузить{!!maxFiles && maxFiles > 1 ? ` ${maxFiles}` : ''} {!maxFiles || maxFiles > 1 ? 'фотографий' : 'фотографию'}
       </p>
       <div className="flex flex-col items-center gap-y-1">
         <p className="text-xs text-muted-foreground">
-          Drag and drop or{' '}
+          Перетащите или{' '}
           <a
             onClick={() => inputRef.current?.click()}
             className="underline cursor-pointer transition hover:text-foreground"
           >
-            select {maxFiles === 1 ? `file` : 'files'}
+            выберите {maxFiles === 1 ? `фотографию` : 'фотографии'}
           </a>{' '}
-          to upload
+          для загрузки
         </p>
         {maxFileSize !== Number.POSITIVE_INFINITY && (
           <p className="text-xs text-muted-foreground">
-            Maximum file size: {formatBytes(maxFileSize, 2)}
+            Максимальный размер: {formatBytes(maxFileSize, 2)}
           </p>
         )}
       </div>
@@ -220,7 +234,7 @@ const useDropzoneContext = () => {
   const context = useContext(DropzoneContext)
 
   if (!context) {
-    throw new Error('useDropzoneContext must be used within a Dropzone')
+    throw new Error('useDropzoneContext должен использоваться внутри Dropzone')
   }
 
   return context
