@@ -79,10 +79,10 @@ export function PhotosTable({ photos: initialPhotos, supabaseUrl }: PhotosTableP
               <th className="p-2 text-left text-sm font-medium text-muted-foreground">
                 Заголовок
               </th>
-              <th className="p-2 text-left text-sm font-medium text-muted-foreground">
+              <th className="hidden md:table-cell p-2 text-left text-sm font-medium text-muted-foreground">
                 Описание
               </th>
-              <th className="p-2 text-left text-sm font-medium text-muted-foreground">
+              <th className="hidden md:table-cell p-2 text-left text-sm font-medium text-muted-foreground">
                 Alt текст
               </th>
               <th className="p-2 text-left text-sm font-medium text-muted-foreground">

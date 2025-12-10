@@ -31,7 +31,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
     setError(null)
 
     if (password !== repeatPassword) {
-      setError('Passwords do not match')
+      setError('Пароли не совпадают')
       setIsLoading(false)
       return
     }
@@ -57,8 +57,8 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
+          <CardTitle className="text-2xl">Регистрация</CardTitle>
+          <CardDescription>Создание нового аккаунта</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp}>
@@ -68,7 +68,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="email@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -76,7 +76,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Пароль</Label>
                 </div>
                 <Input
                   id="password"
@@ -88,7 +88,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="repeat-password">Repeat Password</Label>
+                  <Label htmlFor="repeat-password">Повторите пароль</Label>
                 </div>
                 <Input
                   id="repeat-password"
@@ -100,13 +100,13 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating an account...' : 'Sign up'}
+                {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Already have an account?{' '}
+              Уже есть аккаунт?{' '}
               <Link href="/auth/login" className="underline underline-offset-4">
-                Login
+                Войти
               </Link>
             </div>
           </form>

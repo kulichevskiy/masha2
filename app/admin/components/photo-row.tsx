@@ -148,7 +148,7 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
       </td>
 
       {/* Description */}
-      <td className="p-2">
+      <td className="hidden md:table-cell p-2">
         {editingField === 'description' ? (
           <Input
             value={description}
@@ -180,7 +180,7 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
       </td>
 
       {/* Alt Text */}
-      <td className="p-2">
+      <td className="hidden md:table-cell p-2">
         {editingField === 'alt_text' ? (
           <Input
             value={altText}

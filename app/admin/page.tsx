@@ -26,15 +26,17 @@ export default async function AdminPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Личный кабинет фотографа</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Личный кабинет фотографа</h1>
           <p className="text-muted-foreground mt-1">
             Управление фотографиями портфолио
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">{data.claims.email}</span>
+          <span className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-none">
+            {data.claims.email}
+          </span>
           <LogoutButton />
         </div>
       </div>
