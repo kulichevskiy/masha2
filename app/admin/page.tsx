@@ -33,7 +33,7 @@ export default async function AdminPage() {
             Управление фотографиями портфолио
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
           <span className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-none">
             {data.claims.email}
           </span>

@@ -118,7 +118,7 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
       </td>
 
       {/* Title */}
-      <td className="p-2">
+      <td className="hidden sm:table-cell p-2">
         {editingField === 'title' ? (
           <Input
             value={title}
@@ -210,7 +210,7 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
       </td>
 
       {/* Is Visible */}
-      <td className="p-2">
+      <td className="p-2 text-center">
         <Switch
           checked={isVisible}
           onCheckedChange={handleToggleVisible}
@@ -219,7 +219,7 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
       </td>
 
       {/* Delete */}
-      <td className="p-2">
+      <td className="p-2 text-center">
         <Button
           variant="ghost"
           size="icon"
