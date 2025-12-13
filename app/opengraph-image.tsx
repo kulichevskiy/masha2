@@ -9,14 +9,6 @@ export const size = {
 export const contentType = "image/png";
 
 export default async function Image() {
-  const playfairDisplay = await fetch(
-    "https://fonts.gstatic.com/s/playfairdisplay/v36/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvUDXdzTYg-F_cfO3pgq0nSybvLxQtAdY.ttf"
-  ).then((res) => res.arrayBuffer());
-
-  const robotoMono = await fetch(
-    "https://fonts.gstatic.com/s/robotomono/v23/L0xuDF4xlVMF-BfR8bXMIhJHg45mwgGEFl0_3vq_SeW4Ep0C8.ttf"
-  ).then((res) => res.arrayBuffer());
-
   return new ImageResponse(
     (
       <div
@@ -43,7 +35,7 @@ export default async function Image() {
             style={{
               fontSize: "72px",
               fontWeight: 600,
-              fontFamily: "Playfair Display",
+              fontFamily: "serif",
               color: "black",
               margin: 0,
               textAlign: "center",
@@ -56,7 +48,7 @@ export default async function Image() {
             style={{
               fontSize: "24px",
               fontWeight: 400,
-              fontFamily: "Roboto Mono",
+              fontFamily: "monospace",
               color: "#6b7280",
               margin: 0,
               textAlign: "center",
@@ -71,20 +63,6 @@ export default async function Image() {
     ),
     {
       ...size,
-      fonts: [
-        {
-          name: "Playfair Display",
-          data: playfairDisplay,
-          style: "normal",
-          weight: 600,
-        },
-        {
-          name: "Roboto Mono",
-          data: robotoMono,
-          style: "normal",
-          weight: 400,
-        },
-      ],
     }
   );
 }
