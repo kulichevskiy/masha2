@@ -3,7 +3,7 @@ import Link from "next/link"
 export function TopNav() {
   return (
     <nav className="bg-white/50 backdrop-blur-md w-full">
-      <div className="mx-auto max-w-7xl px-4 md:px-6 flex items-center justify-center py-6 md:py-8">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 flex items-center justify-center pt-6 md:pt-8">
         <div className="flex flex-col items-center w-full gap-3">
           {/* Logo and Title Section */}
           <div className="flex flex-col items-center text-center">

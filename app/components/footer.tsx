@@ -32,13 +32,13 @@ export function Footer() {
             >
               <Instagram className="h-6 w-6" strokeWidth={1} />
             </Link>
-            <Link
-              href="mailto:maria@chevskaya.com"
+            <a
+              href="mailto:maria.chevskaya@gmail.com"
               aria-label="Email"
               className="text-gray-500 opacity-50 transition-opacity hover:opacity-100"
             >
               <Mail className="h-6 w-6" strokeWidth={1} />
-            </Link>
+            </a>
             <Link
               href="/auth/login"
               aria-label="Login"

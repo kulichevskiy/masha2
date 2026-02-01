@@ -47,12 +47,12 @@ export default function BookPage() {
           <p className="mb-8">
             If this feels like a match, write to me and tell a few words about yourself or your idea.
           </p>
-          <Link
+          <a
             href="mailto:maria.chevskaya@gmail.com"
             className="inline-block bg-black text-white px-14 py-3 hover:bg-gray-800 transition-colors"
           >
             Email me
-          </Link>
+          </a>
         </div>
       </main>
       <Footer />
