@@ -48,7 +48,7 @@ export default function BookPage() {
             If this feels like a match, write to me and tell a few words about yourself or your idea.
           </p>
           <Link
-            href="mailto:maria@chevskaya.com"
+            href="mailto:maria.chevskaya@gmail.com"
             className="inline-block bg-black text-white px-14 py-3 hover:bg-gray-800 transition-colors"
           >
             Email me
