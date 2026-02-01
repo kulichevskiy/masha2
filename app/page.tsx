@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { TopNav } from "./components/top-nav";
 import { MasonryGrid } from "./components/ui/masonry-grid";
 import { Footer } from "./components/footer";
+import { FloatingBookButton } from "./components/floating-book-button";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
         </Suspense>
       </div>
       <Footer />
+      <FloatingBookButton />
     </div>
   );
 }
