@@ -6,7 +6,7 @@ export function FloatingBookButton() {
       <div className="max-w-7xl mx-auto md:px-6 flex justify-end">
         <Link
           href="/book"
-          className="pointer-events-auto w-full md:w-auto bg-black/80 text-white px-12 md:px-20 py-3 font-bebas-neue text-xl tracking-wider uppercase transition-all hover:bg-black md:hover:scale-105 shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-center backdrop-blur-sm"
+          className="pointer-events-auto w-full md:w-auto bg-black/80 text-white px-12 md:px-20 py-3 font-bebas-neue text-xl tracking-wider uppercase border border-white/30 transition-all hover:bg-black hover:border-white/60 md:hover:scale-105 shadow-[0_4px_20px_rgba(0,0,0,0.45)] text-center backdrop-blur-sm"
         >
           Book
         </Link>
