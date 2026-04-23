@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Imagery grid</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-inter); color: var(--fg); background: var(--bg); padding: 16px; }
+  .g { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 60px; gap: 8px; }
+  .g div { overflow: hidden; background: var(--mc-image-plate); }
+  .g img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(1); }
+  .s2 { grid-row: span 2; }
+  .s3 { grid-row: span 3; }
+</style>
+</head>
+<body>
+  <div class="g">
+    <div class="s2"><img src="../assets/photos/DSC_0123.jpg" alt=""></div>
+    <div class="s2"><img src="../assets/photos/DSC_1610-Edit.jpg" alt=""></div>
+    <div class="s3"><img src="../assets/photos/DSC_2348-Edit.jpg" alt=""></div>
+    <div class="s2"><img src="../assets/photos/DSC_3426-Edit.jpg" alt=""></div>
+    <div class="s2"><img src="../assets/photos/DSC_4274-Edit.jpg" alt=""></div>
+    <div class="s2"><img src="../assets/photos/DSC_5971-Edit.jpg" alt=""></div>
+    <div class="s3"><img src="../assets/photos/DSC_6750.jpg" alt=""></div>
+    <div class="s3"><img src="../assets/photos/DSC_7040.jpg" alt=""></div>
+    <div class="s2"><img src="../assets/photos/DSC_8898-Edit.jpg" alt=""></div>
+    <div class="s2"><img src="../assets/photos/DSC_9398.jpg" alt=""></div>
+    <div class="s2"><img src="../assets/photos/DSC_1113.jpg" alt=""></div>
+    <div class="s2"><img src="../assets/photos/DSC_6120.jpg" alt=""></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Colors — Neutrals</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-inter); color: var(--fg); background: var(--bg); padding: 24px; }
+  .row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .sw { display: flex; flex-direction: column; gap: 6px; }
+  .chip { height: 64px; border: 1px solid var(--border); }
+  .name { font-family: var(--font-bebas-neue); font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg); }
+  .hex { font-family: var(--font-roboto-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.05em; }
+  .role { font-family: var(--font-inter); font-size: 10px; color: var(--muted); text-transform: lowercase; letter-spacing: 0.1em; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="sw"><div class="chip" style="background:#ffffff"></div><div class="name">White</div><div class="hex">#FFFFFF</div><div class="role">page / paper</div></div>
+    <div class="sw"><div class="chip" style="background:#f3f4f6"></div><div class="name">Plate</div><div class="hex">#F3F4F6</div><div class="role">image loading</div></div>
+    <div class="sw"><div class="chip" style="background:#e5e7eb"></div><div class="name">Border</div><div class="hex">#E5E7EB</div><div class="role">hairlines</div></div>
+    <div class="sw"><div class="chip" style="background:#6b7280"></div><div class="name">Muted</div><div class="hex">#6B7280</div><div class="role">tagline / meta</div></div>
+    <div class="sw"><div class="chip" style="background:#4b5563"></div><div class="name">Text</div><div class="hex">#4B5563</div><div class="role">body copy</div></div>
+    <div class="sw"><div class="chip" style="background:#252525"></div><div class="name">Near-black</div><div class="hex">#252525</div><div class="role">display / fg</div></div>
+  </div>
+</body>
+</html>

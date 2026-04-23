@@ -1,0 +1,232 @@
+/* ============================================================
+   Maria Chevskaya — Design System
+   colors_and_type.css
+   ============================================================
+   Usage:
+     <link rel="stylesheet" href="/colors_and_type.css">
+   All tokens are exposed as CSS variables on :root.
+   Fonts load from Google Fonts (same source as the live site).
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Roboto+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ---------- CORE PALETTE ---------- */
+  --mc-white:        #ffffff;              /* page / paper */
+  --mc-near-black:   #252525;              /* display type, BOOK button */
+  --mc-black:        #000000;              /* hard black — used for solid CTAs */
+  --mc-text:         #4b5563;              /* body copy (gray-600) */
+  --mc-muted:        #6b7280;              /* supporting labels (gray-500) */
+  --mc-border:       #e5e7eb;              /* hairlines (gray-200) */
+  --mc-image-plate:  #f3f4f6;              /* loading-state bg behind images */
+  --mc-destructive:  oklch(0.577 0.245 27.325); /* admin-only delete red */
+
+  /* Overlays used for glass-morph surfaces */
+  --mc-white-50:     rgba(255,255,255,0.5);
+  --mc-black-80:     rgba(0,0,0,0.8);
+  --mc-shadow-book:  0 4px 20px rgba(0,0,0,0.3);
+
+  /* ---------- SEMANTIC COLORS ---------- */
+  --bg:              var(--mc-white);
+  --fg:              var(--mc-near-black);
+  --text:            var(--mc-text);
+  --muted:           var(--mc-muted);
+  --border:          var(--mc-border);
+  --cta-bg:          var(--mc-black);
+  --cta-fg:          var(--mc-white);
+  --cta-bg-hover:    #1f2937;              /* gray-800 */
+
+  /* ---------- FONT FAMILIES ---------- */
+  --font-bebas-neue:       'Bebas Neue', 'Oswald', 'Impact', sans-serif;
+  /* Bebas Neue has no Cyrillic. Use Oswald (condensed, similar DNA) for Russian display. */
+  --font-bebas-neue-cyrillic: 'Oswald', 'Bebas Neue', 'Impact', sans-serif;
+  --font-inter:            'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-playfair-display: 'Playfair Display', 'Georgia', serif;
+  --font-roboto-mono:      'Roboto Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-geist-sans:       -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-geist-mono:       ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* ---------- TYPOGRAPHIC SCALE ---------- */
+  --text-xs:   12px;
+  --text-sm:   14px;
+  --text-base: 16px;
+  --text-lg:   18px;
+  --text-xl:   20px;
+  --text-2xl:  24px;
+  --text-3xl:  30px;
+  --text-4xl:  36px;
+  --text-5xl:  48px;
+  --text-6xl:  60px;
+  --text-7xl:  72px;
+
+  --tracking-tight:    -0.02em;
+  --tracking-normal:    0em;
+  --tracking-wide:      0.05em;
+  --tracking-wider:     0.075em;
+  --tracking-widest:    0.15em;
+
+  /* ---------- SPACING ---------- */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  /* ---------- RADII ---------- */
+  --radius-0:   0;        /* public site default */
+  --radius-sm:  6px;
+  --radius-md:  8px;      /* admin inputs */
+  --radius-lg:  10px;     /* admin cards */
+  --radius-xl:  14px;
+
+  /* ---------- SHADOWS ---------- */
+  --shadow-none: none;
+  --shadow-xs:   0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-cta:  var(--mc-shadow-book);
+
+  /* ---------- LAYOUT ---------- */
+  --container-xl:  36rem;    /* 576px — booking column */
+  --container-7xl: 80rem;    /* 1280px — portfolio grid */
+  --grid-gap:      16px;
+  --grid-row:      200px;
+}
+
+/* ============================================================
+   SEMANTIC TYPE PRESETS
+   ============================================================ */
+
+.mc-wordmark {
+  font-family: var(--font-bebas-neue);
+  font-weight: 400;
+  font-size: var(--text-3xl);
+  line-height: 1;
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+  color: var(--fg);
+}
+@media (min-width: 768px) { .mc-wordmark { font-size: var(--text-4xl); } }
+@media (min-width: 1024px) { .mc-wordmark { font-size: var(--text-5xl); } }
+
+.mc-wordmark-sm {
+  font-family: var(--font-bebas-neue);
+  font-weight: 400;
+  font-size: var(--text-2xl);
+  line-height: 1;
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.mc-tagline {
+  font-family: var(--font-inter);
+  font-weight: 400;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  letter-spacing: var(--tracking-widest);
+  text-transform: lowercase;
+  color: var(--muted);
+}
+
+.mc-page-title {
+  font-family: var(--font-bebas-neue);
+  font-weight: 400;
+  font-size: var(--text-3xl);
+  line-height: 1;
+  text-transform: lowercase;
+  color: var(--fg);
+}
+
+.mc-body {
+  font-family: var(--font-inter);
+  font-weight: 400;
+  font-size: var(--text-base);
+  line-height: 1.65;
+  color: var(--text);
+}
+.mc-body strong, .mc-body .mc-price {
+  color: var(--fg);
+  font-weight: 400;
+}
+
+.mc-meta {
+  font-family: var(--font-inter);
+  font-weight: 400;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.mc-mono {
+  font-family: var(--font-roboto-mono);
+  font-weight: 400;
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-wide);
+  color: var(--muted);
+}
+
+.mc-editorial {
+  font-family: var(--font-playfair-display);
+  font-weight: 500;
+  font-size: var(--text-5xl);
+  line-height: 1.1;
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg);
+}
+
+/* ============================================================
+   SEMANTIC COMPONENT PRIMITIVES
+   ============================================================ */
+
+.mc-cta {
+  display: inline-block;
+  background: var(--cta-bg);
+  color: var(--cta-fg);
+  font-family: var(--font-bebas-neue);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  padding: 12px 56px;
+  border: 0;
+  border-radius: 0;
+  text-decoration: none;
+  transition: background-color 150ms ease, transform 150ms ease;
+  cursor: pointer;
+}
+.mc-cta:hover { background: var(--cta-bg-hover); }
+@media (min-width: 768px) { .mc-cta:hover { transform: scale(1.05); } }
+
+.mc-cta--floating {
+  background: var(--mc-black-80);
+  backdrop-filter: blur(4px);
+  box-shadow: var(--shadow-cta);
+  padding: 12px 80px;
+}
+.mc-cta--floating:hover { background: var(--mc-black); }
+
+.mc-nav {
+  background: var(--mc-white-50);
+  backdrop-filter: blur(12px);
+}
+
+.mc-hairline {
+  border-top: 1px solid var(--border);
+}
+
+.mc-image-cell {
+  position: relative;
+  overflow: hidden;
+  background: var(--mc-image-plate);
+  border-radius: 0;
+}
+.mc-image-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 500ms ease;
+}
+.mc-image-cell:hover img { transform: scale(1.05); }

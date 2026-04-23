@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Radii & Shadows</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-inter); color: var(--fg); background: var(--bg); padding: 24px 32px; }
+  .row { display: flex; gap: 24px; align-items: flex-end; }
+  .box { width: 88px; height: 88px; background: var(--fg); }
+  .shadow { background: #fff; border: 1px solid var(--border); }
+  .lab { font-family: var(--font-roboto-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.05em; margin-top: 8px; display: block; text-align: center; }
+  h4 { font-family: var(--font-bebas-neue); font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg); margin: 0 0 10px; }
+  .section { display: inline-block; }
+  .section + .section { margin-left: 40px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="section">
+      <h4>Radii</h4>
+      <div class="row">
+        <div><div class="box" style="border-radius:0"></div><span class="lab">0 · public</span></div>
+        <div><div class="box" style="border-radius:6px"></div><span class="lab">sm · 6</span></div>
+        <div><div class="box" style="border-radius:8px"></div><span class="lab">md · 8</span></div>
+        <div><div class="box" style="border-radius:10px"></div><span class="lab">lg · 10 admin</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <h4>Shadows</h4>
+      <div class="row">
+        <div><div class="box shadow"></div><span class="lab">none</span></div>
+        <div><div class="box shadow" style="box-shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04)"></div><span class="lab">sm · admin card</span></div>
+        <div><div class="box" style="background:rgba(0,0,0,0.8);box-shadow:0 4px 20px rgba(0,0,0,0.3)"></div><span class="lab">cta · BOOK</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

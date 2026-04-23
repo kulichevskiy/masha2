@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Design system is a reference bundle (HTML prototypes, JSX kits). Not production code.
+    "design-system/**",
   ]),
 ]);
 

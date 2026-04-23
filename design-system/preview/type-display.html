@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Type — Display</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-inter); color: var(--fg); background: var(--bg); padding: 28px 32px; }
+  .stack { display: flex; flex-direction: column; gap: 20px; }
+  .row { display: grid; grid-template-columns: 120px 1fr; align-items: baseline; gap: 20px; }
+  .label { font-family: var(--font-roboto-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+  .wm-xl { font-family: var(--font-bebas-neue); font-size: 56px; line-height: 1; letter-spacing: -0.02em; text-transform: uppercase; color: var(--fg); }
+  .wm-md { font-family: var(--font-bebas-neue); font-size: 30px; line-height: 1; text-transform: lowercase; color: var(--fg); }
+  .wm-cta { font-family: var(--font-bebas-neue); font-size: 20px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg); }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="row"><div class="label">Wordmark · 48–56</div><div class="wm-xl">MARIA CHEVSKAYA</div></div>
+    <div class="row"><div class="label">Page title · 30</div><div class="wm-md">booking</div></div>
+    <div class="row"><div class="label">CTA · 20</div><div class="wm-cta">BOOK &nbsp; EMAIL ME</div></div>
+  </div>
+</body>
+</html>

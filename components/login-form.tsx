@@ -2,23 +2,13 @@
 
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 function GoogleIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4">
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-3.5">
       <path
         fill="#EA4335"
         d="M12 10.2v3.9h5.5c-.24 1.4-1.67 4.1-5.5 4.1-3.31 0-6.01-2.74-6.01-6.1S8.69 5.9 12 5.9c1.88 0 3.14.8 3.86 1.48l2.63-2.54C16.85 3.3 14.62 2.3 12 2.3 6.98 2.3 2.9 6.38 2.9 11.4s4.08 9.1 9.1 9.1c5.26 0 8.74-3.69 8.74-8.89 0-.6-.06-1.05-.14-1.51H12z"
@@ -58,7 +48,6 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         password,
       })
       if (error) throw error
-      // Update this route to redirect to an authenticated route. The user already has an active session.
       router.push('/admin')
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
@@ -82,70 +71,79 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       setError(error.message)
       setIsLoading(false)
     }
-    // On success the browser is redirected to Google — no further work here.
   }
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Вход</CardTitle>
-          <CardDescription>Введите email для входа в аккаунт</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="email@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Пароль</Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Восстановить пароль
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Вход...' : 'Войти'}
-              </Button>
-              <div className="relative text-center text-sm">
-                <span className="bg-card text-muted-foreground relative z-10 px-2">или</span>
-                <span className="bg-border absolute inset-x-0 top-1/2 h-px -translate-y-1/2" />
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleGoogleLogin}
-                disabled={isLoading}
+      <div className="bg-white border border-gray-200 p-6 max-w-sm w-full">
+        <h3 className="text-[22px] font-semibold tracking-tight text-[#252525] leading-tight">Вход</h3>
+        <p className="mt-1 mb-5 text-[13px] text-gray-500 font-inter">
+          Введите email для входа в аккаунт
+        </p>
+
+        <form onSubmit={handleLogin} className="flex flex-col gap-3">
+          <div>
+            <label htmlFor="email" className="block mb-1.5 text-[13px] font-medium text-[#252525]">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="email@example.com"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full h-9 border border-gray-200 rounded-none px-3 text-sm bg-transparent font-inter outline-none focus:border-[#252525]"
+            />
+          </div>
+          <div>
+            <div className="flex items-center mb-1.5">
+              <label htmlFor="password" className="text-[13px] font-medium text-[#252525]">
+                Пароль
+              </label>
+              <Link
+                href="/auth/forgot-password"
+                className="ml-auto text-xs text-[#252525] no-underline hover:underline"
               >
-                <GoogleIcon />
-                Войти через Google
-              </Button>
+                Восстановить пароль
+              </Link>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+            <input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-9 border border-gray-200 rounded-none px-3 text-sm bg-transparent font-inter outline-none focus:border-[#252525]"
+            />
+          </div>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full h-11 mt-4 bg-black text-white rounded-none font-inter text-[13px] font-normal tracking-[0.02em] lowercase cursor-pointer transition-colors hover:bg-gray-800 disabled:opacity-60"
+          >
+            {isLoading ? 'вход...' : 'войти'}
+          </button>
+
+          <div className="relative text-center text-xs text-gray-500 my-3">
+            <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gray-200" />
+            <span className="relative bg-white px-2.5 lowercase">или</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            className="group w-full h-9 bg-transparent text-gray-500 rounded-none font-inter text-[13px] font-normal tracking-[0.02em] cursor-pointer inline-flex items-center justify-center gap-2 transition-colors hover:text-[#252525] disabled:opacity-60"
+          >
+            <GoogleIcon />
+            <span className="pb-0.5 border-b border-transparent transition-colors group-hover:border-[#252525]">
+              войти через Google
+            </span>
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

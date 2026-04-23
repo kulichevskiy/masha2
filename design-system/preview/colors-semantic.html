@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Colors — Semantic</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-inter); color: var(--fg); background: var(--bg); padding: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .tok { border: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 104px; }
+  .tok .chip { height: 36px; border: 1px solid var(--border); }
+  .tok .var { font-family: var(--font-roboto-mono); font-size: 11px; color: var(--fg); letter-spacing: 0.02em; }
+  .tok .role { font-family: var(--font-inter); font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="tok"><div class="chip" style="background:var(--bg)"></div><div class="var">--bg</div><div class="role">page background</div></div>
+    <div class="tok"><div class="chip" style="background:var(--fg)"></div><div class="var">--fg</div><div class="role">display / wordmark</div></div>
+    <div class="tok"><div class="chip" style="background:var(--text)"></div><div class="var">--text</div><div class="role">body copy</div></div>
+    <div class="tok"><div class="chip" style="background:var(--muted)"></div><div class="var">--muted</div><div class="role">tagline / meta</div></div>
+    <div class="tok"><div class="chip" style="background:var(--border)"></div><div class="var">--border</div><div class="role">hairlines</div></div>
+    <div class="tok"><div class="chip" style="background:var(--cta-bg)"></div><div class="var">--cta-bg</div><div class="role">BOOK / EMAIL ME</div></div>
+    <div class="tok"><div class="chip" style="background:rgba(0,0,0,0.8)"></div><div class="var">--mc-black-80</div><div class="role">floating CTA</div></div>
+    <div class="tok"><div class="chip" style="background:rgba(255,255,255,0.5); border:1px dashed var(--border)"></div><div class="var">--mc-white-50</div><div class="role">glass nav</div></div>
+  </div>
+</body>
+</html>

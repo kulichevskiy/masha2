@@ -2,16 +2,6 @@
 
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -28,7 +18,6 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
     setError(null)
 
     try {
-      // The url which will be included in the email. This URL needs to be configured in your redirect URLs in the Supabase dashboard at https://supabase.com/dashboard/project/_/auth/url-configuration
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/update-password`,
       })
@@ -44,52 +33,55 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       {success ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Проверьте почту</CardTitle>
-            <CardDescription>Инструкции отправлены</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Если вы зарегистрированы, письмо для восстановления пароля отправлено на указанный
-              email.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="bg-white border border-gray-200 p-6 max-w-sm w-full">
+          <h3 className="text-[22px] font-semibold tracking-tight text-[#252525] leading-tight">
+            Проверьте почту
+          </h3>
+          <p className="mt-1 mb-5 text-[13px] text-gray-500 font-inter">Инструкции отправлены</p>
+          <p className="text-sm text-gray-500 font-inter leading-relaxed">
+            Если вы зарегистрированы, письмо для восстановления пароля отправлено на указанный email.
+          </p>
+        </div>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Восстановление пароля</CardTitle>
-            <CardDescription>Введите email для получения ссылки</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleForgotPassword}>
-              <div className="flex flex-col gap-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="email@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Отправка...' : 'Отправить'}
-                </Button>
-              </div>
-              <div className="mt-4 text-center text-sm">
-                Вспомнили пароль?{' '}
-                <Link href="/auth/login" className="underline underline-offset-4">
-                  Войти
-                </Link>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        <div className="bg-white border border-gray-200 p-6 max-w-sm w-full">
+          <h3 className="text-[22px] font-semibold tracking-tight text-[#252525] leading-tight">
+            Восстановление пароля
+          </h3>
+          <p className="mt-1 mb-5 text-[13px] text-gray-500 font-inter">
+            Введите email для получения ссылки
+          </p>
+
+          <form onSubmit={handleForgotPassword} className="flex flex-col gap-3">
+            <div>
+              <label htmlFor="email" className="block mb-1.5 text-[13px] font-medium text-[#252525]">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                placeholder="email@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full h-9 border border-gray-200 rounded-none px-3 text-sm bg-transparent font-inter outline-none focus:border-[#252525]"
+              />
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-11 mt-4 bg-black text-white rounded-none font-inter text-[13px] font-normal tracking-[0.02em] lowercase cursor-pointer transition-colors hover:bg-gray-800 disabled:opacity-60"
+            >
+              {isLoading ? 'отправка...' : 'отправить'}
+            </button>
+            <div className="mt-4 text-center text-[13px] text-gray-500 font-inter">
+              Вспомнили пароль?{' '}
+              <Link href="/auth/login" className="text-[#252525] underline underline-offset-4">
+                Войти
+              </Link>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   )

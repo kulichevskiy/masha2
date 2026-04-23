@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display, Roboto_Mono, Bebas_Neue, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display, Roboto_Mono, Bebas_Neue, Inter, Oswald } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,6 +31,14 @@ const bebasNeue = Bebas_Neue({
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+// Oswald is the Cyrillic-capable sibling of Bebas Neue (Bebas has no Cyrillic glyphs).
+// Exposed as --font-bebas-neue-cyrillic so Russian display type has an explicit home.
+const oswald = Oswald({
+  variable: "--font-bebas-neue-cyrillic",
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "500"],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -67,7 +75,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${robotoMono.variable} ${bebasNeue.variable} ${inter.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${robotoMono.variable} ${bebasNeue.variable} ${inter.variable} ${oswald.variable} antialiased`}
       >
         {children}
       </body>

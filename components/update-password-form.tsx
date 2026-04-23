@@ -2,16 +2,6 @@
 
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -21,7 +11,7 @@ export function UpdatePasswordForm({ className, ...props }: React.ComponentProps
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     const supabase = createClient()
     setIsLoading(true)
@@ -30,7 +20,6 @@ export function UpdatePasswordForm({ className, ...props }: React.ComponentProps
     try {
       const { error } = await supabase.auth.updateUser({ password })
       if (error) throw error
-      // Update this route to redirect to an authenticated route. The user already has an active session.
       router.push('/admin')
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
@@ -41,33 +30,37 @@ export function UpdatePasswordForm({ className, ...props }: React.ComponentProps
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Новый пароль</CardTitle>
-          <CardDescription>Введите новый пароль</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleForgotPassword}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="password">Новый пароль</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Новый пароль"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Сохранение...' : 'Сохранить'}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      <div className="bg-white border border-gray-200 p-6 max-w-sm w-full">
+        <h3 className="text-[22px] font-semibold tracking-tight text-[#252525] leading-tight">
+          Новый пароль
+        </h3>
+        <p className="mt-1 mb-5 text-[13px] text-gray-500 font-inter">Введите новый пароль</p>
+
+        <form onSubmit={handleUpdatePassword} className="flex flex-col gap-3">
+          <div>
+            <label htmlFor="password" className="block mb-1.5 text-[13px] font-medium text-[#252525]">
+              Новый пароль
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Новый пароль"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-9 border border-gray-200 rounded-none px-3 text-sm bg-transparent font-inter outline-none focus:border-[#252525]"
+            />
+          </div>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full h-11 mt-4 bg-black text-white rounded-none font-inter text-[13px] font-normal tracking-[0.02em] lowercase cursor-pointer transition-colors hover:bg-gray-800 disabled:opacity-60"
+          >
+            {isLoading ? 'сохранение...' : 'сохранить'}
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

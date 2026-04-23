@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Type — Casing rules</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-inter); color: var(--fg); background: var(--bg); padding: 24px 32px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .cell { display: flex; flex-direction: column; gap: 8px; }
+  .tag { font-family: var(--font-roboto-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .up { font-family: var(--font-bebas-neue); font-size: 36px; line-height: 1; letter-spacing: -0.02em; text-transform: uppercase; color: var(--fg); }
+  .low { font-family: var(--font-bebas-neue); font-size: 30px; line-height: 1; text-transform: lowercase; color: var(--fg); }
+  .sentence { font-family: var(--font-inter); font-size: 15px; line-height: 1.5; color: var(--text); }
+  .rule { font-family: var(--font-inter); font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="cell">
+      <div class="tag">Display UPPERCASE</div>
+      <div class="up">MARIA CHEVSKAYA</div>
+      <div class="rule">Wordmark, CTAs. Bebas Neue, tight tracking.</div>
+    </div>
+    <div class="cell">
+      <div class="tag">Display lowercase</div>
+      <div class="low">booking</div>
+      <div class="rule">Page titles. Bebas Neue, natural tracking.</div>
+    </div>
+    <div class="cell">
+      <div class="tag">Sentence case</div>
+      <div class="sentence">People I work with are seen, not just photographed.</div>
+      <div class="rule">All body copy. Inter, normal punctuation, no !.</div>
+    </div>
+  </div>
+</body>
+</html>

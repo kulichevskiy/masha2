@@ -11,6 +11,7 @@
   --font-playfair-display: var(--font-playfair-display);
   --font-roboto-mono: var(--font-roboto-mono);
   --font-bebas-neue: var(--font-bebas-neue);
+  --font-bebas-neue-cyrillic: var(--font-bebas-neue-cyrillic);
   --font-inter: var(--font-inter);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -57,6 +58,10 @@
 
 .font-bebas-neue {
   font-family: var(--font-bebas-neue);
+}
+
+.font-bebas-neue-cyrillic {
+  font-family: var(--font-bebas-neue-cyrillic);
 }
 
 .font-inter {
