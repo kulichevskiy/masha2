@@ -14,6 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_emails: {
+        Row: {
+          added_at: string
+          email: string
+        }
+        Insert: {
+          added_at?: string
+          email: string
+        }
+        Update: {
+          added_at?: string
+          email?: string
+        }
+        Relationships: []
+      }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      booking_requests: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          ip_hash: string | null
+          message: string | null
+          tier_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          ip_hash?: string | null
+          message?: string | null
+          tier_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          ip_hash?: string | null
+          message?: string | null
+          tier_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_requests_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "booking_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_tiers: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_accent: boolean
+          is_active: boolean
+          name: string
+          position: number
+          price_text: string
+          subtitle: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_accent?: boolean
+          is_active?: boolean
+          name: string
+          position?: number
+          price_text: string
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_accent?: boolean
+          is_active?: boolean
+          name?: string
+          position?: number
+          price_text?: string
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           alt_text: string | null

@@ -3,8 +3,18 @@ import { createClient } from '@/lib/supabase/server'
 import { PhotosTable } from './components/photos-table'
 import { PhotoUploadDropzone } from './components/photo-upload-dropzone'
 import { LogoutButton } from '@/components/logout-button'
+import { AdminTabs, type AdminTab } from './components/admin-tabs'
+import { TiersTable } from './components/tiers-table'
+import { RequestsTable, type BookingRequestRow } from './components/requests-table'
+import { SettingsForm } from './components/settings-form'
 
-export default async function AdminPage() {
+const VALID_TABS: AdminTab[] = ['photos', 'tiers', 'requests', 'settings']
+
+type Props = {
+  searchParams: Promise<{ tab?: string }>
+}
+
+export default async function AdminPage({ searchParams }: Props) {
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getClaims()
@@ -12,17 +22,10 @@ export default async function AdminPage() {
     redirect('/auth/login')
   }
 
-  // Fetch all photos ordered by position
-  const { data: photos, error: photosError } = await supabase
-    .from('photos')
-    .select('*')
-    .order('position', { ascending: true })
-
-  if (photosError) {
-    throw new Error(`Failed to fetch photos: ${photosError.message}`)
-  }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const params = await searchParams
+  const tab: AdminTab = VALID_TABS.includes(params.tab as AdminTab)
+    ? (params.tab as AdminTab)
+    : 'photos'
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -30,7 +33,7 @@ export default async function AdminPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Личный кабинет фотографа</h1>
           <p className="text-muted-foreground mt-1">
-            Управление фотографиями портфолио
+            Управление портфолио и заявками
           </p>
         </div>
         <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
@@ -41,8 +44,32 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      <PhotoUploadDropzone />
+      <AdminTabs active={tab} />
 
+      {tab === 'photos' && <PhotosTab />}
+      {tab === 'tiers' && <TiersTab />}
+      {tab === 'requests' && <RequestsTab />}
+      {tab === 'settings' && <SettingsTab />}
+    </div>
+  )
+}
+
+async function PhotosTab() {
+  const supabase = await createClient()
+  const { data: photos, error } = await supabase
+    .from('photos')
+    .select('*')
+    .order('position', { ascending: true })
+
+  if (error) {
+    throw new Error(`Failed to fetch photos: ${error.message}`)
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+
+  return (
+    <>
+      <PhotoUploadDropzone />
       {photos && photos.length > 0 ? (
         <PhotosTable photos={photos} supabaseUrl={supabaseUrl} />
       ) : (
@@ -50,6 +77,62 @@ export default async function AdminPage() {
           <p>Нет загруженных фотографий</p>
         </div>
       )}
-    </div>
+    </>
   )
+}
+
+async function TiersTab() {
+  const supabase = await createClient()
+  const { data: tiers, error } = await supabase
+    .from('booking_tiers')
+    .select('*')
+    .order('position', { ascending: true })
+
+  if (error) {
+    throw new Error(`Failed to fetch tiers: ${error.message}`)
+  }
+
+  return <TiersTable tiers={tiers ?? []} />
+}
+
+async function RequestsTab() {
+  const supabase = await createClient()
+  const { data: requests, error } = await supabase
+    .from('booking_requests')
+    .select('id, email, message, created_at, booking_tiers(name)')
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  if (error) {
+    throw new Error(`Failed to fetch booking requests: ${error.message}`)
+  }
+
+  // Normalise the embed: supabase-js types the FK join as an array even though
+  // booking_requests.tier_id is many-to-one on booking_tiers.
+  const rows: BookingRequestRow[] = (requests ?? []).map((r) => ({
+    id: r.id,
+    email: r.email,
+    message: r.message,
+    created_at: r.created_at,
+    booking_tiers: Array.isArray(r.booking_tiers)
+      ? (r.booking_tiers[0] ?? null)
+      : (r.booking_tiers ?? null),
+  }))
+
+  return <RequestsTable requests={rows} />
+}
+
+async function SettingsTab() {
+  const supabase = await createClient()
+  const { data: row, error } = await supabase
+    .from('app_settings')
+    .select('value')
+    .eq('key', 'booking_recipient_email')
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(`Failed to fetch settings: ${error.message}`)
+  }
+
+  return <SettingsForm recipientEmail={row?.value ?? ''} />
 }

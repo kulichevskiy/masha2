@@ -139,3 +139,124 @@ export async function createPhotosFromUploads(storagePaths: string[]) {
 
   revalidatePath('/admin')
 }
+
+// --- booking tiers ---------------------------------------------------------
+
+export async function createTier() {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  // Place new tier above existing ones, mirroring createPhotosFromUploads:
+  // newest at the top until admin reorders.
+  const { data: minRow } = await supabase
+    .from('booking_tiers')
+    .select('position')
+    .order('position', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  const startPosition = minRow?.position != null ? minRow.position - 1 : 0
+
+  const { error } = await supabase.from('booking_tiers').insert({
+    name: 'New tier',
+    description: null,
+    price_text: 'upon request',
+    position: startPosition,
+    is_active: false,
+  })
+
+  if (error) {
+    throw new Error(`Failed to create tier: ${error.message}`)
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/book')
+}
+
+export async function updateTier(
+  id: string,
+  data: {
+    name?: string
+    subtitle?: string | null
+    description?: string | null
+    price_text?: string
+    is_active?: boolean
+    is_accent?: boolean
+  }
+) {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const { error } = await supabase.from('booking_tiers').update(data).eq('id', id)
+
+  if (error) {
+    throw new Error(`Failed to update tier: ${error.message}`)
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/book')
+}
+
+export async function deleteTier(id: string) {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const { error } = await supabase.from('booking_tiers').delete().eq('id', id)
+
+  if (error) {
+    throw new Error(`Failed to delete tier: ${error.message}`)
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/book')
+}
+
+export async function reorderTiers(orderedIds: string[]) {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  for (const [index, id] of orderedIds.entries()) {
+    const { error } = await supabase
+      .from('booking_tiers')
+      .update({ position: index + 1 })
+      .eq('id', id)
+    if (error) {
+      throw new Error(`Failed to update tier position: ${error.message}`)
+    }
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/book')
+}
+
+// --- booking requests ------------------------------------------------------
+
+export async function deleteBookingRequest(id: string) {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const { error } = await supabase.from('booking_requests').delete().eq('id', id)
+
+  if (error) {
+    throw new Error(`Failed to delete booking request: ${error.message}`)
+  }
+
+  revalidatePath('/admin')
+}
+
+// --- app settings ----------------------------------------------------------
+
+export async function updateSetting(key: string, value: string) {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const { error } = await supabase
+    .from('app_settings')
+    .upsert({ key, value }, { onConflict: 'key' })
+
+  if (error) {
+    throw new Error(`Failed to update setting: ${error.message}`)
+  }
+
+  revalidatePath('/admin')
+}

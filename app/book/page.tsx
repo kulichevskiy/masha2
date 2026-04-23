@@ -1,14 +1,25 @@
-import Link from "next/link"
 import Image from "next/image"
 import { TopNav } from "../components/top-nav"
 import { Footer } from "../components/footer"
+import { createClient } from "@/lib/supabase/server"
+import { BookingForm } from "./booking-form"
+import { RichText } from "@/components/rich-text"
 
 export const metadata = {
   title: "Booking",
   description: "Book a portrait or editorial photography session with Maria Chevskaya.",
 }
 
-export default function BookPage() {
+export default async function BookPage() {
+  const supabase = await createClient()
+  const { data: tiers } = await supabase
+    .from('booking_tiers')
+    .select('id, name, subtitle, description, price_text, is_accent')
+    .eq('is_active', true)
+    .order('position', { ascending: true })
+
+  const activeTiers = tiers ?? []
+
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <TopNav />
@@ -27,32 +38,50 @@ export default function BookPage() {
           booking
         </h1>
 
-
         <p className="mb-8">
           People I work with are seen, not just photographed. Each session is built around presence, character and rhythm, not poses or time slots.
           It is a collaborative process, calm and attentive, with space to arrive into yourself.
         </p>
 
-        <p className="text-black">Portrait sessions — from 450 €</p>
-        <p className="mb-8">
-          For personal portraits, moments of transition, inner shifts and quiet confidence.
-        </p>
+        {activeTiers.length > 0 && (
+          <div className="mb-12 space-y-2">
+            {activeTiers.map((tier) => (
+              <section
+                key={tier.id}
+                className={
+                  '-mx-4 md:-mx-6 p-6 border ' +
+                  (tier.is_accent ? 'border-gray-300' : 'border-transparent')
+                }
+              >
+                <h2 className="font-bebas-neue text-black uppercase tracking-wide leading-none text-xl">
+                  {tier.name}
+                </h2>
+                {tier.subtitle && (
+                  <p className="mt-1 text-[15px] text-gray-700 leading-snug">
+                    {tier.subtitle}
+                  </p>
+                )}
+                <p className="text-black mt-4 mb-5">{tier.price_text}</p>
+                {tier.description && <RichText html={tier.description} />}
+              </section>
+            ))}
+          </div>
+        )}
 
-        <p className="text-black">Editorial / personal projects — upon request</p>
-        <p className="mb-8">
-          For magazines, artists, authors and long-term collaborations.
-        </p>
-
-        <div className="mb-8">
+        <div className="mb-8 -mx-4 md:-mx-6 bg-gray-50 p-6 md:p-10">
           <p className="mb-8">
-            If this feels like a match, write to me and tell a few words about yourself or your idea.
+            If this feels like a match, pick a tier, leave your email and a few words.
           </p>
-          <a
-            href="mailto:maria.chevskaya@gmail.com"
-            className="inline-block bg-black text-white px-14 py-3 hover:bg-gray-800 transition-colors"
-          >
-            Email me
-          </a>
+          {activeTiers.length > 0 ? (
+            <BookingForm tiers={activeTiers.map(({ id, name, price_text }) => ({ id, name, price_text }))} />
+          ) : (
+            <a
+              href="mailto:maria.chevskaya@gmail.com"
+              className="inline-block bg-black text-white px-14 py-3 hover:bg-gray-800 transition-colors"
+            >
+              Email me
+            </a>
+          )}
         </div>
       </main>
       <Footer />
