@@ -3,16 +3,19 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+type ServerSupabase = Awaited<ReturnType<typeof createClient>>
+
+async function requireAdmin(supabase: ServerSupabase) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+  const { data: isAdmin, error } = await supabase.rpc('is_admin')
+  if (error || !isAdmin) throw new Error('Forbidden')
+}
 
 export async function reorderPhotos(orderedIds: string[]) {
   const supabase = await createClient()
 
-  // Verify user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  await requireAdmin(supabase)
 
   // Update positions based on the new order
   const updates = orderedIds.map((id, index) => ({
@@ -46,11 +49,7 @@ export async function updatePhoto(
 ) {
   const supabase = await createClient()
 
-  // Verify user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  await requireAdmin(supabase)
 
   const { error } = await supabase
     .from('photos')
@@ -67,11 +66,7 @@ export async function updatePhoto(
 export async function deletePhoto(id: string) {
   const supabase = await createClient()
 
-  // Verify user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  await requireAdmin(supabase)
 
   // Get photo to find storage path
   const { data: photo, error: fetchError } = await supabase
@@ -110,11 +105,7 @@ export async function deletePhoto(id: string) {
 export async function createPhotosFromUploads(storagePaths: string[]) {
   const supabase = await createClient()
 
-  // Verify user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  await requireAdmin(supabase)
 
   // Get the minimum position to place new photos at the top
   const { data: minPositionData, error: minPositionError } = await supabase

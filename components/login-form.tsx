@@ -143,12 +143,6 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                 Войти через Google
               </Button>
             </div>
-            <div className="mt-4 text-center text-sm">
-              Нет аккаунта?{' '}
-              <Link href="/auth/sign-up" className="underline underline-offset-4">
-                Зарегистрироваться
-              </Link>
-            </div>
           </form>
         </CardContent>
       </Card>

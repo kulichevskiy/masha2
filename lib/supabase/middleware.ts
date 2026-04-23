@@ -38,11 +38,26 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims()
   const user = data?.claims
 
-  if (!user && request.nextUrl.pathname.startsWith('/admin')) {
-    // Redirect to login only for admin pages
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    return NextResponse.redirect(url)
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      return NextResponse.redirect(url)
+    }
+
+    const { data: isAdmin } = await supabase.rpc('is_admin')
+    if (!isAdmin) {
+      await supabase.auth.signOut()
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/error'
+      url.searchParams.set('error', 'Доступ запрещён для этого аккаунта')
+      // Forward any cookie mutations from signOut onto the redirect response.
+      const response = NextResponse.redirect(url)
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        response.cookies.set(cookie.name, cookie.value, cookie)
+      })
+      return response
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
