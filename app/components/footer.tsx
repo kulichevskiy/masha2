@@ -84,6 +84,16 @@ export function Footer() {
           </div>
 
           <p className="text-sm text-gray-500 opacity-50">© {currentYear} Maria Chevskaya. All rights reserved.</p>
+
+          <p className="text-sm font-inter text-gray-500 opacity-50">
+            <Link href="/impressum" className="transition-opacity hover:opacity-100">
+              Impressum
+            </Link>
+            <span aria-hidden="true" className="mx-2">·</span>
+            <Link href="/datenschutz" className="transition-opacity hover:opacity-100">
+              Datenschutzerklärung
+            </Link>
+          </p>
         </div>
       </div>
     </footer>
