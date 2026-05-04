@@ -23,7 +23,7 @@ export default async function BookPage() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <TopNav />
-      <main className="mx-auto max-w-xl w-full px-4 md:px-6 py-16 md:py-24 font-inter text-gray-600 leading-relaxed">
+      <main className="mx-auto max-w-xl w-full px-4 md:px-6 py-16 md:py-24 font-inter text-gray-700 leading-relaxed">
         <div className="mb-10">
           <Image
             src="/photos/photo_2026-02-01 17.14.58.jpeg"
@@ -53,16 +53,21 @@ export default async function BookPage() {
                   (tier.is_accent ? 'border-gray-300' : 'border-transparent')
                 }
               >
-                <h2 className="font-bebas-neue text-black uppercase tracking-wide leading-none text-xl">
-                  {tier.name}
+                <h2 className="font-bebas-neue text-black uppercase tracking-wide leading-none text-xl flex flex-wrap items-baseline gap-x-3">
+                  <span>{tier.name}</span>
+                  <span aria-hidden="true" className="text-gray-400">—</span>
+                  <span>{tier.price_text}</span>
                 </h2>
                 {tier.subtitle && (
-                  <p className="mt-1 text-[15px] text-gray-700 leading-snug">
+                  <p className="mt-3 text-[15px] text-gray-700 leading-snug">
                     {tier.subtitle}
                   </p>
                 )}
-                <p className="text-black mt-4 mb-5">{tier.price_text}</p>
-                {tier.description && <RichText html={tier.description} />}
+                {tier.description && (
+                  <div className="mt-4">
+                    <RichText html={tier.description} />
+                  </div>
+                )}
               </section>
             ))}
           </div>
@@ -77,7 +82,7 @@ export default async function BookPage() {
           ) : (
             <a
               href="mailto:maria.chevskaya@gmail.com"
-              className="inline-block bg-black text-white px-14 py-3 hover:bg-gray-800 transition-colors"
+              className="inline-block bg-black text-white px-14 py-3 font-bebas-neue text-xl tracking-wider uppercase hover:bg-gray-800 transition-colors"
             >
               Email me
             </a>

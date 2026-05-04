@@ -108,7 +108,7 @@ export function BookingForm({ tiers }: { tiers: Tier[] }) {
           name="tier_id"
           value={tierId}
           onChange={(e) => setTierId(e.target.value)}
-          className="h-11 border border-gray-200 rounded-none px-3 bg-white text-gray-900 focus:border-black outline-none"
+          className="h-11 border border-gray-200 rounded-none px-3 bg-white text-black focus:border-black outline-none"
         >
           <option value="">Select a tier</option>
           {tiers.map((t) => (
@@ -131,7 +131,7 @@ export function BookingForm({ tiers }: { tiers: Tier[] }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="h-11 border border-gray-200 rounded-none px-3 bg-white text-gray-900 focus:border-black outline-none"
+          className="h-11 border border-gray-200 rounded-none px-3 bg-white text-black focus:border-black outline-none"
         />
       </div>
 
@@ -146,7 +146,7 @@ export function BookingForm({ tiers }: { tiers: Tier[] }) {
           maxLength={2000}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="border border-gray-200 rounded-none px-3 py-2 bg-white text-gray-900 focus:border-black outline-none resize-y"
+          className="border border-gray-200 rounded-none px-3 py-2 bg-white text-black focus:border-black outline-none resize-y"
         />
       </div>
 
@@ -154,9 +154,9 @@ export function BookingForm({ tiers }: { tiers: Tier[] }) {
         <button
           type="submit"
           disabled={isPending}
-          className="inline-block bg-black text-white rounded-none px-14 py-3 hover:bg-gray-800 transition-colors disabled:opacity-60"
+          className="inline-block bg-black text-white rounded-none px-14 py-3 font-bebas-neue text-xl tracking-wider uppercase hover:bg-gray-800 transition-colors disabled:opacity-60"
         >
-          {isPending ? 'Sending...' : 'Send request'}
+          {isPending ? 'Sending…' : 'Send request'}
         </button>
       </div>
 
