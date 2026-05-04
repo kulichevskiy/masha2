@@ -87,11 +87,11 @@ export function Footer() {
 
           <p className="text-sm font-inter text-gray-500 opacity-50">
             <Link href="/impressum" className="transition-opacity hover:opacity-100">
-              Impressum
+              Legal Notice
             </Link>
             <span aria-hidden="true" className="mx-2">·</span>
             <Link href="/datenschutz" className="transition-opacity hover:opacity-100">
-              Datenschutzerklärung
+              Privacy Policy
             </Link>
           </p>
         </div>
