@@ -3,11 +3,15 @@ import { TopNav } from "./components/top-nav";
 import { MasonryGrid } from "./components/ui/masonry-grid";
 import { Footer } from "./components/footer";
 import { FloatingBookButton } from "./components/floating-book-button";
+import { WorkshopBanner } from "./components/workshop-banner";
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <TopNav />
+      <Suspense fallback={null}>
+        <WorkshopBanner />
+      </Suspense>
       <div className="mx-auto max-w-7xl w-full px-4 md:px-6 py-8">
         <Suspense fallback={<MasonryGridSkeleton />}>
           <MasonryGrid />

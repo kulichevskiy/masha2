@@ -1,0 +1,470 @@
+// Pure presentational renderer for the workshop page (Workshop C / bold magazine
+// layout, mobile-first). Takes a normalised Workshop + a publicUrlFor() resolver
+// so it stays free of supabase imports — that's what lets the snapshot test
+// pass a synthetic workshop in without standing up a client.
+
+import { RichText } from '@/components/rich-text'
+import { WorkshopApplyForm } from './workshop-apply-form'
+import type { Workshop } from '../data'
+
+type Props = {
+  workshop: Workshop
+  publicUrlFor: (storagePath: string | null | undefined) => string | null
+}
+
+const CHAPTERS = [
+  'The idea',
+  'Program',
+  'A day',
+  'Included',
+  'Bring',
+  'Questions',
+  'Apply',
+]
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<\s*br\s*\/?>/gi, '\n')
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n[ \t]+/g, '\n')
+    .trim()
+}
+
+function ChapterLabel({ n, label }: { n: number; label: string }) {
+  return (
+    <div className="flex items-center gap-2.5 font-inter text-[10.5px] md:text-[11px] tracking-[0.28em] md:tracking-[0.3em] uppercase text-gray-500 mb-3 md:mb-3">
+      <span className="opacity-60">{String(n).padStart(2, '0')}</span>
+      <span className="block w-4 md:w-7 h-px bg-current opacity-40" aria-hidden="true" />
+      <span>{label}</span>
+    </div>
+  )
+}
+
+export function WorkshopContent({ workshop, publicUrlFor }: Props) {
+  const heroUrl = publicUrlFor(workshop.hero_photo_path)
+  const title = workshop.title ?? ''
+  // The hero design splits the title across two lines (e.g. "Portrait /
+  // Workshop"). Honour that if the admin uses a literal " / " separator,
+  // otherwise let the browser wrap naturally.
+  const titleLines = title.includes(' / ')
+    ? title.split(' / ')
+    : title.split(/\s*·\s*/)
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: workshop.faq.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: htmlToText(f.answer),
+      },
+    })),
+  }
+
+  return (
+    <div className="bg-white text-gray-700 font-inter">
+      {/* ───────── Hero — full-bleed black plate ───────── */}
+      <section className="relative bg-black text-white overflow-hidden mt-6 md:mt-10">
+        {heroUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={heroUrl}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover opacity-40 [filter:grayscale(1)_contrast(1.1)]"
+          />
+        )}
+        <div className="relative mx-auto max-w-7xl px-5 md:px-10 pt-8 md:pt-28 pb-10 md:pb-24">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-7 md:mb-10 font-inter text-[10px] md:text-xs tracking-[0.3em] uppercase text-white/70">
+            {workshop.workshop_number && <span>{workshop.workshop_number}</span>}
+            {workshop.location && (
+              <>
+                <span className="hidden md:inline-block w-7 h-px bg-white/40" aria-hidden="true" />
+                <span className="md:hidden opacity-50">·</span>
+                <span>{workshop.location}</span>
+              </>
+            )}
+            {workshop.dates && (
+              <>
+                <span className="hidden md:inline-block w-7 h-px bg-white/40" aria-hidden="true" />
+                <span className="md:hidden opacity-50">·</span>
+                <span>{workshop.dates}</span>
+              </>
+            )}
+          </div>
+
+          <h1 className="font-bebas-neue uppercase font-normal text-white m-0 text-[88px] md:text-[140px] lg:text-[200px] leading-[0.88] tracking-[-0.015em] md:tracking-[-0.02em]">
+            {titleLines.map((line, i) => (
+              <span key={i} className="block">
+                {line.trim()}
+              </span>
+            ))}
+          </h1>
+
+          {workshop.tagline && (
+            <p className="font-playfair-display italic text-[18px] md:text-[28px] leading-[1.4] md:leading-[1.3] mt-6 md:mt-10 max-w-[560px] text-white/90 m-0">
+              &ldquo;{workshop.tagline}&rdquo;
+            </p>
+          )}
+
+          {/* Mobile-only meta row above the buttons (matches MWorkshopC). */}
+          {(workshop.dates || workshop.seats || workshop.price) && (
+            <div className="md:hidden mt-7 pt-5 border-t border-white/20 flex flex-wrap gap-3 font-inter text-[11px] tracking-[0.18em] uppercase text-white/70">
+              {workshop.dates && <span>{workshop.dates}</span>}
+              {workshop.seats && (
+                <>
+                  <span className="opacity-50">·</span>
+                  <span>{workshop.seats}</span>
+                </>
+              )}
+              {workshop.price && (
+                <>
+                  <span className="opacity-50">·</span>
+                  <span>{workshop.price}</span>
+                </>
+              )}
+            </div>
+          )}
+
+          <div className="mt-6 md:mt-14 flex gap-3 md:gap-4">
+            <a
+              href="#apply"
+              className="bg-white text-black px-0 md:px-14 py-3.5 md:py-4 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase text-center flex-[1.4] md:flex-none md:inline-block hover:bg-white/90 transition-colors"
+            >
+              Apply →
+            </a>
+            {(workshop.price || workshop.seats) && (
+              <span className="bg-transparent text-white border border-white/50 px-0 md:px-10 py-3.5 md:py-4 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase text-center flex-1 md:flex-none md:inline-block">
+                <span className="md:hidden">Save</span>
+                <span className="hidden md:inline">
+                  {[workshop.price, workshop.seats].filter(Boolean).join(' · ')}
+                </span>
+              </span>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ───────── Chapter strip (desktop only) ───────── */}
+      <section className="hidden md:block border-b border-gray-200">
+        <div className="mx-auto max-w-7xl px-10 flex">
+          {CHAPTERS.map((c, i) => (
+            <div
+              key={c}
+              className={
+                'px-6 py-5 font-inter text-xs tracking-[0.2em] uppercase ' +
+                (i === 0
+                  ? 'text-foreground border-b border-foreground -mb-px'
+                  : 'text-gray-500')
+              }
+            >
+              <span className="mr-2 opacity-50">{String(i + 1).padStart(2, '0')}</span>
+              {c}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ───────── 01 — The idea ───────── */}
+      <section className="px-5 md:px-10 pt-14 md:pt-28">
+        <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8 md:gap-16">
+          <div>
+            <ChapterLabel n={1} label="The idea" />
+            <h2 className="font-bebas-neue text-3xl md:text-[56px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.015em] whitespace-pre-line">
+              {workshop.the_idea_heading ?? ''}
+            </h2>
+          </div>
+          <div>
+            {workshop.the_idea_quote && (
+              <p className="font-playfair-display italic text-[22px] md:text-[32px] leading-[1.4] text-foreground m-0 mb-6 md:mb-8">
+                &ldquo;{workshop.the_idea_quote}&rdquo;
+              </p>
+            )}
+            {workshop.intro && (
+              <RichText
+                html={workshop.intro}
+                className="text-[15.5px] md:text-[17px] leading-[1.7] md:leading-[1.75]"
+              />
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ───────── 02 — Program ───────── */}
+      <section className="px-5 md:px-10 pt-16 md:pt-28">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8 md:gap-16 mb-8 md:mb-12">
+            <div>
+              <ChapterLabel n={2} label="Program" />
+              <h2 className="font-bebas-neue text-3xl md:text-[56px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.015em]">
+                three days
+                <br />
+                in rhythm
+              </h2>
+            </div>
+            <div />
+          </div>
+          <div className="border-t border-gray-200">
+            {workshop.program.map((d, i) => {
+              const photo = publicUrlFor(d.photo_path)
+              const isLast = i === workshop.program.length - 1
+              return (
+                <div
+                  key={`${d.day}-${i}`}
+                  className={
+                    'grid grid-cols-1 md:grid-cols-[240px_320px_1fr] gap-6 md:gap-16 py-7 md:py-10 items-start ' +
+                    (isLast ? 'border-b border-gray-200' : '')
+                  }
+                >
+                  <div className="flex md:block items-baseline gap-4 md:gap-0">
+                    <div className="font-bebas-neue text-[64px] md:text-[96px] leading-[0.85] text-foreground tracking-[-0.02em]">
+                      {String(i + 1).padStart(2, '0')}
+                    </div>
+                    <div className="font-inter text-[10.5px] md:text-xs tracking-[0.25em] uppercase text-gray-500 md:mt-3">
+                      {d.day}
+                    </div>
+                  </div>
+                  <div className="md:max-w-none">
+                    {photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={photo}
+                        alt=""
+                        aria-hidden="true"
+                        className="w-full md:aspect-square aspect-[4/3] object-cover bg-gray-200"
+                      />
+                    ) : (
+                      <div
+                        className="w-full md:aspect-square aspect-[4/3] bg-gray-200"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-bebas-neue text-[30px] md:text-[56px] leading-none lowercase text-foreground m-0 mb-4 md:mb-5 font-normal tracking-[-0.005em] md:tracking-[-0.01em]">
+                      {d.title}
+                    </h3>
+                    {d.body && (
+                      <RichText
+                        html={d.body}
+                        className="text-[15px] md:text-[17px] leading-[1.7]"
+                      />
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ───────── 03 / 04 / 05 — A day · Included · Bring ───────── */}
+      <section className="px-5 md:px-10 pt-14 md:pt-28">
+        <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
+          <div>
+            <ChapterLabel n={3} label="A day, roughly" />
+            <h3 className="font-bebas-neue text-3xl md:text-[32px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
+              a day
+            </h3>
+            <dl className="mt-6 border-t border-gray-200">
+              {workshop.schedule.map(([time, what], i) => (
+                <div
+                  key={`${time}-${i}`}
+                  className="grid grid-cols-[70px_1fr] gap-3 py-3 border-b border-gray-200 items-baseline"
+                >
+                  <dt className="font-bebas-neue text-xl text-foreground [font-variant-numeric:tabular-nums]">
+                    {time}
+                  </dt>
+                  <dd className="text-sm leading-[1.55]">{what}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div>
+            <ChapterLabel n={4} label="Included" />
+            <h3 className="font-bebas-neue text-3xl md:text-[32px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
+              what comes
+              <br />
+              with
+            </h3>
+            <ul className="mt-6 pl-5 list-disc text-[15px] leading-[1.85] space-y-1">
+              {workshop.includes.map((it, i) => (
+                <li key={i}>{it}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <ChapterLabel n={5} label="What to bring" />
+            <h3 className="font-bebas-neue text-3xl md:text-[32px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
+              what
+              <br />
+              to bring
+            </h3>
+            <ul className="mt-6 pl-5 list-disc text-[15px] leading-[1.85] space-y-1">
+              {workshop.bring.map((it, i) => (
+                <li key={i}>{it}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ───────── 06 — Gallery ───────── */}
+      {workshop.gallery.length > 0 && (
+        <section className="pt-14 md:pt-28">
+          <div className="mx-auto max-w-7xl px-5 md:px-10 mb-5 md:mb-8">
+            <ChapterLabel n={6} label="From the practice" />
+            <h3 className="font-bebas-neue text-3xl md:text-5xl leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
+              the kind of
+              <br />
+              work we make
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-[1fr_1.4fr_1fr_1.2fr] gap-1 px-1">
+            {workshop.gallery.map((g, i) => {
+              const url = publicUrlFor(g.photo_path)
+              return (
+                <div
+                  key={`${g.photo_path}-${i}`}
+                  className="aspect-[3/4] overflow-hidden bg-gray-200"
+                >
+                  {url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={url}
+                      alt=""
+                      aria-hidden="true"
+                      className="w-full h-full object-cover block"
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ───────── 07 — Questions / FAQ ───────── */}
+      {workshop.faq.length > 0 && (
+        <section className="px-5 md:px-10 pt-14 md:pt-28">
+          <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8 md:gap-16">
+            <div>
+              <ChapterLabel n={7} label="Questions" />
+              <h3 className="font-bebas-neue text-3xl md:text-5xl leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
+                before
+                <br />
+                you ask
+              </h3>
+            </div>
+            <div>
+              <div className="border-t border-gray-200">
+                {workshop.faq.map((f, i) => (
+                  <details
+                    key={`${f.question}-${i}`}
+                    className="group border-b border-gray-200"
+                  >
+                    <summary className="list-none [&::-webkit-details-marker]:hidden flex cursor-pointer items-start justify-between gap-4 py-4">
+                      <span className="font-bebas-neue text-lg md:text-[22px] uppercase tracking-[0.02em] text-foreground">
+                        {f.question}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="shrink-0 select-none text-xl leading-none text-gray-400"
+                      >
+                        <span className="group-open:hidden">+</span>
+                        <span className="hidden group-open:inline">−</span>
+                      </span>
+                    </summary>
+                    <div className="pb-5 pr-2 md:pr-8 text-[14px] md:text-[15px] text-gray-700">
+                      <RichText html={f.answer} />
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <script
+            type="application/ld+json"
+            // escape `<` as < so an admin-authored answer containing
+            // `</script>` cannot terminate this block and inject markup.
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c'),
+            }}
+          />
+        </section>
+      )}
+
+      {/* ───────── Apply — black plate ───────── */}
+      <section id="apply" className="px-0 md:px-10 pt-16 md:pt-28 scroll-mt-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="bg-black text-white px-6 md:px-16 py-12 md:py-20 relative overflow-hidden">
+            <div className="font-inter text-[10.5px] md:text-[11px] tracking-[0.3em] uppercase text-white/60 mb-3">
+              {workshop.gallery.length > 0 ? '08' : '07'} — Apply
+            </div>
+            {workshop.apply_heading && (
+              <h3 className="font-bebas-neue text-[52px] md:text-[80px] leading-[0.95] uppercase text-white m-0 mb-5 md:mb-6 font-normal tracking-[-0.015em] md:tracking-[-0.01em]">
+                {workshop.apply_heading}
+              </h3>
+            )}
+            {workshop.apply_intro && (
+              <RichText
+                html={workshop.apply_intro}
+                className="text-[14.5px] md:text-[17px] leading-[1.7] max-w-[560px] text-white/85 mb-8 md:mb-12 [&_p]:text-white/85"
+              />
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 md:max-w-[880px]">
+              <WorkshopApplyForm />
+              <div className="md:order-none order-first md:mt-0 mt-2 md:pt-0 pt-6 md:border-0 border-t border-white/15">
+                <ApplyMetaGrid workshop={workshop} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  )
+}
+
+function ApplyMetaGrid({ workshop }: { workshop: Workshop }) {
+  // Mobile: 2-col tight grid (matches MWorkshopC). Desktop: stacked rows.
+  const items: { label: string; value: string }[] = []
+  if (workshop.dates) items.push({ label: 'When', value: workshop.dates })
+  if (workshop.location) items.push({ label: 'Where', value: workshop.location })
+  if (workshop.seats) items.push({ label: 'Group', value: workshop.seats })
+  if (workshop.price) items.push({ label: 'Price', value: workshop.price })
+
+  return (
+    <dl className="grid grid-cols-2 md:grid-cols-1 gap-x-4 gap-y-5 md:gap-y-0">
+      {items.map((it, i) => (
+        <div
+          key={it.label}
+          className={
+            'md:pb-5 md:mb-5 ' +
+            (i < items.length - 1 ? 'md:border-b md:border-white/15' : '')
+          }
+        >
+          <dt className="font-inter text-[10px] md:text-[11px] tracking-[0.25em] uppercase text-white/55 mb-1.5">
+            {it.label}
+          </dt>
+          <dd className="font-bebas-neue text-[22px] md:text-[28px] text-white tracking-[0.02em]">
+            {it.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  )
+}

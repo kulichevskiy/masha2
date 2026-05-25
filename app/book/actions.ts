@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { createHash } from 'node:crypto'
 import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { checkRate } from '@/lib/rate-limit'
 
 export type BookingSubmitResult =
   | { ok: true }
@@ -11,24 +12,6 @@ export type BookingSubmitResult =
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MESSAGE_MAX = 2000
-
-// Per-IP rate limit. Module-level Map — survives as long as the Node instance
-// does. Good enough for a portfolio's traffic; swap for Upstash if abuse starts.
-const RATE_WINDOW_MS = 10 * 60 * 1000
-const RATE_MAX = 3
-const rateBuckets = new Map<string, { count: number, resetAt: number }>()
-
-function checkRate(ip: string): boolean {
-  const now = Date.now()
-  const bucket = rateBuckets.get(ip)
-  if (!bucket || bucket.resetAt < now) {
-    rateBuckets.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS })
-    return true
-  }
-  if (bucket.count >= RATE_MAX) return false
-  bucket.count += 1
-  return true
-}
 
 async function getClientIp(): Promise<string> {
   const h = await headers()
@@ -58,7 +41,7 @@ export async function submitBookingRequest(
   const tierId = tierIdRaw.length > 0 ? tierIdRaw : null
 
   const ip = await getClientIp()
-  if (!checkRate(ip)) {
+  if (!checkRate(`book:${ip}`)) {
     return { ok: false, error: 'Too many requests — try again in a few minutes.' }
   }
 
