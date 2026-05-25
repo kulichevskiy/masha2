@@ -1,6 +1,14 @@
+'use client'
+
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 export function FloatingBookButton() {
+  const pathname = usePathname()
+  // The /workshop page has its own Apply CTA — two competing fixed buttons would
+  // drown each other. Hide BOOK there.
+  if (pathname?.startsWith('/workshop')) return null
+
   return (
     <div className="fixed bottom-4 left-4 right-4 md:bottom-6 z-50 pointer-events-none">
       <div className="max-w-7xl mx-auto md:px-6 flex justify-end">

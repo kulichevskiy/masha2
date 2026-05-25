@@ -3,6 +3,7 @@ import { TopNav } from "../components/top-nav"
 import { Footer } from "../components/footer"
 import { createClient } from "@/lib/supabase/server"
 import { BookingForm } from "./booking-form"
+import { BookingFaq } from "./booking-faq"
 import { RichText } from "@/components/rich-text"
 
 export const metadata = {
@@ -12,13 +13,21 @@ export const metadata = {
 
 export default async function BookPage() {
   const supabase = await createClient()
-  const { data: tiers } = await supabase
-    .from('booking_tiers')
-    .select('id, name, subtitle, description, price_text, is_accent')
-    .eq('is_active', true)
-    .order('position', { ascending: true })
+  const [{ data: tiers }, { data: faq }] = await Promise.all([
+    supabase
+      .from('booking_tiers')
+      .select('id, name, subtitle, description, price_text, is_accent')
+      .eq('is_active', true)
+      .order('position', { ascending: true }),
+    supabase
+      .from('booking_faq')
+      .select('id, question, answer')
+      .eq('is_visible', true)
+      .order('position', { ascending: true }),
+  ])
 
   const activeTiers = tiers ?? []
+  const faqEntries = faq ?? []
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -88,6 +97,8 @@ export default async function BookPage() {
             </a>
           )}
         </div>
+
+        {faqEntries.length > 0 && <BookingFaq entries={faqEntries} />}
       </main>
       <Footer />
     </div>

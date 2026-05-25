@@ -5,10 +5,13 @@ import { PhotoUploadDropzone } from './components/photo-upload-dropzone'
 import { LogoutButton } from '@/components/logout-button'
 import { AdminTabs, type AdminTab } from './components/admin-tabs'
 import { TiersTable } from './components/tiers-table'
+import { FaqTable } from './components/faq-table'
 import { RequestsTable, type BookingRequestRow } from './components/requests-table'
 import { SettingsForm } from './components/settings-form'
+import { WorkshopTab } from './components/workshop-tab'
+import { getAdminWorkshop } from '@/app/workshop/data'
 
-const VALID_TABS: AdminTab[] = ['photos', 'tiers', 'requests', 'settings']
+const VALID_TABS: AdminTab[] = ['photos', 'tiers', 'faq', 'workshop', 'requests', 'settings']
 
 type Props = {
   searchParams: Promise<{ tab?: string }>
@@ -20,6 +23,16 @@ export default async function AdminPage({ searchParams }: Props) {
   const { data, error } = await supabase.auth.getClaims()
   if (error || !data?.claims) {
     redirect('/auth/login')
+  }
+
+  // Defense-in-depth admin gate. Other tabs are RLS-protected by their
+  // user-scoped queries, but the workshop tab reads via the service role to
+  // see hidden draft content — so a signed-in non-admin reaching this page
+  // would otherwise see admin-only data. Require is_admin() up front and
+  // redirect non-admins to the public home.
+  const { data: isAdmin } = await supabase.rpc('is_admin')
+  if (!isAdmin) {
+    redirect('/')
   }
 
   const params = await searchParams
@@ -48,6 +61,8 @@ export default async function AdminPage({ searchParams }: Props) {
 
       {tab === 'photos' && <PhotosTab />}
       {tab === 'tiers' && <TiersTab />}
+      {tab === 'faq' && <FaqTab />}
+      {tab === 'workshop' && <WorkshopTabSection />}
       {tab === 'requests' && <RequestsTab />}
       {tab === 'settings' && <SettingsTab />}
     </div>
@@ -93,6 +108,52 @@ async function TiersTab() {
   }
 
   return <TiersTable tiers={tiers ?? []} />
+}
+
+async function WorkshopTabSection() {
+  const supabase = await createClient()
+  const workshop = await getAdminWorkshop()
+  if (!workshop) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <p>Не найдена запись воркшопа. Примените миграцию `create_workshop`.</p>
+      </div>
+    )
+  }
+
+  const { data: applications, error } = await supabase
+    .from('workshop_applications')
+    .select('id, name, email, instagram, message, created_at')
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  if (error) {
+    throw new Error(`Failed to fetch workshop applications: ${error.message}`)
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+
+  return (
+    <WorkshopTab
+      workshop={workshop}
+      applications={applications ?? []}
+      supabaseUrl={supabaseUrl}
+    />
+  )
+}
+
+async function FaqTab() {
+  const supabase = await createClient()
+  const { data: entries, error } = await supabase
+    .from('booking_faq')
+    .select('*')
+    .order('position', { ascending: true })
+
+  if (error) {
+    throw new Error(`Failed to fetch faq entries: ${error.message}`)
+  }
+
+  return <FaqTable entries={entries ?? []} />
 }
 
 async function RequestsTab() {

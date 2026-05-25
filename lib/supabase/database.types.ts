@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_faq: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          is_visible: boolean
+          position: number
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          position?: number
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          position?: number
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_requests: {
         Row: {
           created_at: string
@@ -157,6 +187,117 @@ export type Database = {
           storage_path?: string
           title?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      workshop: {
+        Row: {
+          apply_heading: string | null
+          apply_intro: string | null
+          bring: Json
+          created_at: string
+          dates: string | null
+          faq: Json
+          gallery: Json
+          hero_photo_path: string | null
+          id: string
+          includes: Json
+          intro: string | null
+          is_visible: boolean
+          location: string | null
+          price: string | null
+          program: Json
+          schedule: Json
+          seats: string | null
+          tagline: string | null
+          the_idea_heading: string | null
+          the_idea_quote: string | null
+          title: string | null
+          updated_at: string
+          workshop_number: string | null
+        }
+        Insert: {
+          apply_heading?: string | null
+          apply_intro?: string | null
+          bring?: Json
+          created_at?: string
+          dates?: string | null
+          faq?: Json
+          gallery?: Json
+          hero_photo_path?: string | null
+          id?: string
+          includes?: Json
+          intro?: string | null
+          is_visible?: boolean
+          location?: string | null
+          price?: string | null
+          program?: Json
+          schedule?: Json
+          seats?: string | null
+          tagline?: string | null
+          the_idea_heading?: string | null
+          the_idea_quote?: string | null
+          title?: string | null
+          updated_at?: string
+          workshop_number?: string | null
+        }
+        Update: {
+          apply_heading?: string | null
+          apply_intro?: string | null
+          bring?: Json
+          created_at?: string
+          dates?: string | null
+          faq?: Json
+          gallery?: Json
+          hero_photo_path?: string | null
+          id?: string
+          includes?: Json
+          intro?: string | null
+          is_visible?: boolean
+          location?: string | null
+          price?: string | null
+          program?: Json
+          schedule?: Json
+          seats?: string | null
+          tagline?: string | null
+          the_idea_heading?: string | null
+          the_idea_quote?: string | null
+          title?: string | null
+          updated_at?: string
+          workshop_number?: string | null
+        }
+        Relationships: []
+      }
+      workshop_applications: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          instagram: string | null
+          ip_hash: string | null
+          message: string | null
+          name: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          instagram?: string | null
+          ip_hash?: string | null
+          message?: string | null
+          name: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          instagram?: string | null
+          ip_hash?: string | null
+          message?: string | null
+          name?: string
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -295,3 +436,9 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
