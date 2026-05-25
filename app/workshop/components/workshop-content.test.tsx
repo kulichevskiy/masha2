@@ -81,6 +81,37 @@ describe('<WorkshopContent />', () => {
       <WorkshopContent workshop={SAMPLE} publicUrlFor={() => null} />
     )
     const text = container.textContent ?? ''
-    expect(text).not.toContain('the kind of\nwork we make')
+    expect(text).not.toContain('the kind of')
+  })
+
+  it('hides the gallery section when every entry has an empty photo_path', () => {
+    const workshop: Workshop = {
+      ...SAMPLE,
+      gallery: [{ photo_path: '' }, { photo_path: '   ' }],
+    }
+    const { container } = render(
+      <WorkshopContent workshop={workshop} publicUrlFor={() => null} />
+    )
+    const text = container.textContent ?? ''
+    expect(text).not.toContain('the kind of')
+    // Apply chapter stays at 07 when there's no visible gallery section.
+    expect(text).toContain('07 — Apply')
+  })
+
+  it('shows the gallery section when at least one entry has a path', () => {
+    const workshop: Workshop = {
+      ...SAMPLE,
+      gallery: [{ photo_path: '' }, { photo_path: 'workshop/p1.jpg' }],
+    }
+    const { container } = render(
+      <WorkshopContent
+        workshop={workshop}
+        publicUrlFor={(p) => (p ? `https://cdn.example.com/photos/${p}` : null)}
+      />
+    )
+    const text = container.textContent ?? ''
+    expect(text).toContain('the kind of')
+    // Apply chapter bumps to 08 when the gallery is visible.
+    expect(text).toContain('08 — Apply')
   })
 })

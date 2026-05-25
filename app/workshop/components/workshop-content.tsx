@@ -58,6 +58,15 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
     ? title.split(' / ')
     : title.split(/\s*·\s*/)
 
+  // Filter empty gallery entries before rendering — admin can persist a row
+  // with no photo_path yet (default for new rows / cleared rows). Without this
+  // filter the public page would show blank gray placeholder tiles, and the
+  // Apply chapter number would jump to 08 even when no gallery shows.
+  const galleryItems = workshop.gallery.filter(
+    (g) => g.photo_path && g.photo_path.trim() !== ''
+  )
+  const hasGallery = galleryItems.length > 0
+
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -322,7 +331,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
       </section>
 
       {/* ───────── 06 — Gallery ───────── */}
-      {workshop.gallery.length > 0 && (
+      {hasGallery && (
         <section className="pt-14 md:pt-28">
           <div className="mx-auto max-w-7xl px-5 md:px-10 mb-5 md:mb-8">
             <ChapterLabel n={6} label="From the practice" />
@@ -333,7 +342,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
             </h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-[1fr_1.4fr_1fr_1.2fr] gap-1 px-1">
-            {workshop.gallery.map((g, i) => {
+            {galleryItems.map((g, i) => {
               const url = publicUrlFor(g.photo_path)
               return (
                 <div
@@ -412,7 +421,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         <div className="mx-auto max-w-7xl">
           <div className="bg-black text-white px-6 md:px-16 py-12 md:py-20 relative overflow-hidden">
             <div className="font-inter text-[10.5px] md:text-[11px] tracking-[0.3em] uppercase text-white/60 mb-3">
-              {workshop.gallery.length > 0 ? '08' : '07'} — Apply
+              {hasGallery ? '08' : '07'} — Apply
             </div>
             {workshop.apply_heading && (
               <h3 className="font-bebas-neue text-[52px] md:text-[80px] leading-[0.95] uppercase text-white m-0 mb-5 md:mb-6 font-normal tracking-[-0.015em] md:tracking-[-0.01em]">
