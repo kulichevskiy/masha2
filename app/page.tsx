@@ -13,7 +13,7 @@ export default function Home() {
           <MasonryGrid />
         </Suspense>
       </div>
-      <Footer />
+      <Footer floatingCtaSpacer />
       <FloatingBookButton />
     </div>
   );
