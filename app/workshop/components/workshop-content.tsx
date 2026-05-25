@@ -27,7 +27,10 @@ type ChapterKey =
   | 'questions'
   | 'apply'
 
-function buildChapters(hasGallery: boolean): { key: ChapterKey; label: string }[] {
+function buildChapters(
+  hasGallery: boolean,
+  hasFaq: boolean
+): { key: ChapterKey; label: string }[] {
   const base: { key: ChapterKey; label: string }[] = [
     { key: 'idea', label: 'The idea' },
     { key: 'program', label: 'Program' },
@@ -36,7 +39,7 @@ function buildChapters(hasGallery: boolean): { key: ChapterKey; label: string }[
     { key: 'bring', label: 'Bring' },
   ]
   if (hasGallery) base.push({ key: 'gallery', label: 'From the practice' })
-  base.push({ key: 'questions', label: 'Questions' })
+  if (hasFaq) base.push({ key: 'questions', label: 'Questions' })
   base.push({ key: 'apply', label: 'Apply' })
   return base
 }
@@ -85,7 +88,8 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
     (g) => g.photo_path && g.photo_path.trim() !== ''
   )
   const hasGallery = galleryItems.length > 0
-  const chapters = buildChapters(hasGallery)
+  const hasFaq = workshop.faq.length > 0
+  const chapters = buildChapters(hasGallery, hasFaq)
   const chapterN = (key: ChapterKey): number => {
     const i = chapters.findIndex((c) => c.key === key)
     return i + 1 // 1-based; missing keys fall through to 0 → never used

@@ -43,16 +43,20 @@ function publicUrl(supabaseUrl: string, path: string | null | undefined): string
   return `${supabaseUrl}/storage/v1/object/public/photos/${path}`
 }
 
-// Ephemeral client-side id stitched onto list items that contain a
-// RichTextEditor. Tiptap only applies its `content` prop at init, so without
-// a stable key React's index-based reuse would swap an editor's old document
-// onto a different row after a reorder. The _id travels with the item across
-// move/patch operations and is stripped before persisting to JSONB.
+// Ephemeral client-side id stitched onto list items whose row hosts an init-
+// time-only child component — RichTextEditor (Tiptap content is set only at
+// init) and PhotoUploader (UploadSession owns a per-row sessionId / upload
+// state). Without a stable key, React's index-based reuse would swap a
+// neighbouring row's editor document or in-flight upload onto a different
+// workshop entry after a reorder. The _id travels with the item across move/
+// patch operations and is stripped before persisting to JSONB.
 type WithId<T> = T & { _id: string }
 type LocalProgramDay = WithId<ProgramDay>
 type LocalFaqItem = WithId<FaqItem>
-type LocalState = Omit<Workshop, 'program' | 'faq'> & {
+type LocalGalleryItem = WithId<GalleryItem>
+type LocalState = Omit<Workshop, 'program' | 'gallery' | 'faq'> & {
   program: LocalProgramDay[]
+  gallery: LocalGalleryItem[]
   faq: LocalFaqItem[]
 }
 
@@ -76,6 +80,7 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
   const [state, setState] = useState<LocalState>(() => ({
     ...workshop,
     program: workshop.program.map(withId),
+    gallery: workshop.gallery.map(withId),
     faq: workshop.faq.map(withId),
   }))
   const [pending, startTransition] = useTransition()
@@ -110,7 +115,7 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
           schedule: state.schedule,
           includes: state.includes,
           bring: state.bring,
-          gallery: state.gallery,
+          gallery: state.gallery.map(stripId),
           faq: state.faq.map(stripId),
         })
         setSavedAt(new Date())
@@ -332,7 +337,7 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
         <ListEditor
           items={state.gallery}
           onChange={(gallery) => save({ gallery })}
-          empty={(): GalleryItem => ({ photo_path: '' })}
+          empty={(): LocalGalleryItem => withId({ photo_path: '' })}
           render={(item, onPatch) => (
             <PhotoUploader
               currentPath={item.photo_path || null}

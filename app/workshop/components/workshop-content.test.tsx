@@ -101,6 +101,18 @@ describe('<WorkshopContent />', () => {
     expect(text).toContain('07 — Apply')
   })
 
+  it('omits the Questions chapter when the FAQ list is empty', () => {
+    const workshop: Workshop = { ...SAMPLE, faq: [] }
+    const { container } = render(
+      <WorkshopContent workshop={workshop} publicUrlFor={() => null} />
+    )
+    const text = container.textContent ?? ''
+    // No questions chapter visible — neither inline label nor strip entry.
+    expect(text).not.toMatch(/Questions/i)
+    // Apply slides up to 06 since gallery is also absent here.
+    expect(text).toContain('06 — Apply')
+  })
+
   it('shows the gallery section when at least one entry has a path', () => {
     const workshop: Workshop = {
       ...SAMPLE,
