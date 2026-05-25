@@ -43,13 +43,46 @@ function publicUrl(supabaseUrl: string, path: string | null | undefined): string
   return `${supabaseUrl}/storage/v1/object/public/photos/${path}`
 }
 
+// Ephemeral client-side id stitched onto list items that contain a
+// RichTextEditor. Tiptap only applies its `content` prop at init, so without
+// a stable key React's index-based reuse would swap an editor's old document
+// onto a different row after a reorder. The _id travels with the item across
+// move/patch operations and is stripped before persisting to JSONB.
+type WithId<T> = T & { _id: string }
+type LocalProgramDay = WithId<ProgramDay>
+type LocalFaqItem = WithId<FaqItem>
+type LocalState = Omit<Workshop, 'program' | 'faq'> & {
+  program: LocalProgramDay[]
+  faq: LocalFaqItem[]
+}
+
+function newId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `id-${Math.random().toString(36).slice(2)}-${Date.now()}`
+}
+
+function withId<T>(item: T): WithId<T> {
+  return { ...item, _id: newId() }
+}
+
+function stripId<T extends { _id: string }>(item: T): Omit<T, '_id'> {
+  const { _id: _drop, ...rest } = item
+  return rest
+}
+
 export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
-  const [state, setState] = useState<Workshop>(workshop)
+  const [state, setState] = useState<LocalState>(() => ({
+    ...workshop,
+    program: workshop.program.map(withId),
+    faq: workshop.faq.map(withId),
+  }))
   const [pending, startTransition] = useTransition()
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const save = (patch: Partial<Workshop>) => {
+  const save = (patch: Partial<LocalState>) => {
     const next = { ...state, ...patch }
     setState(next)
   }
@@ -73,12 +106,12 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
           the_idea_quote: state.the_idea_quote,
           apply_heading: state.apply_heading,
           apply_intro: state.apply_intro,
-          program: state.program,
+          program: state.program.map(stripId),
           schedule: state.schedule,
           includes: state.includes,
           bring: state.bring,
           gallery: state.gallery,
-          faq: state.faq,
+          faq: state.faq.map(stripId),
         })
         setSavedAt(new Date())
       } catch (err) {
@@ -206,12 +239,14 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
         <ListEditor
           items={state.program}
           onChange={(program) => save({ program })}
-          empty={(): ProgramDay => ({
-            day: 'Day 0X',
-            title: '',
-            body: '',
-            photo_path: null,
-          })}
+          empty={(): LocalProgramDay =>
+            withId({
+              day: 'Day 0X',
+              title: '',
+              body: '',
+              photo_path: null,
+            })
+          }
           render={(day, onPatch) => (
             <div className="flex flex-col gap-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -315,7 +350,7 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
         <ListEditor
           items={state.faq}
           onChange={(faq) => save({ faq })}
-          empty={(): FaqItem => ({ question: '', answer: '' })}
+          empty={(): LocalFaqItem => withId({ question: '', answer: '' })}
           render={(item, onPatch) => (
             <div className="flex flex-col gap-3">
               <Field
@@ -444,43 +479,50 @@ function ListEditor<T extends object>({
 
   return (
     <div className="flex flex-col gap-3">
-      {items.map((item, i) => (
-        <div
-          key={i}
-          className="border border-border rounded-md p-3 flex flex-col gap-2"
-        >
-          {render(item, (p) => patch(i, p))}
-          <div className="flex justify-end gap-1.5 pt-2 border-t border-border/50">
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => move(i, -1)}
-              disabled={i === 0}
-            >
-              ↑
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => move(i, 1)}
-              disabled={i === items.length - 1}
-            >
-              ↓
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => remove(i)}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+      {items.map((item, i) => {
+        // Prefer the stable per-item _id over the index so that components
+        // with init-only internal state (e.g. RichTextEditor / Tiptap) keep
+        // their identity through reorders.
+        const itemId = (item as { _id?: string })._id
+        const key = itemId ?? i
+        return (
+          <div
+            key={key}
+            className="border border-border rounded-md p-3 flex flex-col gap-2"
+          >
+            {render(item, (p) => patch(i, p))}
+            <div className="flex justify-end gap-1.5 pt-2 border-t border-border/50">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => move(i, -1)}
+                disabled={i === 0}
+              >
+                ↑
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => move(i, 1)}
+                disabled={i === items.length - 1}
+              >
+                ↓
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => remove(i)}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
       <Button type="button" variant="outline" size="sm" onClick={add} className="self-start">
         <Plus className="h-4 w-4 mr-1" />
         {addLabel}
