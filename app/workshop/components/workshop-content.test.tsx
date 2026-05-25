@@ -94,7 +94,10 @@ describe('<WorkshopContent />', () => {
     )
     const text = container.textContent ?? ''
     expect(text).not.toContain('the kind of')
-    // Apply chapter stays at 07 when there's no visible gallery section.
+    // Questions slides to 06 and Apply to 07 — no gap, no duplicate numbers.
+    // ChapterLabel renders the number and label as separate spans, so they
+    // come out adjacent in textContent without a separator.
+    expect(text).toContain('06Questions')
     expect(text).toContain('07 — Apply')
   })
 
@@ -111,7 +114,8 @@ describe('<WorkshopContent />', () => {
     )
     const text = container.textContent ?? ''
     expect(text).toContain('the kind of')
-    // Apply chapter bumps to 08 when the gallery is visible.
+    // Questions is 07, Apply bumps to 08 when the gallery sits at 06.
+    expect(text).toContain('07Questions')
     expect(text).toContain('08 — Apply')
   })
 })

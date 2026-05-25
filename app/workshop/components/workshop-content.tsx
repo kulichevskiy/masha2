@@ -12,15 +12,34 @@ type Props = {
   publicUrlFor: (storagePath: string | null | undefined) => string | null
 }
 
-const CHAPTERS = [
-  'The idea',
-  'Program',
-  'A day',
-  'Included',
-  'Bring',
-  'Questions',
-  'Apply',
-]
+// Chapter sequence used both for the desktop strip and the inline "n — label"
+// markers. Gallery is conditional, so we derive numbers from this list rather
+// than hardcoding them — otherwise hiding the gallery would leave a gap
+// (Questions stuck at 07 with nothing at 06) and the desktop strip would
+// diverge from the page body.
+type ChapterKey =
+  | 'idea'
+  | 'program'
+  | 'day'
+  | 'included'
+  | 'bring'
+  | 'gallery'
+  | 'questions'
+  | 'apply'
+
+function buildChapters(hasGallery: boolean): { key: ChapterKey; label: string }[] {
+  const base: { key: ChapterKey; label: string }[] = [
+    { key: 'idea', label: 'The idea' },
+    { key: 'program', label: 'Program' },
+    { key: 'day', label: 'A day' },
+    { key: 'included', label: 'Included' },
+    { key: 'bring', label: 'Bring' },
+  ]
+  if (hasGallery) base.push({ key: 'gallery', label: 'From the practice' })
+  base.push({ key: 'questions', label: 'Questions' })
+  base.push({ key: 'apply', label: 'Apply' })
+  return base
+}
 
 function htmlToText(html: string): string {
   return html
@@ -61,11 +80,16 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
   // Filter empty gallery entries before rendering — admin can persist a row
   // with no photo_path yet (default for new rows / cleared rows). Without this
   // filter the public page would show blank gray placeholder tiles, and the
-  // Apply chapter number would jump to 08 even when no gallery shows.
+  // Apply chapter number would jump even when no gallery shows.
   const galleryItems = workshop.gallery.filter(
     (g) => g.photo_path && g.photo_path.trim() !== ''
   )
   const hasGallery = galleryItems.length > 0
+  const chapters = buildChapters(hasGallery)
+  const chapterN = (key: ChapterKey): number => {
+    const i = chapters.findIndex((c) => c.key === key)
+    return i + 1 // 1-based; missing keys fall through to 0 → never used
+  }
 
   const faqJsonLd = {
     '@context': 'https://schema.org',
@@ -167,9 +191,9 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
       {/* ───────── Chapter strip (desktop only) ───────── */}
       <section className="hidden md:block border-b border-gray-200">
         <div className="mx-auto max-w-7xl px-10 flex">
-          {CHAPTERS.map((c, i) => (
+          {chapters.map((c, i) => (
             <div
-              key={c}
+              key={c.key}
               className={
                 'px-6 py-5 font-inter text-xs tracking-[0.2em] uppercase ' +
                 (i === 0
@@ -178,7 +202,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
               }
             >
               <span className="mr-2 opacity-50">{String(i + 1).padStart(2, '0')}</span>
-              {c}
+              {c.label}
             </div>
           ))}
         </div>
@@ -188,7 +212,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
       <section className="px-5 md:px-10 pt-14 md:pt-28">
         <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8 md:gap-16">
           <div>
-            <ChapterLabel n={1} label="The idea" />
+            <ChapterLabel n={chapterN('idea')} label="The idea" />
             <h2 className="font-bebas-neue text-3xl md:text-[56px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.015em] whitespace-pre-line">
               {workshop.the_idea_heading ?? ''}
             </h2>
@@ -214,7 +238,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8 md:gap-16 mb-8 md:mb-12">
             <div>
-              <ChapterLabel n={2} label="Program" />
+              <ChapterLabel n={chapterN('program')} label="Program" />
               <h2 className="font-bebas-neue text-3xl md:text-[56px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.015em]">
                 three days
                 <br />
@@ -281,7 +305,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
       <section className="px-5 md:px-10 pt-14 md:pt-28">
         <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
           <div>
-            <ChapterLabel n={3} label="A day, roughly" />
+            <ChapterLabel n={chapterN('day')} label="A day, roughly" />
             <h3 className="font-bebas-neue text-3xl md:text-[32px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
               a day
             </h3>
@@ -301,7 +325,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
           </div>
 
           <div>
-            <ChapterLabel n={4} label="Included" />
+            <ChapterLabel n={chapterN('included')} label="Included" />
             <h3 className="font-bebas-neue text-3xl md:text-[32px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
               what comes
               <br />
@@ -315,7 +339,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
           </div>
 
           <div>
-            <ChapterLabel n={5} label="What to bring" />
+            <ChapterLabel n={chapterN('bring')} label="What to bring" />
             <h3 className="font-bebas-neue text-3xl md:text-[32px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
               what
               <br />
@@ -334,7 +358,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
       {hasGallery && (
         <section className="pt-14 md:pt-28">
           <div className="mx-auto max-w-7xl px-5 md:px-10 mb-5 md:mb-8">
-            <ChapterLabel n={6} label="From the practice" />
+            <ChapterLabel n={chapterN('gallery')} label="From the practice" />
             <h3 className="font-bebas-neue text-3xl md:text-5xl leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
               the kind of
               <br />
@@ -370,7 +394,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         <section className="px-5 md:px-10 pt-14 md:pt-28">
           <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8 md:gap-16">
             <div>
-              <ChapterLabel n={7} label="Questions" />
+              <ChapterLabel n={chapterN('questions')} label="Questions" />
               <h3 className="font-bebas-neue text-3xl md:text-5xl leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
                 before
                 <br />
@@ -421,7 +445,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         <div className="mx-auto max-w-7xl">
           <div className="bg-black text-white px-6 md:px-16 py-12 md:py-20 relative overflow-hidden">
             <div className="font-inter text-[10.5px] md:text-[11px] tracking-[0.3em] uppercase text-white/60 mb-3">
-              {hasGallery ? '08' : '07'} — Apply
+              {String(chapterN('apply')).padStart(2, '0')} — Apply
             </div>
             {workshop.apply_heading && (
               <h3 className="font-bebas-neue text-[52px] md:text-[80px] leading-[0.95] uppercase text-white m-0 mb-5 md:mb-6 font-normal tracking-[-0.015em] md:tracking-[-0.01em]">

@@ -82,9 +82,14 @@ function normalise(row: WorkshopRow): Workshop {
 
 export async function getPublicWorkshop(): Promise<Workshop | null> {
   const supabase = await createClient()
+  // Explicit visibility filter. RLS already hides the row for anon, but the
+  // cookie-backed server client picks up the admin's session on /workshop,
+  // and the "Admins can view all workshop" policy would otherwise expose
+  // hidden drafts to logged-in admins on the public route.
   const { data, error } = await supabase
     .from('workshop')
     .select('*')
+    .eq('is_visible', true)
     .limit(1)
     .maybeSingle()
   if (error || !data) return null
