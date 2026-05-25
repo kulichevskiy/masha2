@@ -5,20 +5,32 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { __resetRateLimitForTests } from '@/lib/rate-limit'
 
-const mockMaybeSingle = vi.fn(async () => ({
+const mockRecipientMaybeSingle = vi.fn(async () => ({
   data: { value: 'maria@example.com' },
+  error: null,
+}))
+const mockWorkshopMaybeSingle = vi.fn(async () => ({
+  data: { is_visible: true },
   error: null,
 }))
 const mockInsert = vi.fn(async () => ({ error: null }))
 
-// supabase admin client — chained query builder for `from('app_settings').select().eq().maybeSingle()`
+// supabase admin client — chained query builder. workshop reads use
+// `.select().limit().maybeSingle()`; app_settings uses `.select().eq().maybeSingle()`.
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({
     from: (table: string) => {
+      if (table === 'workshop') {
+        return {
+          select: () => ({
+            limit: () => ({ maybeSingle: mockWorkshopMaybeSingle }),
+          }),
+        }
+      }
       if (table === 'app_settings') {
         return {
           select: () => ({
-            eq: () => ({ maybeSingle: mockMaybeSingle }),
+            eq: () => ({ maybeSingle: mockRecipientMaybeSingle }),
           }),
         }
       }
@@ -55,7 +67,12 @@ function fd(fields: Record<string, string>): FormData {
 describe('submitWorkshopApplication validation', () => {
   beforeEach(() => {
     __resetRateLimitForTests()
-    mockMaybeSingle.mockClear()
+    mockRecipientMaybeSingle.mockClear()
+    mockWorkshopMaybeSingle.mockClear()
+    mockWorkshopMaybeSingle.mockResolvedValue({
+      data: { is_visible: true },
+      error: null,
+    })
     mockInsert.mockClear()
   })
 
@@ -96,6 +113,19 @@ describe('submitWorkshopApplication validation', () => {
       })
     )
     expect(result).toEqual({ ok: true })
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('rejects when the workshop is hidden (closes intake server-side)', async () => {
+    mockWorkshopMaybeSingle.mockResolvedValueOnce({
+      data: { is_visible: false },
+      error: null,
+    })
+    const submit = await loadAction()
+    const result = await submit(
+      fd({ name: 'Alex', email: 'alex@example.com' })
+    )
+    expect(result).toEqual({ ok: false, error: 'Applications are closed.' })
     expect(mockInsert).not.toHaveBeenCalled()
   })
 

@@ -570,6 +570,16 @@ function PhotoUploader({
     setFiles([])
   }, [successes, onUploaded, setFiles])
 
+  // When the parent clears the current photo (trash button), forget any names
+  // we have already processed. Otherwise re-uploading a file with the same
+  // filename would be a no-op — the upload hook re-emits the name into
+  // successes, but our processed-set would suppress it.
+  useEffect(() => {
+    if (!currentPath) {
+      processedRef.current.clear()
+    }
+  }, [currentPath])
+
   const currentUrl = publicUrl(supabaseUrl, currentPath)
 
   return (

@@ -76,6 +76,24 @@ export async function submitWorkshopApplication(
 
   const supabase = createAdminClient()
 
+  // Re-check the visibility gate server-side. The page/banner already disappear
+  // when is_visible flips false, but a stale browser tab can still POST this
+  // action. Without this check, applications would keep landing in the DB after
+  // intake is closed.
+  const { data: workshopRow, error: workshopErr } = await supabase
+    .from('workshop')
+    .select('is_visible')
+    .limit(1)
+    .maybeSingle()
+
+  if (workshopErr) {
+    console.error('workshop: failed to read visibility', workshopErr)
+    return { ok: false, error: 'Something went wrong on our side. Please try again later.' }
+  }
+  if (!workshopRow || !workshopRow.is_visible) {
+    return { ok: false, error: 'Applications are closed.' }
+  }
+
   const { data: recipientRow, error: recipientErr } = await supabase
     .from('app_settings')
     .select('value')
