@@ -591,44 +591,14 @@ function PhotoUploader({
   onClear: () => void
   supabaseUrl: string
 }) {
-  // Per-upload UUID prefix so two photos with the same filename (e.g. the
-  // ubiquitous `IMG_0001.jpg`) don't collide in the bucket. We refresh the
-  // prefix after each successful upload so subsequent uploads from the same
-  // component get their own keyspace too. upsert stays off — with the unique
-  // prefix there's nothing legitimate to overwrite.
-  const [prefix, setPrefix] = useState<string>(() => newId())
-  const upload = useSupabaseUpload({
-    bucketName: 'photos',
-    path: `workshop/${prefix}`,
-    allowedMimeTypes: ['image/*'],
-    maxFileSize: 10 * 1024 * 1024,
-    maxFiles: 1,
-    upsert: false,
-  })
-
-  // When upload finishes, push the storage path back up. Mirrors the
-  // processed-set pattern in PhotoUploadDropzone so we don't loop.
-  const { successes, setFiles } = upload
-  const processedRef = useRef<Set<string>>(new Set())
-  useEffect(() => {
-    const fresh = successes.find((name) => !processedRef.current.has(name))
-    if (!fresh) return
-    processedRef.current.add(fresh)
-    onUploaded(`workshop/${prefix}/${fresh}`)
-    setFiles([])
-    setPrefix(newId())
-  }, [successes, onUploaded, setFiles, prefix])
-
-  // When the parent clears the current photo (trash button), forget any names
-  // we have already processed. Otherwise re-uploading a file with the same
-  // filename would be a no-op — the upload hook re-emits the name into
-  // successes, but our processed-set would suppress it.
-  useEffect(() => {
-    if (!currentPath) {
-      processedRef.current.clear()
-    }
-  }, [currentPath])
-
+  // Each upload runs inside a fresh UploadSession instance keyed by sessionId.
+  // After a successful upload we bump sessionId so the inner component
+  // unmounts and remounts — the supabase upload hook re-initialises with
+  // empty `successes` / `files`, which avoids `isSuccess` flipping to true the
+  // moment the user drops a second file (and hiding the upload controls).
+  // The per-session id doubles as the storage key prefix so filenames that
+  // collide across sessions (e.g. `IMG_0001.jpg`) don't overwrite each other.
+  const [sessionId, setSessionId] = useState<string>(() => newId())
   const currentUrl = publicUrl(supabaseUrl, currentPath)
 
   return (
@@ -655,11 +625,48 @@ function PhotoUploader({
           </Button>
         </div>
       )}
-      <Dropzone {...upload}>
-        <DropzoneEmptyState />
-        <DropzoneContent />
-      </Dropzone>
+      <UploadSession
+        key={sessionId}
+        prefix={sessionId}
+        onUploaded={(path) => {
+          onUploaded(path)
+          setSessionId(newId())
+        }}
+      />
     </div>
+  )
+}
+
+function UploadSession({
+  prefix,
+  onUploaded,
+}: {
+  prefix: string
+  onUploaded: (storagePath: string) => void
+}) {
+  const upload = useSupabaseUpload({
+    bucketName: 'photos',
+    path: `workshop/${prefix}`,
+    allowedMimeTypes: ['image/*'],
+    maxFileSize: 10 * 1024 * 1024,
+    maxFiles: 1,
+    upsert: false,
+  })
+
+  const { successes } = upload
+  const firedRef = useRef(false)
+  useEffect(() => {
+    if (firedRef.current) return
+    if (successes.length === 0) return
+    firedRef.current = true
+    onUploaded(`workshop/${prefix}/${successes[0]}`)
+  }, [successes, prefix, onUploaded])
+
+  return (
+    <Dropzone {...upload}>
+      <DropzoneEmptyState />
+      <DropzoneContent />
+    </Dropzone>
   )
 }
 
