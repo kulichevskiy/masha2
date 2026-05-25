@@ -5,10 +5,11 @@ import { PhotoUploadDropzone } from './components/photo-upload-dropzone'
 import { LogoutButton } from '@/components/logout-button'
 import { AdminTabs, type AdminTab } from './components/admin-tabs'
 import { TiersTable } from './components/tiers-table'
+import { FaqTable } from './components/faq-table'
 import { RequestsTable, type BookingRequestRow } from './components/requests-table'
 import { SettingsForm } from './components/settings-form'
 
-const VALID_TABS: AdminTab[] = ['photos', 'tiers', 'requests', 'settings']
+const VALID_TABS: AdminTab[] = ['photos', 'tiers', 'faq', 'requests', 'settings']
 
 type Props = {
   searchParams: Promise<{ tab?: string }>
@@ -48,6 +49,7 @@ export default async function AdminPage({ searchParams }: Props) {
 
       {tab === 'photos' && <PhotosTab />}
       {tab === 'tiers' && <TiersTab />}
+      {tab === 'faq' && <FaqTab />}
       {tab === 'requests' && <RequestsTab />}
       {tab === 'settings' && <SettingsTab />}
     </div>
@@ -93,6 +95,20 @@ async function TiersTab() {
   }
 
   return <TiersTable tiers={tiers ?? []} />
+}
+
+async function FaqTab() {
+  const supabase = await createClient()
+  const { data: entries, error } = await supabase
+    .from('booking_faq')
+    .select('*')
+    .order('position', { ascending: true })
+
+  if (error) {
+    throw new Error(`Failed to fetch faq entries: ${error.message}`)
+  }
+
+  return <FaqTable entries={entries ?? []} />
 }
 
 async function RequestsTab() {

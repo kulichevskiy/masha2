@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_faq: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          is_visible: boolean
+          position: number
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          position?: number
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          position?: number
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       booking_requests: {
         Row: {
           created_at: string
@@ -295,3 +325,9 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

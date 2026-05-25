@@ -1,10 +1,11 @@
 import Link from 'next/link'
 
-export type AdminTab = 'photos' | 'tiers' | 'requests' | 'settings'
+export type AdminTab = 'photos' | 'tiers' | 'faq' | 'requests' | 'settings'
 
 const TABS: { id: AdminTab, label: string }[] = [
   { id: 'photos', label: 'Фото' },
   { id: 'tiers', label: 'Тарифы' },
+  { id: 'faq', label: 'Вопросы' },
   { id: 'requests', label: 'Заявки' },
   { id: 'settings', label: 'Настройки' },
 ]
