@@ -72,7 +72,11 @@ export function BookingFaq({ entries }: { entries: FaqEntry[] }) {
 
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // escape `<` as < so an admin-authored answer containing
+        // `</script>` cannot terminate this block and inject markup.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
       />
     </section>
   )
