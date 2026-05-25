@@ -591,13 +591,19 @@ function PhotoUploader({
   onClear: () => void
   supabaseUrl: string
 }) {
+  // Per-upload UUID prefix so two photos with the same filename (e.g. the
+  // ubiquitous `IMG_0001.jpg`) don't collide in the bucket. We refresh the
+  // prefix after each successful upload so subsequent uploads from the same
+  // component get their own keyspace too. upsert stays off — with the unique
+  // prefix there's nothing legitimate to overwrite.
+  const [prefix, setPrefix] = useState<string>(() => newId())
   const upload = useSupabaseUpload({
     bucketName: 'photos',
-    path: 'workshop',
+    path: `workshop/${prefix}`,
     allowedMimeTypes: ['image/*'],
     maxFileSize: 10 * 1024 * 1024,
     maxFiles: 1,
-    upsert: true,
+    upsert: false,
   })
 
   // When upload finishes, push the storage path back up. Mirrors the
@@ -608,9 +614,10 @@ function PhotoUploader({
     const fresh = successes.find((name) => !processedRef.current.has(name))
     if (!fresh) return
     processedRef.current.add(fresh)
-    onUploaded(`workshop/${fresh}`)
+    onUploaded(`workshop/${prefix}/${fresh}`)
     setFiles([])
-  }, [successes, onUploaded, setFiles])
+    setPrefix(newId())
+  }, [successes, onUploaded, setFiles, prefix])
 
   // When the parent clears the current photo (trash button), forget any names
   // we have already processed. Otherwise re-uploading a file with the same

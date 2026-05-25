@@ -25,6 +25,16 @@ export default async function AdminPage({ searchParams }: Props) {
     redirect('/auth/login')
   }
 
+  // Defense-in-depth admin gate. Other tabs are RLS-protected by their
+  // user-scoped queries, but the workshop tab reads via the service role to
+  // see hidden draft content — so a signed-in non-admin reaching this page
+  // would otherwise see admin-only data. Require is_admin() up front and
+  // redirect non-admins to the public home.
+  const { data: isAdmin } = await supabase.rpc('is_admin')
+  if (!isAdmin) {
+    redirect('/')
+  }
+
   const params = await searchParams
   const tab: AdminTab = VALID_TABS.includes(params.tab as AdminTab)
     ? (params.tab as AdminTab)
