@@ -27,6 +27,22 @@ export type FaqItem = {
   answer: string
 }
 
+// Two fixed pricing tiers shown on /workshop, ordered `short` then `full`.
+// `key` is a fixed slot identity (not user-editable); `featured` marks the
+// black anchor card (Full = true).
+export type Tariff = {
+  key: 'short' | 'full'
+  name: string
+  days: string
+  price: string
+  summary: string
+  desc: string
+  days_list: string[]
+  extras: string[]
+  note: string
+  featured: boolean
+}
+
 export type Workshop = {
   id: string
   is_visible: boolean
@@ -47,6 +63,7 @@ export type Workshop = {
   schedule: ScheduleRow[]
   includes: string[]
   bring: string[]
+  tariffs: Tariff[]
   gallery: GalleryItem[]
   faq: FaqItem[]
 }
@@ -75,6 +92,7 @@ function normalise(row: WorkshopRow): Workshop {
     schedule: (row.schedule as ScheduleRow[] | null) ?? [],
     includes: (row.includes as string[] | null) ?? [],
     bring: (row.bring as string[] | null) ?? [],
+    tariffs: (row.tariffs as Tariff[] | null) ?? [],
     gallery: (row.gallery as GalleryItem[] | null) ?? [],
     faq: (row.faq as FaqItem[] | null) ?? [],
   }

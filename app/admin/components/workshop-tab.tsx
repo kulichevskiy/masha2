@@ -17,6 +17,7 @@ import type {
   ScheduleRow,
   GalleryItem,
   FaqItem,
+  Tariff,
 } from '@/app/workshop/data'
 
 // Workshop admin editor. The whole record is a single client form: edits live
@@ -115,6 +116,7 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
           schedule: state.schedule,
           includes: state.includes,
           bring: state.bring,
+          tariffs: state.tariffs,
           gallery: state.gallery.map(stripId),
           faq: state.faq.map(stripId),
         })
@@ -332,6 +334,23 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
         />
       </Section>
 
+      {/* Tariffs — two fixed tiers (short then full), no add/remove */}
+      <Section title="Тарифы">
+        {state.tariffs.map((t, i) => (
+          <TariffEditor
+            key={t.key}
+            tariff={t}
+            onPatch={(patch) =>
+              save({
+                tariffs: state.tariffs.map((cur, j) =>
+                  j === i ? { ...cur, ...patch } : cur
+                ),
+              })
+            }
+          />
+        ))}
+      </Section>
+
       {/* Gallery */}
       <Section title="06 — Галерея">
         <ListEditor
@@ -445,6 +464,75 @@ function Field({
       ) : (
         <Input value={value} onChange={(e) => onChange(e.target.value)} />
       )}
+    </div>
+  )
+}
+
+// Editor for a single fixed tariff tier. `key` is the slot identity and is not
+// editable. Mirrors the public Tariff shape: Field for the text fields, a
+// StringListEditor each for the program days and extras, a featured checkbox.
+function TariffEditor({
+  tariff,
+  onPatch,
+}: {
+  tariff: Tariff
+  onPatch: (patch: Partial<Tariff>) => void
+}) {
+  return (
+    <div className="border border-border rounded-md p-4 flex flex-col gap-4">
+      <h3 className="text-sm font-medium text-muted-foreground">
+        {tariff.key === 'full' ? 'Полный интейк' : 'Короткий интейк'}
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Field label="Название" value={tariff.name} onChange={(v) => onPatch({ name: v })} />
+        <Field label="Дни" value={tariff.days} onChange={(v) => onPatch({ days: v })} />
+        <Field label="Цена" value={tariff.price} onChange={(v) => onPatch({ price: v })} />
+      </div>
+      <Field
+        label="Кратко (italic)"
+        value={tariff.summary}
+        onChange={(v) => onPatch({ summary: v })}
+        multiline
+      />
+      <Field
+        label="Описание"
+        value={tariff.desc}
+        onChange={(v) => onPatch({ desc: v })}
+        multiline
+      />
+      <div className="flex flex-col gap-1.5">
+        <Label>Дни программы</Label>
+        <StringListEditor
+          items={tariff.days_list}
+          onChange={(days_list) => onPatch({ days_list })}
+          placeholder="Day 01 — Seeing"
+          addLabel="Добавить день"
+        />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label>Дополнительно</Label>
+        <StringListEditor
+          items={tariff.extras}
+          onChange={(extras) => onPatch({ extras })}
+          placeholder="Один пункт"
+          addLabel="Добавить пункт"
+        />
+      </div>
+      <Field
+        label="Примечание (italic)"
+        value={tariff.note}
+        onChange={(v) => onPatch({ note: v })}
+        multiline
+      />
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <input
+          type="checkbox"
+          checked={tariff.featured}
+          onChange={(e) => onPatch({ featured: e.target.checked })}
+          className="h-4 w-4"
+        />
+        Выделенный тариф (чёрная карточка)
+      </label>
     </div>
   )
 }

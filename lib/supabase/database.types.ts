@@ -210,6 +210,7 @@ export type Database = {
           schedule: Json
           seats: string | null
           tagline: string | null
+          tariffs: Json
           the_idea_heading: string | null
           the_idea_quote: string | null
           title: string | null
@@ -235,6 +236,7 @@ export type Database = {
           schedule?: Json
           seats?: string | null
           tagline?: string | null
+          tariffs?: Json
           the_idea_heading?: string | null
           the_idea_quote?: string | null
           title?: string | null
@@ -260,6 +262,7 @@ export type Database = {
           schedule?: Json
           seats?: string | null
           tagline?: string | null
+          tariffs?: Json
           the_idea_heading?: string | null
           the_idea_quote?: string | null
           title?: string | null
