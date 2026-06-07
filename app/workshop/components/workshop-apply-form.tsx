@@ -2,12 +2,19 @@
 
 import { useState, useTransition } from 'react'
 import { submitWorkshopApplication } from '../actions'
+import { useIntake } from './intake-context'
+import type { Tariff } from '../data'
 
 // Mirrors the booking form's status state machine but in dark-plate styling
 // for the apply section. White-on-black inputs with a hairline underline,
 // labels in Inter 11px / 0.25em tracking / uppercase.
+//
+// Reads the shared intake selection: it posts the chosen key as a hidden
+// `intake` field (the server resolves it to a label snapshot) and its submit
+// label reflects the choice, e.g. "Apply for the three-day intake".
 
-export function WorkshopApplyForm() {
+export function WorkshopApplyForm({ tariffs }: { tariffs: Tariff[] }) {
+  const { intake } = useIntake()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [instagram, setInstagram] = useState('')
@@ -64,6 +71,20 @@ export function WorkshopApplyForm() {
     )
   }
 
+  // Submit label reflects the chosen intake, derived from its tariff's `days`
+  // ("Three days" → "three-day"). Falls back to a neutral label when the
+  // tariff can't be resolved (e.g. no tariffs configured).
+  const selectedTariff = tariffs.find((t) => t.key === intake)
+  let submitLabel = 'Apply to join'
+  if (!isPending && selectedTariff) {
+    const days = selectedTariff.days
+      .trim()
+      .toLowerCase()
+      .replace(/s$/, '')
+      .replace(/\s+/g, '-')
+    if (days) submitLabel = `Apply for the ${days} intake`
+  }
+
   const labelCls =
     'block font-inter text-[11px] tracking-[0.25em] uppercase text-white/55 mb-1'
   const fieldCls =
@@ -80,6 +101,9 @@ export function WorkshopApplyForm() {
         aria-hidden="true"
         className="hidden"
       />
+
+      {/* Selected intake key — resolved to a label snapshot server-side. */}
+      <input type="hidden" name="intake" value={intake} />
 
       <label htmlFor="workshop-name" className={labelCls}>
         Your name
@@ -142,7 +166,7 @@ export function WorkshopApplyForm() {
           disabled={isPending}
           className="inline-block bg-white text-black px-14 py-4 font-bebas-neue text-xl tracking-[0.12em] uppercase hover:bg-white/90 transition-colors disabled:opacity-60"
         >
-          {isPending ? 'Sending…' : 'Apply to join'}
+          {isPending ? 'Sending…' : submitLabel}
         </button>
       </div>
 

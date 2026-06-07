@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRate } from '@/lib/rate-limit'
 import type { TablesUpdate } from '@/lib/supabase/database.types'
+import type { Tariff } from './data'
 
 export type WorkshopSubmitResult =
   | { ok: true }
@@ -82,7 +83,7 @@ export async function submitWorkshopApplication(
   // intake is closed.
   const { data: workshopRow, error: workshopErr } = await supabase
     .from('workshop')
-    .select('is_visible')
+    .select('is_visible, tariffs')
     .limit(1)
     .maybeSingle()
 
@@ -92,6 +93,19 @@ export async function submitWorkshopApplication(
   }
   if (!workshopRow || !workshopRow.is_visible) {
     return { ok: false, error: 'Applications are closed.' }
+  }
+
+  // Resolve the chosen intake. The posted value is a public-form input, so we
+  // only trust the two known keys and resolve the *label* server-side from the
+  // current tariffs — never store a client-provided free-text label. An
+  // invalid/missing key (or a key with no matching tariff) leaves intake null
+  // and the application is still accepted.
+  const intakeKey = (formData.get('intake') ?? '').toString().trim()
+  let intake: string | null = null
+  if (intakeKey === 'short' || intakeKey === 'full') {
+    const tariffs = (workshopRow.tariffs as Tariff[] | null) ?? []
+    const tariff = tariffs.find((t) => t.key === intakeKey)
+    if (tariff) intake = `${tariff.name} — ${tariff.price}`
   }
 
   const { data: recipientRow, error: recipientErr } = await supabase
@@ -115,6 +129,7 @@ export async function submitWorkshopApplication(
     email,
     instagram: instagram.length > 0 ? instagram : null,
     message: message.length > 0 ? message : null,
+    intake,
     ip_hash: ipHash,
     user_agent: userAgent,
   })
@@ -144,6 +159,7 @@ export async function submitWorkshopApplication(
     `Name: ${name}`,
     `Email: ${email}`,
     `Instagram: ${instagram.length > 0 ? instagram : '(none)'}`,
+    `Intake: ${intake ?? '(not specified)'}`,
     '',
     'Message:',
     message.length > 0 ? message : '(no message)',

@@ -4,10 +4,12 @@
 // as a numbered chapter. Full is the black/featured anchor card. Desktop:
 // side-by-side with a hairline divider between the cards; mobile: stacked with
 // a top hairline on each card after the first. Section intro + labels are
-// hardcoded, consistent with the page's other headings. In this slice the
-// Apply buttons are plain `#apply` anchors — shared intake state arrives later.
+// hardcoded, consistent with the page's other headings. Each card's Apply
+// button selects that intake (shared via IntakeProvider) and scrolls to the
+// `#apply` band; the selected card reflects its state inline.
 
 import type { Tariff } from '../data'
+import { useIntake } from './intake-context'
 
 export function TariffsBand({ n, tariffs }: { n: number; tariffs: Tariff[] }) {
   return (
@@ -45,6 +47,8 @@ export function TariffsBand({ n, tariffs }: { n: number; tariffs: Tariff[] }) {
 }
 
 function TariffCard({ tariff, first }: { tariff: Tariff; first: boolean }) {
+  const { intake, setIntake } = useIntake()
+  const selected = intake === tariff.key
   const featured = tariff.featured
   // Stacked on mobile → top hairline on every card after the first. Side-by-side
   // on desktop → left hairline divider between the two cards (drop the mobile
@@ -149,6 +153,8 @@ function TariffCard({ tariff, first }: { tariff: Tariff; first: boolean }) {
 
       <a
         href="#apply"
+        aria-current={selected ? 'true' : undefined}
+        onClick={() => setIntake(tariff.key)}
         className={
           'mt-auto inline-block text-center px-8 py-3.5 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase transition-colors ' +
           (featured
@@ -156,7 +162,7 @@ function TariffCard({ tariff, first }: { tariff: Tariff; first: boolean }) {
             : 'bg-black text-white hover:bg-black/90')
         }
       >
-        Apply →
+        {selected ? 'Selected — complete below ↓' : 'Apply →'}
       </a>
     </div>
   )

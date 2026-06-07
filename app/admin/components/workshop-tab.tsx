@@ -30,6 +30,7 @@ type Application = {
   email: string
   instagram: string | null
   message: string | null
+  intake: string | null
   created_at: string
 }
 
@@ -780,6 +781,7 @@ function ApplicationsTable({ applications }: { applications: Application[] }) {
             <th className="py-2 pr-3 font-medium">Дата</th>
             <th className="py-2 pr-3 font-medium">Имя</th>
             <th className="py-2 pr-3 font-medium">Email</th>
+            <th className="py-2 pr-3 font-medium hidden md:table-cell">Тариф</th>
             <th className="py-2 pr-3 font-medium hidden md:table-cell">Instagram</th>
             <th className="py-2 pr-3 font-medium hidden lg:table-cell">Сообщение</th>
             <th className="py-2 pr-3 font-medium" />
@@ -800,6 +802,7 @@ function ApplicationsTable({ applications }: { applications: Application[] }) {
                   {a.email}
                 </a>
               </td>
+              <td className="py-2 pr-3 hidden md:table-cell whitespace-nowrap">{a.intake ?? '—'}</td>
               <td className="py-2 pr-3 hidden md:table-cell">{a.instagram ?? '—'}</td>
               <td className="py-2 pr-3 hidden lg:table-cell max-w-md whitespace-pre-wrap">
                 {a.message ?? '—'}

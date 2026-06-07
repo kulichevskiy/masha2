@@ -4,8 +4,9 @@
 // pass a synthetic workshop in without standing up a client.
 
 import { RichText } from '@/components/rich-text'
-import { WorkshopApplyForm } from './workshop-apply-form'
 import { TariffsBand } from './tariffs-band'
+import { ApplyBand } from './apply-band'
+import { IntakeProvider } from './intake-context'
 import type { Workshop } from '../data'
 
 type Props = {
@@ -114,6 +115,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
   }
 
   return (
+    <IntakeProvider>
     <div className="bg-white text-gray-700 font-inter">
       {/* ───────── Hero — full-bleed black plate ───────── */}
       <section className="relative bg-black text-white overflow-hidden mt-6 md:mt-10">
@@ -449,64 +451,10 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         </section>
       )}
 
-      {/* ───────── Apply — black plate ───────── */}
-      <section id="apply" className="px-0 md:px-10 pt-16 md:pt-28 scroll-mt-12">
-        <div className="mx-auto max-w-7xl">
-          <div className="bg-black text-white px-6 md:px-16 py-12 md:py-20 relative overflow-hidden">
-            <div className="font-inter text-[10.5px] md:text-[11px] tracking-[0.3em] uppercase text-white/60 mb-3">
-              {String(chapterN('apply')).padStart(2, '0')} — Apply
-            </div>
-            {workshop.apply_heading && (
-              <h3 className="font-bebas-neue text-[52px] md:text-[80px] leading-[0.95] uppercase text-white m-0 mb-5 md:mb-6 font-normal tracking-[-0.015em] md:tracking-[-0.01em]">
-                {workshop.apply_heading}
-              </h3>
-            )}
-            {workshop.apply_intro && (
-              <RichText
-                html={workshop.apply_intro}
-                className="text-[14.5px] md:text-[17px] leading-[1.7] max-w-[560px] text-white/85 mb-8 md:mb-12 [&_p]:text-white/85"
-              />
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 md:max-w-[880px]">
-              <WorkshopApplyForm />
-              <div className="md:order-none order-first md:mt-0 mt-2 md:pt-0 pt-6 md:border-0 border-t border-white/15">
-                <ApplyMetaGrid workshop={workshop} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ───────── Apply — black plate (picker + form + meta) ───────── */}
+      <ApplyBand n={chapterN('apply')} workshop={workshop} />
 
     </div>
-  )
-}
-
-function ApplyMetaGrid({ workshop }: { workshop: Workshop }) {
-  // Mobile: 2-col tight grid (matches MWorkshopC). Desktop: stacked rows.
-  const items: { label: string; value: string }[] = []
-  if (workshop.dates) items.push({ label: 'When', value: workshop.dates })
-  if (workshop.location) items.push({ label: 'Where', value: workshop.location })
-  if (workshop.seats) items.push({ label: 'Group', value: workshop.seats })
-  if (workshop.price) items.push({ label: 'Price', value: workshop.price })
-
-  return (
-    <dl className="grid grid-cols-2 md:grid-cols-1 gap-x-4 gap-y-5 md:gap-y-0">
-      {items.map((it, i) => (
-        <div
-          key={it.label}
-          className={
-            'md:pb-5 md:mb-5 ' +
-            (i < items.length - 1 ? 'md:border-b md:border-white/15' : '')
-          }
-        >
-          <dt className="font-inter text-[10px] md:text-[11px] tracking-[0.25em] uppercase text-white/55 mb-1.5">
-            {it.label}
-          </dt>
-          <dd className="font-bebas-neue text-[22px] md:text-[28px] text-white tracking-[0.02em]">
-            {it.value}
-          </dd>
-        </div>
-      ))}
-    </dl>
+    </IntakeProvider>
   )
 }

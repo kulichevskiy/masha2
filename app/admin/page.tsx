@@ -123,7 +123,7 @@ async function WorkshopTabSection() {
 
   const { data: applications, error } = await supabase
     .from('workshop_applications')
-    .select('id, name, email, instagram, message, created_at')
+    .select('id, name, email, instagram, message, intake, created_at')
     .order('created_at', { ascending: false })
     .limit(200)
 
