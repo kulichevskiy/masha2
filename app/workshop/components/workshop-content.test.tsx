@@ -44,6 +44,32 @@ const SAMPLE: Workshop = {
   ],
   includes: ['Three days', 'Two models'],
   bring: ['A camera'],
+  tariffs: [
+    {
+      key: 'short',
+      name: 'Short intake',
+      days: 'Two days',
+      price: '450 €',
+      summary: 'Two days inside the frame.',
+      desc: 'Seeing and making, with two models and evening review.',
+      days_list: ['Day 01 — Seeing', 'Day 02 — Making'],
+      extras: ['Studio + locations in Mitte', 'Lunch and coffee both days'],
+      note: 'Best if you have shot before.',
+      featured: false,
+    },
+    {
+      key: 'full',
+      name: 'Full intake',
+      days: 'Three days',
+      price: '600 €',
+      summary: 'The full arc, to the long edit.',
+      desc: 'Everything in the short intake plus the third day.',
+      days_list: ['Day 01 — Seeing', 'Day 02 — Making', 'Day 03 — Editing'],
+      extras: ['Personal portfolio review', 'Printed take-home zine'],
+      note: 'The complete experience.',
+      featured: true,
+    },
+  ],
   gallery: [],
   faq: [
     { question: 'What language?', answer: '<p>English.</p>' },
@@ -71,6 +97,13 @@ describe('<WorkshopContent />', () => {
       expect(text).toContain(item.question)
     }
 
+    // Both tariff tiers reach the DOM: name, price and days for each.
+    for (const tier of SAMPLE.tariffs) {
+      expect(text).toContain(tier.name)
+      expect(text).toContain(tier.price)
+      expect(text).toContain(tier.days)
+    }
+
     expect(text).toContain('Six seats. One of them is yours?')
     // apply form stub is mounted.
     expect(container.querySelector('[data-testid="apply-form-stub"]')).not.toBeNull()
@@ -94,11 +127,11 @@ describe('<WorkshopContent />', () => {
     )
     const text = container.textContent ?? ''
     expect(text).not.toContain('the kind of')
-    // Questions slides to 06 and Apply to 07 — no gap, no duplicate numbers.
-    // ChapterLabel renders the number and label as separate spans, so they
-    // come out adjacent in textContent without a separator.
-    expect(text).toContain('06Questions')
-    expect(text).toContain('07 — Apply')
+    // Tariffs sits at 06 (after Bring), so Questions slides to 07 and Apply to
+    // 08 — no gap, no duplicate numbers. ChapterLabel renders the number and
+    // label as separate spans, so they come out adjacent in textContent.
+    expect(text).toContain('07Questions')
+    expect(text).toContain('08 — Apply')
   })
 
   it('omits the Questions chapter when the FAQ list is empty', () => {
@@ -109,12 +142,12 @@ describe('<WorkshopContent />', () => {
     const text = container.textContent ?? ''
     // No questions chapter visible — neither inline label nor strip entry.
     expect(text).not.toMatch(/Questions/i)
-    // Apply slides up to 06 since gallery is also absent here.
-    expect(text).toContain('06 — Apply')
+    // Apply slides up to 07 (Tariffs at 06) since gallery is also absent here.
+    expect(text).toContain('07 — Apply')
   })
 
   it('renders the desktop chapter strip as a uniform single-row table of contents', () => {
-    // Gallery path + FAQ yields the full set of 8 chapters.
+    // Gallery path + FAQ + tariffs yields the full set of 9 chapters.
     const workshop: Workshop = {
       ...SAMPLE,
       gallery: [{ photo_path: 'workshop/p1.jpg' }],
@@ -139,7 +172,7 @@ describe('<WorkshopContent />', () => {
     expect(row.className).toContain('justify-between')
 
     const items = Array.from(row.children) as HTMLElement[]
-    expect(items.length).toBe(8)
+    expect(items.length).toBe(9)
     for (const item of items) {
       // Each label stays on one line, no mid-word wrapping.
       expect(item.className).toContain('whitespace-nowrap')
@@ -168,8 +201,8 @@ describe('<WorkshopContent />', () => {
     )
     const text = container.textContent ?? ''
     expect(text).toContain('the kind of')
-    // Questions is 07, Apply bumps to 08 when the gallery sits at 06.
-    expect(text).toContain('07Questions')
-    expect(text).toContain('08 — Apply')
+    // Tariffs at 06, gallery at 07, so Questions is 08 and Apply bumps to 09.
+    expect(text).toContain('08Questions')
+    expect(text).toContain('09 — Apply')
   })
 })

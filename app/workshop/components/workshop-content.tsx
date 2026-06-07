@@ -5,6 +5,7 @@
 
 import { RichText } from '@/components/rich-text'
 import { WorkshopApplyForm } from './workshop-apply-form'
+import { TariffsBand } from './tariffs-band'
 import type { Workshop } from '../data'
 
 type Props = {
@@ -23,11 +24,13 @@ type ChapterKey =
   | 'day'
   | 'included'
   | 'bring'
+  | 'tariffs'
   | 'gallery'
   | 'questions'
   | 'apply'
 
 function buildChapters(
+  hasTariffs: boolean,
   hasGallery: boolean,
   hasFaq: boolean
 ): { key: ChapterKey; label: string }[] {
@@ -38,6 +41,7 @@ function buildChapters(
     { key: 'included', label: 'Included' },
     { key: 'bring', label: 'Bring' },
   ]
+  if (hasTariffs) base.push({ key: 'tariffs', label: 'Intakes' })
   if (hasGallery) base.push({ key: 'gallery', label: 'From the practice' })
   if (hasFaq) base.push({ key: 'questions', label: 'Questions' })
   base.push({ key: 'apply', label: 'Apply' })
@@ -89,7 +93,8 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
   )
   const hasGallery = galleryItems.length > 0
   const hasFaq = workshop.faq.length > 0
-  const chapters = buildChapters(hasGallery, hasFaq)
+  const hasTariffs = workshop.tariffs.length > 0
+  const chapters = buildChapters(hasTariffs, hasGallery, hasFaq)
   const chapterN = (key: ChapterKey): number => {
     const i = chapters.findIndex((c) => c.key === key)
     return i + 1 // 1-based; missing keys fall through to 0 → never used
@@ -353,7 +358,12 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         </div>
       </section>
 
-      {/* ───────── 06 — Gallery ───────── */}
+      {/* ───────── Tariffs / Intakes band ───────── */}
+      {hasTariffs && (
+        <TariffsBand n={chapterN('tariffs')} tariffs={workshop.tariffs} />
+      )}
+
+      {/* ───────── Gallery ───────── */}
       {hasGallery && (
         <section className="pt-14 md:pt-28">
           <div className="mx-auto max-w-7xl px-5 md:px-10 mb-5 md:mb-8">
