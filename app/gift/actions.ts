@@ -1,10 +1,13 @@
 'use server'
 
 import { headers } from 'next/headers'
+import { revalidatePath } from 'next/cache'
 import { createHash } from 'node:crypto'
 import { Resend } from 'resend'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRate } from '@/lib/rate-limit'
+import type { TablesUpdate } from '@/lib/supabase/database.types'
 import type { Amount } from './data'
 
 export type GiftSubmitResult =
@@ -129,4 +132,63 @@ export async function submitGiftOrder(
   }
 
   return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// Admin actions — all gated by requireAdmin()
+// ---------------------------------------------------------------------------
+
+type ServerSupabase = Awaited<ReturnType<typeof createClient>>
+
+async function requireAdmin(supabase: ServerSupabase) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+  const { data: isAdmin, error } = await supabase.rpc('is_admin')
+  if (error || !isAdmin) throw new Error('Forbidden')
+}
+
+export async function updateGiftCertificate(
+  patch: TablesUpdate<'gift_certificate'>
+): Promise<void> {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  // Fetch the single row's id; we never insert from the admin UI.
+  const { data: row, error: fetchErr } = await supabase
+    .from('gift_certificate')
+    .select('id')
+    .limit(1)
+    .maybeSingle()
+  if (fetchErr || !row) {
+    throw new Error('Gift certificate row not found')
+  }
+
+  const { error } = await supabase
+    .from('gift_certificate')
+    .update(patch)
+    .eq('id', row.id)
+
+  if (error) {
+    throw new Error(`Failed to update gift certificate: ${error.message}`)
+  }
+
+  revalidatePath('/')
+  revalidatePath('/gift')
+  revalidatePath('/admin')
+}
+
+export async function deleteGiftCertificateRequest(id: string): Promise<void> {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const { error } = await supabase
+    .from('gift_certificate_requests')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    throw new Error(`Failed to delete gift certificate request: ${error.message}`)
+  }
+
+  revalidatePath('/admin')
 }

@@ -5,6 +5,7 @@ export type AdminTab =
   | 'tiers'
   | 'faq'
   | 'workshop'
+  | 'gift'
   | 'requests'
   | 'settings'
 
@@ -13,6 +14,7 @@ const TABS: { id: AdminTab, label: string }[] = [
   { id: 'tiers', label: 'Тарифы' },
   { id: 'faq', label: 'Вопросы' },
   { id: 'workshop', label: 'Воркшоп' },
+  { id: 'gift', label: 'Сертификаты' },
   { id: 'requests', label: 'Заявки' },
   { id: 'settings', label: 'Настройки' },
 ]

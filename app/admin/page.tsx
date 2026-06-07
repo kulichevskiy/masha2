@@ -10,8 +10,10 @@ import { RequestsTable, type BookingRequestRow } from './components/requests-tab
 import { SettingsForm } from './components/settings-form'
 import { WorkshopTab } from './components/workshop-tab'
 import { getAdminWorkshop } from '@/app/workshop/data'
+import { GiftTab } from './components/gift-tab'
+import { getAdminGiftCertificate } from '@/app/gift/data'
 
-const VALID_TABS: AdminTab[] = ['photos', 'tiers', 'faq', 'workshop', 'requests', 'settings']
+const VALID_TABS: AdminTab[] = ['photos', 'tiers', 'faq', 'workshop', 'gift', 'requests', 'settings']
 
 type Props = {
   searchParams: Promise<{ tab?: string }>
@@ -63,6 +65,7 @@ export default async function AdminPage({ searchParams }: Props) {
       {tab === 'tiers' && <TiersTab />}
       {tab === 'faq' && <FaqTab />}
       {tab === 'workshop' && <WorkshopTabSection />}
+      {tab === 'gift' && <GiftTabSection />}
       {tab === 'requests' && <RequestsTab />}
       {tab === 'settings' && <SettingsTab />}
     </div>
@@ -137,6 +140,38 @@ async function WorkshopTabSection() {
     <WorkshopTab
       workshop={workshop}
       applications={applications ?? []}
+      supabaseUrl={supabaseUrl}
+    />
+  )
+}
+
+async function GiftTabSection() {
+  const supabase = await createClient()
+  const giftCertificate = await getAdminGiftCertificate()
+  if (!giftCertificate) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <p>Не найдена запись сертификата. Примените миграцию `create_gift_certificate`.</p>
+      </div>
+    )
+  }
+
+  const { data: orders, error } = await supabase
+    .from('gift_certificate_requests')
+    .select('id, email, amount, created_at')
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  if (error) {
+    throw new Error(`Failed to fetch gift certificate requests: ${error.message}`)
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+
+  return (
+    <GiftTab
+      giftCertificate={giftCertificate}
+      orders={orders ?? []}
       supabaseUrl={supabaseUrl}
     />
   )
