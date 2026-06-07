@@ -277,6 +277,7 @@ export type Database = {
           email: string
           id: string
           instagram: string | null
+          intake: string | null
           ip_hash: string | null
           message: string | null
           name: string
@@ -287,6 +288,7 @@ export type Database = {
           email: string
           id?: string
           instagram?: string | null
+          intake?: string | null
           ip_hash?: string | null
           message?: string | null
           name: string
@@ -297,6 +299,7 @@ export type Database = {
           email?: string
           id?: string
           instagram?: string | null
+          intake?: string | null
           ip_hash?: string | null
           message?: string | null
           name?: string
