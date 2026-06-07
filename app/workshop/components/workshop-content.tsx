@@ -96,6 +96,18 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
   const hasFaq = workshop.faq.length > 0
   const hasTariffs = workshop.tariffs.length > 0
   const chapters = buildChapters(hasTariffs, hasGallery, hasFaq)
+
+  // Hero price: surface both intake prices ("450 € / 600 €") pulled from the
+  // short and full/featured tariff rows. Falls back to the single legacy
+  // workshop.price when fewer than two tariffs exist.
+  const shortTariff = workshop.tariffs.find((t) => t.key === 'short')
+  const fullTariff =
+    workshop.tariffs.find((t) => t.featured) ??
+    workshop.tariffs.find((t) => t.key === 'full')
+  const heroPrice =
+    shortTariff && fullTariff
+      ? `${shortTariff.price} / ${fullTariff.price}`
+      : workshop.price
   const chapterN = (key: ChapterKey): number => {
     const i = chapters.findIndex((c) => c.key === key)
     return i + 1 // 1-based; missing keys fall through to 0 → never used
@@ -162,7 +174,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
           )}
 
           {/* Mobile-only meta row above the buttons (matches MWorkshopC). */}
-          {(workshop.dates || workshop.seats || workshop.price) && (
+          {(workshop.dates || workshop.seats || heroPrice) && (
             <div className="md:hidden mt-7 pt-5 border-t border-white/20 flex flex-wrap gap-3 font-inter text-[11px] tracking-[0.18em] uppercase text-white/70">
               {workshop.dates && <span>{workshop.dates}</span>}
               {workshop.seats && (
@@ -171,10 +183,10 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
                   <span>{workshop.seats}</span>
                 </>
               )}
-              {workshop.price && (
+              {heroPrice && (
                 <>
                   <span className="opacity-50">·</span>
-                  <span>{workshop.price}</span>
+                  <span>{heroPrice}</span>
                 </>
               )}
             </div>
@@ -187,11 +199,11 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
             >
               Apply →
             </a>
-            {(workshop.price || workshop.seats) && (
+            {(heroPrice || workshop.seats) && (
               <span className="bg-transparent text-white border border-white/50 px-0 md:px-10 py-3.5 md:py-4 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase text-center flex-1 md:flex-none md:inline-block">
                 <span className="md:hidden">Save</span>
                 <span className="hidden md:inline">
-                  {[workshop.price, workshop.seats].filter(Boolean).join(' · ')}
+                  {[heroPrice, workshop.seats].filter(Boolean).join(' · ')}
                 </span>
               </span>
             )}
