@@ -21,34 +21,53 @@ export function GiftContent({ giftCertificate, publicUrlFor }: Props) {
     (g) => g.photo_path && g.photo_path.trim() !== ''
   )
 
+  // First photo is the hero; the rest fill a 2-col square mosaic below it.
+  const [hero, ...mosaic] = galleryItems
+  // Odd leftover: with an odd mosaic count, the last tile spans both columns
+  // as a wide tile so there's no empty gap at the end of the grid.
+  const lastMosaicIndex = mosaic.length - 1
+  const hasWideTile = mosaic.length % 2 === 1
+
   return (
     <div className="bg-white text-gray-700 font-inter">
       <section className="px-5 md:px-10 pt-10 md:pt-20 pb-16 md:pb-28">
         <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 lg:gap-24 items-start">
           {/* ───────── Gallery (left on desktop, top on mobile) ───────── */}
           <div className="grid grid-cols-1 gap-1">
-            {galleryItems.length > 0 ? (
-              galleryItems.map((g, i) => {
-                const url = publicUrlFor(g.photo_path)
-                return (
-                  <div
-                    key={`${g.photo_path}-${i}`}
-                    className="aspect-[3/4] overflow-hidden bg-gray-200"
-                  >
-                    {url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={url}
-                        alt=""
-                        aria-hidden="true"
-                        className="w-full h-full object-cover block"
-                      />
-                    )}
+            {hero ? (
+              <>
+                {/* Hero = gallery[0], full column width. */}
+                <GalleryTile
+                  testid="gift-hero"
+                  url={publicUrlFor(hero.photo_path)}
+                  className="aspect-[3/4]"
+                />
+
+                {/* Mosaic = gallery[1..], 2-col square grid. */}
+                {mosaic.length > 0 && (
+                  <div data-testid="gift-mosaic" className="grid grid-cols-2 gap-1">
+                    {mosaic.map((g, i) => {
+                      const wide = hasWideTile && i === lastMosaicIndex
+                      return (
+                        <GalleryTile
+                          key={`${g.photo_path}-${i}`}
+                          testid="gift-mosaic-tile"
+                          url={publicUrlFor(g.photo_path)}
+                          className={
+                            wide ? 'col-span-2 aspect-[3/2]' : 'aspect-square'
+                          }
+                        />
+                      )
+                    })}
                   </div>
-                )
-              })
+                )}
+              </>
             ) : (
-              <div className="aspect-[3/4] bg-gray-200" aria-hidden="true" />
+              <div
+                data-testid="gift-placeholder"
+                className="aspect-[3/4] bg-gray-200"
+                aria-hidden="true"
+              />
             )}
           </div>
 
@@ -70,6 +89,35 @@ export function GiftContent({ giftCertificate, publicUrlFor }: Props) {
           </div>
         </div>
       </section>
+    </div>
+  )
+}
+
+// One decorative gallery tile. `className` carries the aspect ratio (and any
+// column span); the wrapper stays a hard rectangle with object-cover inside.
+function GalleryTile({
+  testid,
+  url,
+  className,
+}: {
+  testid: string
+  url: string | null
+  className: string
+}) {
+  return (
+    <div
+      data-testid={testid}
+      className={`${className} overflow-hidden bg-gray-200`}
+    >
+      {url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={url}
+          alt=""
+          aria-hidden="true"
+          className="w-full h-full object-cover block"
+        />
+      )}
     </div>
   )
 }
