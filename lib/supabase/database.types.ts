@@ -184,6 +184,33 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_certificate_requests: {
+        Row: {
+          amount: string | null
+          created_at: string
+          email: string
+          id: string
+          ip_hash: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          amount?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          amount?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           alt_text: string | null
