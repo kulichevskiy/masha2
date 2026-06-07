@@ -184,6 +184,30 @@ export function GiftTab({ giftCertificate, orders, supabaseUrl }: Props) {
               supabaseUrl={supabaseUrl}
             />
           )}
+          // The public /gift page renders the first photo as a large hero and
+          // the rest as a mosaic — surface that ordering intent in the editor.
+          badge={(i) =>
+            i === 0 ? (
+              <span
+                data-testid="gallery-hero-badge"
+                className="self-start text-[11px] uppercase tracking-wide text-muted-foreground border border-border rounded px-1.5 py-0.5"
+              >
+                Большое фото
+              </span>
+            ) : null
+          }
+          dividerBefore={(i, total) =>
+            i === 1 && total >= 2 ? (
+              <div
+                data-testid="gallery-mosaic-divider"
+                className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted-foreground/70"
+              >
+                <span className="h-px flex-1 bg-border" />
+                мозаика
+                <span className="h-px flex-1 bg-border" />
+              </div>
+            ) : null
+          }
           addLabel="Добавить фото"
         />
       </Section>
@@ -234,6 +258,11 @@ type ListEditorProps<T> = {
   empty: () => T
   render: (item: T, onPatch: (patch: Partial<T>) => void) => React.ReactNode
   addLabel: string
+  // Optional presentation-only chrome keyed off an item's position. `badge`
+  // renders inside the item container (e.g. a hero marker on the first item);
+  // `dividerBefore` renders above the container (e.g. a section divider).
+  badge?: (index: number, total: number) => React.ReactNode
+  dividerBefore?: (index: number, total: number) => React.ReactNode
 }
 
 function ListEditor<T extends object>({
@@ -242,6 +271,8 @@ function ListEditor<T extends object>({
   empty,
   render,
   addLabel,
+  badge,
+  dividerBefore,
 }: ListEditorProps<T>) {
   const move = (from: number, dir: -1 | 1) => {
     const to = from + dir
@@ -266,40 +297,43 @@ function ListEditor<T extends object>({
         // with init-only internal state keep their identity through reorders.
         const itemId = (item as { _id?: string })._id
         const key = itemId ?? i
+        const divider = dividerBefore?.(i, items.length)
+        const itemBadge = badge?.(i, items.length)
         return (
-          <div
-            key={key}
-            className="border border-border rounded-md p-3 flex flex-col gap-2"
-          >
-            {render(item, (p) => patch(i, p))}
-            <div className="flex justify-end gap-1.5 pt-2 border-t border-border/50">
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => move(i, -1)}
-                disabled={i === 0}
-              >
-                ↑
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => move(i, 1)}
-                disabled={i === items.length - 1}
-              >
-                ↓
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => remove(i)}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+          <div key={key} className="flex flex-col gap-3">
+            {divider}
+            <div className="border border-border rounded-md p-3 flex flex-col gap-2">
+              {itemBadge}
+              {render(item, (p) => patch(i, p))}
+              <div className="flex justify-end gap-1.5 pt-2 border-t border-border/50">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => move(i, -1)}
+                  disabled={i === 0}
+                >
+                  ↑
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => move(i, 1)}
+                  disabled={i === items.length - 1}
+                >
+                  ↓
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => remove(i)}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         )
