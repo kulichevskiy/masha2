@@ -109,6 +109,29 @@ describe('<WorkshopContent />', () => {
     expect(container.querySelector('[data-testid="apply-form-stub"]')).not.toBeNull()
   })
 
+  it('shows both intake prices in the hero, derived from the tariffs', () => {
+    const { container } = render(
+      <WorkshopContent workshop={SAMPLE} publicUrlFor={() => null} />
+    )
+    const text = container.textContent ?? ''
+    // Desktop pill: "<short> / <full> · <seats>".
+    expect(text).toContain('450 € / 600 € · 6 seats')
+    // Mobile meta row carries the dual price without the seats join.
+    expect(text).toContain('450 € / 600 €')
+    // The single hero price is no longer surfaced verbatim next to seats.
+    expect(text).not.toContain('850 € · 6 seats')
+  })
+
+  it('falls back to the single workshop.price when fewer than two tariffs exist', () => {
+    const workshop: Workshop = { ...SAMPLE, tariffs: [SAMPLE.tariffs[0]] }
+    const { container } = render(
+      <WorkshopContent workshop={workshop} publicUrlFor={() => null} />
+    )
+    const text = container.textContent ?? ''
+    expect(text).toContain('850 € · 6 seats')
+    expect(text).not.toContain('450 € / 600 €')
+  })
+
   it('hides the gallery section when no items', () => {
     const { container } = render(
       <WorkshopContent workshop={SAMPLE} publicUrlFor={() => null} />
