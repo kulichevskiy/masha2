@@ -4,6 +4,7 @@
 // into a typed GiftCertificate.
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type GiftCertificateRow = Tables<'gift_certificate'>
@@ -49,6 +50,19 @@ export async function getPublicGiftCertificate(): Promise<GiftCertificate | null
     .from('gift_certificate')
     .select('*')
     .eq('is_visible', true)
+    .limit(1)
+    .maybeSingle()
+  if (error || !data) return null
+  return normalise(data)
+}
+
+// Admin reader: service-role, always returns the singleton (including hidden
+// drafts) so the /admin editor can see unpublished content.
+export async function getAdminGiftCertificate(): Promise<GiftCertificate | null> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('gift_certificate')
+    .select('*')
     .limit(1)
     .maybeSingle()
   if (error || !data) return null
