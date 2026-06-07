@@ -57,3 +57,86 @@ describe('<GiftContent />', () => {
     expect(tiles[1].className).not.toContain('bg-black')
   })
 })
+
+// Helper: build a gift certificate with N gallery photos.
+function withGallery(paths: string[]): GiftCertificate {
+  return { ...SAMPLE, gallery: paths.map((p) => ({ photo_path: p })) }
+}
+
+describe('<GiftContent /> gallery', () => {
+  it('renders a single gray placeholder and no hero/mosaic when there are 0 photos', () => {
+    const { container } = render(
+      <GiftContent giftCertificate={withGallery([])} publicUrlFor={(p) => p ?? null} />
+    )
+    expect(container.querySelector('[data-testid="gift-hero"]')).toBeNull()
+    expect(container.querySelector('[data-testid="gift-mosaic"]')).toBeNull()
+    const placeholder = container.querySelector('[data-testid="gift-placeholder"]')
+    expect(placeholder).not.toBeNull()
+    expect(placeholder!.className).toContain('aspect-[3/4]')
+  })
+
+  it('renders only the hero (aspect-[3/4]) and no mosaic when there is 1 photo', () => {
+    const { container } = render(
+      <GiftContent giftCertificate={withGallery(['a.jpg'])} publicUrlFor={(p) => p ?? null} />
+    )
+    const hero = container.querySelector('[data-testid="gift-hero"]')
+    expect(hero).not.toBeNull()
+    expect(hero!.className).toContain('aspect-[3/4]')
+    expect(hero!.querySelector('img')).not.toBeNull()
+    expect(container.querySelector('[data-testid="gift-mosaic"]')).toBeNull()
+  })
+
+  it('renders the rest as a 2-col gap-1 mosaic of aspect-square tiles', () => {
+    const { container } = render(
+      <GiftContent
+        giftCertificate={withGallery(['a.jpg', 'b.jpg', 'c.jpg', 'd.jpg', 'e.jpg'])}
+        publicUrlFor={(p) => p ?? null}
+      />
+    )
+    const mosaic = container.querySelector('[data-testid="gift-mosaic"]')
+    expect(mosaic).not.toBeNull()
+    expect(mosaic!.className).toContain('grid-cols-2')
+    expect(mosaic!.className).toContain('gap-1')
+
+    // 5 photos → hero + 4 mosaic tiles, all square (even count, no wide tile).
+    const tiles = container.querySelectorAll('[data-testid="gift-mosaic-tile"]')
+    expect(tiles.length).toBe(4)
+    for (const t of tiles) {
+      expect(t.className).toContain('aspect-square')
+      expect(t.className).not.toContain('aspect-[3/2]')
+    }
+  })
+
+  it('spans the final mosaic tile across both columns as a wide aspect-[3/2] tile when the count is odd', () => {
+    const { container } = render(
+      <GiftContent
+        giftCertificate={withGallery(['a.jpg', 'b.jpg', 'c.jpg', 'd.jpg'])}
+        publicUrlFor={(p) => p ?? null}
+      />
+    )
+    // 4 photos → hero + 3 mosaic tiles (odd) → last tile is wide.
+    const tiles = container.querySelectorAll('[data-testid="gift-mosaic-tile"]')
+    expect(tiles.length).toBe(3)
+
+    expect(tiles[0].className).toContain('aspect-square')
+    expect(tiles[1].className).toContain('aspect-square')
+
+    const last = tiles[2]
+    expect(last.className).toContain('aspect-[3/2]')
+    expect(last.className).toContain('col-span-2')
+    expect(last.className).not.toContain('aspect-square')
+  })
+
+  it('filters out blank/empty photo_path entries before splitting hero/mosaic', () => {
+    const { container } = render(
+      <GiftContent
+        giftCertificate={withGallery(['a.jpg', '', '  ', 'b.jpg'])}
+        publicUrlFor={(p) => p ?? null}
+      />
+    )
+    // Only 2 real photos survive → hero + 1 mosaic tile.
+    expect(container.querySelector('[data-testid="gift-hero"]')).not.toBeNull()
+    const tiles = container.querySelectorAll('[data-testid="gift-mosaic-tile"]')
+    expect(tiles.length).toBe(1)
+  })
+})
