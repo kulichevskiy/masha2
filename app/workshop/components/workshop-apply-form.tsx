@@ -71,18 +71,15 @@ export function WorkshopApplyForm({ tariffs }: { tariffs: Tariff[] }) {
     )
   }
 
-  // Submit label reflects the chosen intake, derived from its tariff's `days`
-  // ("Three days" → "three-day"). Falls back to a neutral label when the
-  // tariff can't be resolved (e.g. no tariffs configured).
+  // Submit label mirrors the tariff-card "Join the {days} workshop" CTA, using
+  // the tariff's raw `days` ("Three days") so the two buttons read identically.
+  // Falls back to a neutral "Join the workshop" when the tariff can't be
+  // resolved (e.g. no tariffs configured).
   const selectedTariff = tariffs.find((t) => t.key === intake)
-  let submitLabel = 'Apply to join'
+  let submitLabel = 'Join the workshop'
   if (!isPending && selectedTariff) {
-    const days = selectedTariff.days
-      .trim()
-      .toLowerCase()
-      .replace(/s$/, '')
-      .replace(/\s+/g, '-')
-    if (days) submitLabel = `Apply for the ${days} intake`
+    const days = selectedTariff.days.trim()
+    if (days) submitLabel = `Join the ${days} workshop`
   }
 
   const labelCls =

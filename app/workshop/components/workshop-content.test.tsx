@@ -141,7 +141,7 @@ describe('<WorkshopContent />', () => {
     const text = container.textContent ?? ''
 
     // Header row: Bebas lowercase title on the left + muted "Step one" right.
-    expect(text).toContain('choose your intake')
+    expect(text).toContain('choose your workshop')
     expect(text).toContain('Step one')
 
     // Floating "THE FULL COURSE" badge lives on the featured (Full) tile.
@@ -277,12 +277,12 @@ describe('<TariffsBand /> gray reference restyle', () => {
     expect(container.querySelector('div.bg-black')).toBeNull()
   })
 
-  it('renders the lowercase tariffs header, roman intro, and Intakes label', () => {
+  it('renders the lowercase tariffs header, roman intro, and Pricing label', () => {
     const { container } = renderBand()
     const text = container.textContent ?? ''
     expect(text).toContain('tariffs')
     expect(text).toContain('Same group, same room, same studio')
-    expect(text).toContain('Intakes')
+    expect(text).toContain('Pricing')
   })
 
   it('shows days as the big heading, name as the small label, and the price', () => {

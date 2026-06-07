@@ -62,7 +62,7 @@ function IntakePicker({ tariffs }: { tariffs: Workshop['tariffs'] }) {
     <div className="mb-10 md:mb-12 max-w-[880px]">
       <div className="flex items-baseline justify-between gap-4 mb-4 md:mb-5">
         <span className="font-bebas-neue text-[26px] md:text-[32px] leading-none lowercase text-white tracking-[-0.01em]">
-          choose your intake
+          choose your workshop
         </span>
         <span className="font-inter text-[10px] md:text-[11px] tracking-[0.3em] uppercase text-white/45">
           Step one
@@ -70,7 +70,7 @@ function IntakePicker({ tariffs }: { tariffs: Workshop['tariffs'] }) {
       </div>
       <div
         role="radiogroup"
-        aria-label="Choose your intake"
+        aria-label="Choose your workshop"
         className="flex flex-col sm:flex-row"
       >
         {tariffs.map((t, i) => {

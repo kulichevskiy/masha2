@@ -22,7 +22,7 @@ export function TariffsBand({ n, tariffs }: { n: number; tariffs: Tariff[] }) {
             <div className="flex items-center gap-2.5 font-inter text-[10.5px] md:text-[11px] tracking-[0.28em] md:tracking-[0.3em] uppercase text-gray-500 mb-3">
               <span className="opacity-60">{String(n).padStart(2, '0')}</span>
               <span className="block w-4 md:w-7 h-px bg-current opacity-40" aria-hidden="true" />
-              <span>Intakes</span>
+              <span>Pricing</span>
             </div>
             <h2 className="font-bebas-neue text-3xl md:text-[56px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.015em]">
               tariffs
@@ -30,9 +30,9 @@ export function TariffsBand({ n, tariffs }: { n: number; tariffs: Tariff[] }) {
           </div>
           <div className="flex items-end">
             <p className="font-playfair-display text-[18px] md:text-[24px] leading-[1.45] text-foreground m-0 max-w-[520px]">
-              Same group, same room, same studio. The short intake is the
-              conversation and the shooting; the full intake adds the third day
-              — the long edit, where the work becomes a body of work.
+              Same group, same room, same studio. The two-day workshop is the
+              conversation and the shooting; the three-day workshop adds the
+              third day — the long edit, where the work becomes a body of work.
             </p>
           </div>
         </div>
@@ -141,7 +141,9 @@ function TariffCard({ tariff, first }: { tariff: Tariff; first: boolean }) {
             : 'bg-transparent text-foreground hover:bg-black/5')
         }
       >
-        {selected ? 'Selected — complete below ↓' : 'Apply →'}
+        {selected
+          ? 'Selected — complete below ↓'
+          : `Join the ${tariff.days} workshop`}
       </a>
     </div>
   )
