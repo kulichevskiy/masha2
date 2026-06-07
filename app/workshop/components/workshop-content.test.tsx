@@ -132,6 +132,34 @@ describe('<WorkshopContent />', () => {
     expect(text).not.toContain('450 € / 600 €')
   })
 
+  it('renders the restyled dark intake picker: header row, radio tiles, and the Full badge', () => {
+    const { container } = render(
+      <WorkshopContent workshop={SAMPLE} publicUrlFor={() => null} />
+    )
+    const text = container.textContent ?? ''
+
+    // Header row: Bebas lowercase title on the left + muted "Step one" right.
+    expect(text).toContain('choose your intake')
+    expect(text).toContain('Step one')
+
+    // Floating "THE FULL COURSE" badge lives on the featured (Full) tile.
+    expect(text).toContain('The full course')
+
+    // The picker keeps its radiogroup wiring with exactly two radio options,
+    // and the default intake ('full') leaves precisely one tile checked.
+    const group = container.querySelector('[role="radiogroup"]')
+    expect(group).not.toBeNull()
+    const radios = group!.querySelectorAll('[role="radio"]')
+    expect(radios.length).toBe(2)
+    const checked = group!.querySelectorAll('[role="radio"][aria-checked="true"]')
+    expect(checked.length).toBe(1)
+
+    // Each tile now carries its summary line (absent from the old picker).
+    for (const tier of SAMPLE.tariffs) {
+      expect(text).toContain(tier.summary)
+    }
+  })
+
   it('hides the gallery section when no items', () => {
     const { container } = render(
       <WorkshopContent workshop={SAMPLE} publicUrlFor={() => null} />

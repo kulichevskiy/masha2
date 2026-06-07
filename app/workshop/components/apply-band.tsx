@@ -47,23 +47,33 @@ export function ApplyBand({ n, workshop }: { n: number; workshop: Workshop }) {
   )
 }
 
-// Dark two-tile picker. Tiles mirror the tariff cards' identity (name, days,
-// price); the Full intake stays visually featured. Selecting a tile updates
-// the shared intake state, so the tariff-card Apply buttons reflect it too.
+// Dark two-tile picker, restyled to match the reference IntakePickerDark.
+// Radio tiles are butted together with a -2px join (no gap) so their 2px
+// borders share an edge; the active tile inverts to a solid-white plate and
+// rises above the join via z-index. Each tile carries a left radio bullet
+// (filled when active), big uppercase days, an italic price, and the italic
+// Playfair summary. The featured (Full) intake floats a white badge that
+// fades out once it becomes the active tile. Selecting a tile updates the
+// shared intake state, so the tariff-card Apply buttons reflect it too.
 function IntakePicker({ tariffs }: { tariffs: Workshop['tariffs'] }) {
   const { intake, setIntake } = useIntake()
 
   return (
     <div className="mb-10 md:mb-12 max-w-[880px]">
-      <div className="font-inter text-[10.5px] md:text-[11px] tracking-[0.3em] uppercase text-white/55 mb-4">
-        Choose your intake
+      <div className="flex items-baseline justify-between gap-4 mb-4 md:mb-5">
+        <span className="font-bebas-neue text-[26px] md:text-[32px] leading-none lowercase text-white tracking-[-0.01em]">
+          choose your intake
+        </span>
+        <span className="font-inter text-[10px] md:text-[11px] tracking-[0.3em] uppercase text-white/45">
+          Step one
+        </span>
       </div>
       <div
         role="radiogroup"
         aria-label="Choose your intake"
-        className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4"
+        className="flex flex-col sm:flex-row"
       >
-        {tariffs.map((t) => {
+        {tariffs.map((t, i) => {
           const selected = intake === t.key
           return (
             <button
@@ -73,30 +83,69 @@ function IntakePicker({ tariffs }: { tariffs: Workshop['tariffs'] }) {
               aria-checked={selected}
               onClick={() => setIntake(t.key)}
               className={
-                'text-left px-5 py-4 md:px-6 md:py-5 border transition-colors cursor-pointer ' +
+                'relative flex-1 text-left flex items-start gap-3.5 md:gap-4 px-5 py-5 md:px-7 md:py-6 border-2 transition-colors cursor-pointer ' +
+                // Butt the tiles together: pull each one after the first over the
+                // shared border by 2px (vertical on mobile, horizontal on desktop).
+                (i > 0 ? '-mt-0.5 sm:mt-0 sm:-ml-0.5 ' : '') +
                 (selected
-                  ? 'border-white bg-white/10'
-                  : 'border-white/25 hover:border-white/55')
+                  ? 'z-10 bg-white border-white text-black '
+                  : 'bg-transparent border-white/25 text-white hover:border-white/55 ')
               }
             >
-              <div className="flex items-center justify-between gap-3">
-                <span className="font-inter text-[10px] md:text-[10.5px] tracking-[0.25em] uppercase text-white/55">
-                  {t.days}
+              <span
+                aria-hidden="true"
+                className={
+                  'mt-1 shrink-0 inline-flex items-center justify-center rounded-full border-2 w-[18px] h-[18px] md:w-[22px] md:h-[22px] ' +
+                  (selected ? 'border-black' : 'border-white/45')
+                }
+              >
+                {selected && (
+                  <span className="rounded-full bg-black w-[7px] h-[7px] md:w-[9px] md:h-[9px]" />
+                )}
+              </span>
+
+              <span className="flex-1 min-w-0">
+                <span className="flex items-baseline gap-3 flex-wrap">
+                  <span
+                    className={
+                      'font-bebas-neue text-[28px] md:text-[34px] leading-none uppercase tracking-[0.01em] ' +
+                      (selected ? 'text-black' : 'text-white')
+                    }
+                  >
+                    {t.days}
+                  </span>
+                  <span
+                    className={
+                      'font-playfair-display italic text-[15px] md:text-[17px] leading-none ' +
+                      (selected ? 'text-black/70' : 'text-white/70')
+                    }
+                  >
+                    {t.price}
+                  </span>
                 </span>
-                {t.featured && (
-                  <span className="border border-white/40 px-2 py-0.5 font-inter text-[9.5px] tracking-[0.2em] uppercase text-white/70">
-                    Full
+                {t.summary && (
+                  <span
+                    className={
+                      'block mt-1.5 font-playfair-display italic text-[14px] md:text-[16px] leading-[1.4] ' +
+                      (selected ? 'text-black/75' : 'text-white/75')
+                    }
+                  >
+                    {t.summary}
                   </span>
                 )}
-              </div>
-              <div className="mt-2 flex items-baseline justify-between gap-3">
-                <span className="font-bebas-neue text-[26px] md:text-[32px] leading-none lowercase text-white tracking-[-0.01em]">
-                  {t.name}
+              </span>
+
+              {t.featured && (
+                <span
+                  aria-hidden="true"
+                  className={
+                    'absolute -top-2.5 right-4 bg-white text-black px-2.5 py-1 font-inter text-[9px] tracking-[0.2em] uppercase shadow-sm transition-opacity ' +
+                    (selected ? 'opacity-0' : 'opacity-100')
+                  }
+                >
+                  The full course
                 </span>
-                <span className="font-bebas-neue text-[22px] md:text-[26px] leading-none text-white tracking-[0.01em]">
-                  {t.price}
-                </span>
-              </div>
+              )}
             </button>
           )
         })}
