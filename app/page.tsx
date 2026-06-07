@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { TopNav } from "./components/top-nav";
 import { MasonryGrid } from "./components/ui/masonry-grid";
 import { Footer } from "./components/footer";
-import { FloatingBookButton } from "./components/floating-book-button";
+import { FloatingCta } from "./components/floating-cta";
 import { WorkshopBanner } from "./components/workshop-banner";
 
 export default function Home() {
@@ -18,7 +18,9 @@ export default function Home() {
         </Suspense>
       </div>
       <Footer floatingCtaSpacer />
-      <FloatingBookButton />
+      <Suspense fallback={null}>
+        <FloatingCta />
+      </Suspense>
     </div>
   );
 }
