@@ -154,6 +154,36 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_certificate: {
+        Row: {
+          amounts: Json
+          body: string | null
+          created_at: string
+          gallery: Json
+          id: string
+          is_visible: boolean
+          updated_at: string
+        }
+        Insert: {
+          amounts?: Json
+          body?: string | null
+          created_at?: string
+          gallery?: Json
+          id?: string
+          is_visible?: boolean
+          updated_at?: string
+        }
+        Update: {
+          amounts?: Json
+          body?: string | null
+          created_at?: string
+          gallery?: Json
+          id?: string
+          is_visible?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           alt_text: string | null
