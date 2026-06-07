@@ -16,6 +16,8 @@ vi.mock('./workshop-apply-form', () => ({
 }))
 
 import { WorkshopContent } from './workshop-content'
+import { TariffsBand } from './tariffs-band'
+import { IntakeProvider } from './intake-context'
 
 const SAMPLE: Workshop = {
   id: 'w1',
@@ -227,5 +229,77 @@ describe('<WorkshopContent />', () => {
     // Tariffs at 06, gallery at 07, so Questions is 08 and Apply bumps to 09.
     expect(text).toContain('08Questions')
     expect(text).toContain('09 — Apply')
+  })
+})
+
+describe('<TariffsBand /> gray reference restyle', () => {
+  const renderBand = () =>
+    render(
+      <IntakeProvider>
+        <TariffsBand n={6} tariffs={SAMPLE.tariffs} />
+      </IntakeProvider>
+    )
+
+  it('uses a full-bleed warm-gray section background and no black plate', () => {
+    const { container } = renderBand()
+    const section = container.querySelector('section')!
+    expect(section.className).toContain('bg-[#f2f0ec]')
+    // The old black featured card surface is gone (the black is now only the
+    // Full card's button, an <a>, not a card plate <div>).
+    expect(container.querySelector('div.bg-black')).toBeNull()
+  })
+
+  it('renders the lowercase tariffs header, roman intro, and Intakes label', () => {
+    const { container } = renderBand()
+    const text = container.textContent ?? ''
+    expect(text).toContain('tariffs')
+    expect(text).toContain('Same group, same room, same studio')
+    expect(text).toContain('Intakes')
+  })
+
+  it('shows days as the big heading, name as the small label, and the price', () => {
+    const { container } = renderBand()
+    const text = container.textContent ?? ''
+    for (const tier of SAMPLE.tariffs) {
+      expect(text).toContain(tier.days)
+      expect(text).toContain(tier.name)
+      expect(text).toContain(tier.price)
+    }
+  })
+
+  it('shows the THE FULL COURSE label on the full card', () => {
+    const { container } = renderBand()
+    expect((container.textContent ?? '')).toContain('THE FULL COURSE')
+  })
+
+  it('merges days_list and extras into a single What you get list', () => {
+    const { container } = renderBand()
+    const text = container.textContent ?? ''
+    expect(text).toContain('What you get')
+    const full = SAMPLE.tariffs.find((t) => t.key === 'full')!
+    for (const item of [...full.days_list, ...full.extras]) {
+      expect(text).toContain(item)
+    }
+  })
+
+  it('marks the default (full) card as selected with bar + button text', () => {
+    const { container } = renderBand()
+    const text = container.textContent ?? ''
+    expect(text).toContain('Selected — complete below ↓')
+    // 28×2px selection bar.
+    expect(container.querySelector('.w-7.h-0\\.5')).not.toBeNull()
+  })
+
+  it('gives both apply buttons a foreground border; full fills solid black', () => {
+    const { container } = renderBand()
+    const buttons = Array.from(
+      container.querySelectorAll('a[href="#apply"]')
+    ) as HTMLElement[]
+    expect(buttons.length).toBe(2)
+    for (const b of buttons) {
+      expect(b.className).toContain('border')
+    }
+    const full = buttons.find((b) => b.textContent?.includes('Selected'))!
+    expect(full.className).toContain('bg-black')
   })
 })
