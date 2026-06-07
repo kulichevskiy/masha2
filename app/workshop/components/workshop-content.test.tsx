@@ -113,6 +113,48 @@ describe('<WorkshopContent />', () => {
     expect(text).toContain('06 — Apply')
   })
 
+  it('renders the desktop chapter strip as a uniform single-row table of contents', () => {
+    // Gallery path + FAQ yields the full set of 8 chapters.
+    const workshop: Workshop = {
+      ...SAMPLE,
+      gallery: [{ photo_path: 'workshop/p1.jpg' }],
+    }
+    const { container } = render(
+      <WorkshopContent
+        workshop={workshop}
+        publicUrlFor={(p) => (p ? `https://cdn.example.com/photos/${p}` : null)}
+      />
+    )
+
+    // The strip is the desktop-only section bordered with gray-200.
+    const strip = Array.from(container.querySelectorAll('section')).find((s) =>
+      s.className.includes('border-gray-200')
+    )
+    expect(strip).toBeTruthy()
+    expect(strip!.className).toContain('hidden')
+    expect(strip!.className).toContain('md:block')
+
+    // The flex row distributes items across the full content width.
+    const row = strip!.querySelector('div')!
+    expect(row.className).toContain('justify-between')
+
+    const items = Array.from(row.children) as HTMLElement[]
+    expect(items.length).toBe(8)
+    for (const item of items) {
+      // Each label stays on one line, no mid-word wrapping.
+      expect(item.className).toContain('whitespace-nowrap')
+      // Uniform grey — no active-indicator special case.
+      expect(item.className).toContain('text-gray-500')
+      expect(item.className).not.toContain('border-foreground')
+      // Vertical padding kept, per-item horizontal padding dropped.
+      expect(item.className).toContain('py-5')
+      expect(item.className).not.toContain('px-6')
+      // Font size and tracking unchanged.
+      expect(item.className).toContain('text-xs')
+      expect(item.className).toContain('tracking-[0.2em]')
+    }
+  })
+
   it('shows the gallery section when at least one entry has a path', () => {
     const workshop: Workshop = {
       ...SAMPLE,

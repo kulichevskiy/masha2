@@ -194,16 +194,11 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
 
       {/* ───────── Chapter strip (desktop only) ───────── */}
       <section className="hidden md:block border-b border-gray-200">
-        <div className="mx-auto max-w-7xl px-10 flex">
+        <div className="mx-auto max-w-7xl px-10 flex justify-between">
           {chapters.map((c, i) => (
             <div
               key={c.key}
-              className={
-                'px-6 py-5 font-inter text-xs tracking-[0.2em] uppercase ' +
-                (i === 0
-                  ? 'text-foreground border-b border-foreground -mb-px'
-                  : 'text-gray-500')
-              }
+              className="py-5 font-inter text-xs tracking-[0.2em] uppercase text-gray-500 whitespace-nowrap"
             >
               <span className="mr-2 opacity-50">{String(i + 1).padStart(2, '0')}</span>
               {c.label}
