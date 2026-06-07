@@ -42,7 +42,7 @@ function buildChapters(
     { key: 'included', label: 'Included' },
     { key: 'bring', label: 'Bring' },
   ]
-  if (hasTariffs) base.push({ key: 'tariffs', label: 'Intakes' })
+  if (hasTariffs) base.push({ key: 'tariffs', label: 'Pricing' })
   if (hasGallery) base.push({ key: 'gallery', label: 'From the practice' })
   if (hasFaq) base.push({ key: 'questions', label: 'Questions' })
   base.push({ key: 'apply', label: 'Apply' })
@@ -197,7 +197,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
               href="#apply"
               className="bg-white text-black px-0 md:px-14 py-3.5 md:py-4 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase text-center flex-[1.4] md:flex-none md:inline-block hover:bg-white/90 transition-colors"
             >
-              Apply →
+              Join the workshop →
             </a>
             {(heroPrice || workshop.seats) && (
               <span className="bg-transparent text-white border border-white/50 px-0 md:px-10 py-3.5 md:py-4 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase text-center flex-1 md:flex-none md:inline-block">
@@ -320,7 +320,15 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
       </section>
 
       {/* ───────── 03 / 04 / 05 — A day · Included · Bring ───────── */}
-      <section className="px-5 md:px-10 pt-14 md:pt-28">
+      {/* Bottom padding only when the beige Tariffs band follows, so the white
+          content gets a gutter before the colour change rather than butting
+          flush against the beige edge. */}
+      <section
+        className={
+          'px-5 md:px-10 pt-14 md:pt-28' +
+          (hasTariffs ? ' pb-14 md:pb-24' : '')
+        }
+      >
         <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
           <div>
             <ChapterLabel n={chapterN('day')} label="A day, roughly" />
