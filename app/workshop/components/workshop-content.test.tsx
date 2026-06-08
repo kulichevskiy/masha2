@@ -310,12 +310,15 @@ describe('<TariffsBand /> gray reference restyle', () => {
     }
   })
 
-  it('marks the default (full) card as selected with bar + button text', () => {
+  it('renders no per-card selection bar; both buttons read "Join the … workshop"', () => {
     const { container } = renderBand()
     const text = container.textContent ?? ''
-    expect(text).toContain('Selected — complete below ↓')
-    // 28×2px selection bar.
-    expect(container.querySelector('.w-7.h-0\\.5')).not.toBeNull()
+    // No slim selection bar in any state — cards top-align across the divider.
+    expect(container.querySelector('.w-7.h-0\\.5')).toBeNull()
+    expect(text).not.toContain('Selected — complete below ↓')
+    for (const tier of SAMPLE.tariffs) {
+      expect(text).toContain(`Join the ${tier.days} workshop`)
+    }
   })
 
   it('gives both apply buttons a foreground border; full fills solid black', () => {
@@ -327,7 +330,7 @@ describe('<TariffsBand /> gray reference restyle', () => {
     for (const b of buttons) {
       expect(b.className).toContain('border')
     }
-    const full = buttons.find((b) => b.textContent?.includes('Selected'))!
+    const full = buttons.find((b) => b.textContent?.includes('Three days'))!
     expect(full.className).toContain('bg-black')
   })
 })

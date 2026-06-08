@@ -7,8 +7,8 @@
 // with a hairline divider between the cards; mobile: stacked with a top hairline
 // on each card after the first. Section intro + labels are hardcoded, consistent
 // with the page's other headings. Each card's Apply button selects that intake
-// (shared via IntakeProvider) and scrolls to the `#apply` band; the selected
-// card shows a slim top bar and reflects its state inline.
+// (shared via IntakeProvider) and scrolls to the `#apply` band, where the dark
+// picker is the single place that shows the chosen state.
 
 import type { Tariff } from '../data'
 import { useIntake } from './intake-context'
@@ -48,8 +48,7 @@ export function TariffsBand({ n, tariffs }: { n: number; tariffs: Tariff[] }) {
 }
 
 function TariffCard({ tariff, first }: { tariff: Tariff; first: boolean }) {
-  const { intake, setIntake } = useIntake()
-  const selected = intake === tariff.key
+  const { setIntake } = useIntake()
   const featured = tariff.featured
   // Stacked on mobile → top hairline on every card after the first. Side-by-side
   // on desktop → left hairline divider between the two cards (drop the mobile
@@ -60,14 +59,6 @@ function TariffCard({ tariff, first }: { tariff: Tariff; first: boolean }) {
 
   return (
     <div className={`${divider} px-6 md:px-10 py-10 md:py-14 flex flex-col`}>
-      {/* Slim selection bar at the top of the selected card. */}
-      {selected && (
-        <span
-          className="block w-7 h-0.5 bg-foreground mb-5"
-          aria-hidden="true"
-        />
-      )}
-
       <div className="flex items-start justify-between gap-4 mb-5">
         <div className="font-inter text-[10.5px] md:text-[11px] tracking-[0.28em] uppercase text-gray-500">
           {tariff.name}
@@ -132,7 +123,6 @@ function TariffCard({ tariff, first }: { tariff: Tariff; first: boolean }) {
 
       <a
         href="#apply"
-        aria-current={selected ? 'true' : undefined}
         onClick={() => setIntake(tariff.key)}
         className={
           'mt-auto inline-block text-center px-8 py-3.5 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase transition-colors border border-foreground ' +
@@ -141,9 +131,7 @@ function TariffCard({ tariff, first }: { tariff: Tariff; first: boolean }) {
             : 'bg-transparent text-foreground hover:bg-black/5')
         }
       >
-        {selected
-          ? 'Selected — complete below ↓'
-          : `Join the ${tariff.days} workshop`}
+        {`Join the ${tariff.days} workshop`}
       </a>
     </div>
   )
