@@ -23,8 +23,6 @@ type ChapterKey =
   | 'idea'
   | 'program'
   | 'day'
-  | 'included'
-  | 'bring'
   | 'tariffs'
   | 'gallery'
   | 'questions'
@@ -38,9 +36,7 @@ function buildChapters(
   const base: { key: ChapterKey; label: string }[] = [
     { key: 'idea', label: 'The idea' },
     { key: 'program', label: 'Program' },
-    { key: 'day', label: 'A day' },
-    { key: 'included', label: 'Included' },
-    { key: 'bring', label: 'Bring' },
+    { key: 'day', label: 'The three days' },
   ]
   if (hasTariffs) base.push({ key: 'tariffs', label: 'Pricing' })
   if (hasGallery) base.push({ key: 'gallery', label: 'From the practice' })
@@ -319,8 +315,12 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         </div>
       </section>
 
-      {/* ───────── 03 / 04 / 05 — A day · Included · Bring ───────── */}
-      {/* Bottom padding only when the beige Tariffs band follows, so the white
+      {/* ───────── 03 — The three days (fixed 3-column breakdown) ───────── */}
+      {/* Replaces the old schedule · included · bring row. Each column is one
+          day: a "DAY N" eyebrow, the session name as the big Bebas heading, an
+          optional note line, and a bullet list. The single chapter number lives
+          in the desktop strip; columns carry only their day marker.
+          Bottom padding only when the beige Tariffs band follows, so the white
           content gets a gutter before the colour change rather than butting
           flush against the beige edge. */}
       <section
@@ -330,53 +330,27 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         }
       >
         <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
-          <div>
-            <ChapterLabel n={chapterN('day')} label="A day, roughly" />
-            <h3 className="font-bebas-neue text-3xl md:text-[32px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
-              a day
-            </h3>
-            <dl className="mt-6 border-t border-gray-200">
-              {workshop.schedule.map(([time, what], i) => (
-                <div
-                  key={`${time}-${i}`}
-                  className="grid grid-cols-[70px_1fr] gap-3 py-3 border-b border-gray-200 items-baseline"
-                >
-                  <dt className="font-bebas-neue text-xl text-foreground [font-variant-numeric:tabular-nums]">
-                    {time}
-                  </dt>
-                  <dd className="text-sm leading-[1.55]">{what}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          <div>
-            <ChapterLabel n={chapterN('included')} label="Included" />
-            <h3 className="font-bebas-neue text-3xl md:text-[32px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
-              what comes
-              <br />
-              with
-            </h3>
-            <ul className="mt-6 pl-5 list-disc text-[15px] leading-[1.85] space-y-1">
-              {workshop.includes.map((it, i) => (
-                <li key={i}>{it}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <ChapterLabel n={chapterN('bring')} label="What to bring" />
-            <h3 className="font-bebas-neue text-3xl md:text-[32px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
-              what
-              <br />
-              to bring
-            </h3>
-            <ul className="mt-6 pl-5 list-disc text-[15px] leading-[1.85] space-y-1">
-              {workshop.bring.map((it, i) => (
-                <li key={i}>{it}</li>
-              ))}
-            </ul>
-          </div>
+          {workshop.days.map((d, i) => (
+            <div key={`${d.day}-${i}`}>
+              <div className="flex items-center gap-2.5 font-inter text-[10.5px] md:text-[11px] tracking-[0.28em] md:tracking-[0.3em] uppercase text-gray-500 mb-3">
+                <span>{d.day}</span>
+                <span className="block flex-1 h-px bg-current opacity-40" aria-hidden="true" />
+              </div>
+              <h3 className="font-bebas-neue text-3xl md:text-[32px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em] whitespace-pre-line">
+                {d.title}
+              </h3>
+              {d.note && (
+                <p className="mt-2 font-playfair-display italic text-[14px] md:text-[15px] leading-[1.5] text-gray-500 m-0">
+                  {d.note}
+                </p>
+              )}
+              <ul className="mt-6 pl-5 list-disc text-[15px] leading-[1.85] space-y-1">
+                {d.bullets.map((b, j) => (
+                  <li key={j}>{b}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </section>
 

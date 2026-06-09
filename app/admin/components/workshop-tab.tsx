@@ -14,7 +14,7 @@ import { updateWorkshop, deleteWorkshopApplication } from '@/app/workshop/action
 import type {
   Workshop,
   ProgramDay,
-  ScheduleRow,
+  WorkshopDay,
   GalleryItem,
   FaqItem,
   Tariff,
@@ -114,9 +114,7 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
           apply_heading: state.apply_heading,
           apply_intro: state.apply_intro,
           program: state.program.map(stripId),
-          schedule: state.schedule,
-          includes: state.includes,
-          bring: state.bring,
+          days: state.days,
           tariffs: state.tariffs,
           gallery: state.gallery.map(stripId),
           faq: state.faq.map(stripId),
@@ -291,48 +289,23 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
         />
       </Section>
 
-      {/* Schedule */}
-      <Section title="03 — Расписание">
-        <ListEditor
-          items={state.schedule}
-          onChange={(schedule) => save({ schedule })}
-          empty={(): ScheduleRow => ['10:00', '']}
-          render={(row, onReplace) => (
-            <div className="grid grid-cols-[100px_1fr] gap-3">
-              <Input
-                value={row[0]}
-                onChange={(e) => onReplace([e.target.value, row[1]])}
-                placeholder="Время"
-              />
-              <Input
-                value={row[1]}
-                onChange={(e) => onReplace([row[0], e.target.value])}
-                placeholder="Что происходит"
-              />
-            </div>
-          )}
-          addLabel="Добавить строку"
-        />
-      </Section>
-
-      {/* Includes */}
-      <Section title="04 — Что входит">
-        <StringListEditor
-          items={state.includes}
-          onChange={(includes) => save({ includes })}
-          placeholder="Один пункт"
-          addLabel="Добавить пункт"
-        />
-      </Section>
-
-      {/* Bring */}
-      <Section title="05 — Что взять с собой">
-        <StringListEditor
-          items={state.bring}
-          onChange={(bring) => save({ bring })}
-          placeholder="Один пункт"
-          addLabel="Добавить пункт"
-        />
+      {/* Days — fixed three-column day breakdown (03 on the page). Mirrors the
+          fixed Tariffs editor: map over the three day slots, no add/remove. */}
+      <Section title="03 — Дни">
+        {state.days.map((d, i) => (
+          <DayEditor
+            key={i}
+            index={i}
+            day={d}
+            onPatch={(patch) =>
+              save({
+                days: state.days.map((cur, j) =>
+                  j === i ? { ...cur, ...patch } : cur
+                ),
+              })
+            }
+          />
+        ))}
       </Section>
 
       {/* Tariffs — two fixed tiers (short then full), no add/remove */}
@@ -534,6 +507,51 @@ function TariffEditor({
         />
         Выделенный тариф (чёрная карточка)
       </label>
+    </div>
+  )
+}
+
+// Editor for one fixed day slot in the three-day breakdown. Mirrors TariffEditor:
+// day label + session title + optional note as Fields, and a StringListEditor
+// for the bullet list. No add/remove — the three slots are fixed.
+function DayEditor({
+  index,
+  day,
+  onPatch,
+}: {
+  index: number
+  day: WorkshopDay
+  onPatch: (patch: Partial<WorkshopDay>) => void
+}) {
+  return (
+    <div className="border border-border rounded-md p-4 flex flex-col gap-4">
+      <h3 className="text-sm font-medium text-muted-foreground">День {index + 1}</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Field
+          label="Лейбл дня"
+          value={day.day}
+          onChange={(v) => onPatch({ day: v })}
+        />
+        <Field
+          label="Название сессии"
+          value={day.title}
+          onChange={(v) => onPatch({ title: v })}
+        />
+      </div>
+      <Field
+        label="Примечание (опционально)"
+        value={day.note}
+        onChange={(v) => onPatch({ note: v })}
+      />
+      <div className="flex flex-col gap-1.5">
+        <Label>Пункты</Label>
+        <StringListEditor
+          items={day.bullets}
+          onChange={(bullets) => onPatch({ bullets })}
+          placeholder="Один пункт"
+          addLabel="Добавить пункт"
+        />
+      </div>
     </div>
   )
 }

@@ -40,12 +40,26 @@ const SAMPLE: Workshop = {
     { day: 'Day 02', title: 'Making', body: '<p>Making body.</p>', photo_path: null },
     { day: 'Day 03', title: 'Editing', body: '<p>Editing body.</p>', photo_path: null },
   ],
-  schedule: [
-    ['10:00', 'Arrival'],
-    ['19:00', 'Wrap'],
+  days: [
+    {
+      day: 'Day 1',
+      title: 'Online session',
+      note: '',
+      bullets: ['Visual language', 'Working with people', 'Atmosphere & presence'],
+    },
+    {
+      day: 'Day 2',
+      title: 'Shooting day',
+      note: '',
+      bullets: ['Live shooting session', 'Direction & observation', 'Group review'],
+    },
+    {
+      day: 'Day 3',
+      title: 'Review session',
+      note: 'Extended option only',
+      bullets: ['Portfolio review', 'Image selection', 'Feedback on edited work'],
+    },
   ],
-  includes: ['Three days', 'Two models'],
-  bring: ['A camera'],
   tariffs: [
     {
       key: 'short',
@@ -180,11 +194,11 @@ describe('<WorkshopContent />', () => {
     )
     const text = container.textContent ?? ''
     expect(text).not.toContain('the kind of')
-    // Tariffs sits at 06 (after Bring), so Questions slides to 07 and Apply to
-    // 08 — no gap, no duplicate numbers. ChapterLabel renders the number and
-    // label as separate spans, so they come out adjacent in textContent.
-    expect(text).toContain('07Questions')
-    expect(text).toContain('08 — Apply')
+    // Chapters: idea 01, program 02, days 03, tariffs 04, questions 05, apply 06
+    // (no gallery here). No gap, no duplicate numbers. ChapterLabel renders the
+    // number and label as separate spans, so they come out adjacent in textContent.
+    expect(text).toContain('05Questions')
+    expect(text).toContain('06 — Apply')
   })
 
   it('omits the Questions chapter when the FAQ list is empty', () => {
@@ -195,12 +209,14 @@ describe('<WorkshopContent />', () => {
     const text = container.textContent ?? ''
     // No questions chapter visible — neither inline label nor strip entry.
     expect(text).not.toMatch(/Questions/i)
-    // Apply slides up to 07 (Tariffs at 06) since gallery is also absent here.
-    expect(text).toContain('07 — Apply')
+    // Chapters: idea 01, program 02, days 03, tariffs 04, apply 05 (no gallery,
+    // no faq here).
+    expect(text).toContain('05 — Apply')
   })
 
   it('renders the desktop chapter strip as a uniform single-row table of contents', () => {
-    // Gallery path + FAQ + tariffs yields the full set of 9 chapters.
+    // Gallery path + FAQ + tariffs yields the full set of 7 chapters
+    // (idea, program, days, tariffs, gallery, questions, apply).
     const workshop: Workshop = {
       ...SAMPLE,
       gallery: [{ photo_path: 'workshop/p1.jpg' }],
@@ -225,7 +241,7 @@ describe('<WorkshopContent />', () => {
     expect(row.className).toContain('justify-between')
 
     const items = Array.from(row.children) as HTMLElement[]
-    expect(items.length).toBe(9)
+    expect(items.length).toBe(7)
     for (const item of items) {
       // Each label stays on one line, no mid-word wrapping.
       expect(item.className).toContain('whitespace-nowrap')
@@ -254,9 +270,10 @@ describe('<WorkshopContent />', () => {
     )
     const text = container.textContent ?? ''
     expect(text).toContain('the kind of')
-    // Tariffs at 06, gallery at 07, so Questions is 08 and Apply bumps to 09.
-    expect(text).toContain('08Questions')
-    expect(text).toContain('09 — Apply')
+    // Chapters: idea 01, program 02, days 03, tariffs 04, gallery 05,
+    // questions 06, apply 07.
+    expect(text).toContain('06Questions')
+    expect(text).toContain('07 — Apply')
   })
 })
 
