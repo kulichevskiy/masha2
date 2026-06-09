@@ -67,6 +67,7 @@ export type Workshop = {
   the_idea_quote: string | null
   apply_heading: string | null
   apply_intro: string | null
+  tariffs_intro: string | null
   program: ProgramDay[]
   days: WorkshopDay[]
   tariffs: Tariff[]
@@ -94,6 +95,7 @@ function normalise(row: WorkshopRow): Workshop {
     the_idea_quote: row.the_idea_quote,
     apply_heading: row.apply_heading,
     apply_intro: row.apply_intro,
+    tariffs_intro: row.tariffs_intro,
     program: (row.program as ProgramDay[] | null) ?? [],
     // Coerce each day to the full shape. The column was seeded out-of-band, so
     // defend against rows missing `note`/`bullets` rather than trusting the cast.

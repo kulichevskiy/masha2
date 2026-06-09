@@ -35,6 +35,8 @@ const SAMPLE: Workshop = {
   the_idea_quote: 'People are seen, not just photographed.',
   apply_heading: 'Six seats. One of them is yours?',
   apply_intro: '<p>I read every application.</p>',
+  tariffs_intro:
+    '<p>Same group, same room, same studio. The two-day workshop is the conversation and the shooting; the three-day workshop adds the third day — the long edit, where the work becomes a body of work.</p>',
   program: [
     { day: 'Day 01', title: 'Seeing', body: '<p>Seeing body.</p>', photo_path: null },
     { day: 'Day 02', title: 'Making', body: '<p>Making body.</p>', photo_path: null },
@@ -281,7 +283,7 @@ describe('<TariffsBand /> gray reference restyle', () => {
   const renderBand = () =>
     render(
       <IntakeProvider>
-        <TariffsBand n={6} tariffs={SAMPLE.tariffs} />
+        <TariffsBand n={6} tariffs={SAMPLE.tariffs} intro={SAMPLE.tariffs_intro} />
       </IntakeProvider>
     )
 
@@ -300,6 +302,19 @@ describe('<TariffsBand /> gray reference restyle', () => {
     expect(text).toContain('tariffs')
     expect(text).toContain('Same group, same room, same studio')
     expect(text).toContain('Pricing')
+  })
+
+  it('omits the intro paragraph when tariffs_intro is empty', () => {
+    const { container } = render(
+      <IntakeProvider>
+        <TariffsBand n={6} tariffs={SAMPLE.tariffs} intro={null} />
+      </IntakeProvider>
+    )
+    const text = container.textContent ?? ''
+    // Heading + label still render; only the paragraph is gone.
+    expect(text).toContain('tariffs')
+    expect(text).toContain('Pricing')
+    expect(text).not.toContain('Same group, same room, same studio')
   })
 
   it('shows days as the big heading, name as the small label, and the price', () => {

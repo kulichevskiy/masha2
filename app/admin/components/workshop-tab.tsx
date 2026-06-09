@@ -115,6 +115,7 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
           apply_intro: state.apply_intro,
           program: state.program.map(stripId),
           days: state.days,
+          tariffs_intro: state.tariffs_intro,
           tariffs: state.tariffs,
           gallery: state.gallery.map(stripId),
           faq: state.faq.map(stripId),
@@ -310,6 +311,13 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
 
       {/* Tariffs — two fixed tiers (short then full), no add/remove */}
       <Section title="Тарифы">
+        <div className="flex flex-col gap-1.5">
+          <Label>Интро раздела (rich text)</Label>
+          <RichTextEditor
+            value={state.tariffs_intro ?? ''}
+            onChange={(html) => save({ tariffs_intro: html || null })}
+          />
+        </div>
         {state.tariffs.map((t, i) => (
           <TariffEditor
             key={t.key}
