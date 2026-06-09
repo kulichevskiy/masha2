@@ -356,7 +356,11 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
 
       {/* ───────── Tariffs / Intakes band ───────── */}
       {hasTariffs && (
-        <TariffsBand n={chapterN('tariffs')} tariffs={workshop.tariffs} />
+        <TariffsBand
+          n={chapterN('tariffs')}
+          tariffs={workshop.tariffs}
+          intro={workshop.tariffs_intro}
+        />
       )}
 
       {/* ───────── Gallery ───────── */}

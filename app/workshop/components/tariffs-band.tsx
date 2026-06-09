@@ -5,15 +5,25 @@
 // featured plate. Both cards share the gray; the Full card is set apart only by
 // a "THE FULL COURSE" label and a solid-black button. Desktop: side-by-side
 // with a hairline divider between the cards; mobile: stacked with a top hairline
-// on each card after the first. Section intro + labels are hardcoded, consistent
-// with the page's other headings. Each card's Apply button selects that intake
+// on each card after the first. The intro paragraph is admin-editable (Tiptap
+// HTML, like the_idea/apply intros); the eyebrow + "tariffs" label stay hardcoded,
+// consistent with the page's other headings. Each card's Apply button selects that intake
 // (shared via IntakeProvider) and scrolls to the `#apply` band, where the dark
 // picker is the single place that shows the chosen state.
 
 import type { Tariff } from '../data'
+import { RichText } from '@/components/rich-text'
 import { useIntake } from './intake-context'
 
-export function TariffsBand({ n, tariffs }: { n: number; tariffs: Tariff[] }) {
+export function TariffsBand({
+  n,
+  tariffs,
+  intro,
+}: {
+  n: number
+  tariffs: Tariff[]
+  intro: string | null
+}) {
   return (
     <section className="bg-[#f2f0ec] px-5 md:px-10 pt-14 md:pt-28 pb-14 md:pb-24">
       <div className="mx-auto max-w-7xl">
@@ -29,11 +39,12 @@ export function TariffsBand({ n, tariffs }: { n: number; tariffs: Tariff[] }) {
             </h2>
           </div>
           <div className="flex items-end">
-            <p className="font-playfair-display text-[18px] md:text-[24px] leading-[1.45] text-foreground m-0 max-w-[520px]">
-              Same group, same room, same studio. The two-day workshop is the
-              conversation and the shooting; the three-day workshop adds the
-              third day — the long edit, where the work becomes a body of work.
-            </p>
+            {intro && (
+              <RichText
+                html={intro}
+                className="font-playfair-display text-[18px] md:text-[24px] leading-[1.45] text-foreground max-w-[520px]"
+              />
+            )}
           </div>
         </div>
 
