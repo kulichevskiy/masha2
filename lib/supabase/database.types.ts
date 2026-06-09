@@ -251,20 +251,18 @@ export type Database = {
         Row: {
           apply_heading: string | null
           apply_intro: string | null
-          bring: Json
           created_at: string
           dates: string | null
+          days: Json
           faq: Json
           gallery: Json
           hero_photo_path: string | null
           id: string
-          includes: Json
           intro: string | null
           is_visible: boolean
           location: string | null
           price: string | null
           program: Json
-          schedule: Json
           seats: string | null
           tagline: string | null
           tariffs: Json
@@ -277,20 +275,18 @@ export type Database = {
         Insert: {
           apply_heading?: string | null
           apply_intro?: string | null
-          bring?: Json
           created_at?: string
           dates?: string | null
+          days?: Json
           faq?: Json
           gallery?: Json
           hero_photo_path?: string | null
           id?: string
-          includes?: Json
           intro?: string | null
           is_visible?: boolean
           location?: string | null
           price?: string | null
           program?: Json
-          schedule?: Json
           seats?: string | null
           tagline?: string | null
           tariffs?: Json
@@ -303,20 +299,18 @@ export type Database = {
         Update: {
           apply_heading?: string | null
           apply_intro?: string | null
-          bring?: Json
           created_at?: string
           dates?: string | null
+          days?: Json
           faq?: Json
           gallery?: Json
           hero_photo_path?: string | null
           id?: string
-          includes?: Json
           intro?: string | null
           is_visible?: boolean
           location?: string | null
           price?: string | null
           program?: Json
-          schedule?: Json
           seats?: string | null
           tagline?: string | null
           tariffs?: Json
