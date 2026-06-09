@@ -16,7 +16,15 @@ export type ProgramDay = {
   photo_path: string | null
 }
 
-export type ScheduleRow = [string, string]
+// One column in the "03 — the three days" breakdown. Fixed three of these on the
+// page (Day 1/2/3). `note` is an optional annotation line under the heading
+// (e.g. "extended option only" on the third day); `bullets` is the column list.
+export type WorkshopDay = {
+  day: string
+  title: string
+  note: string
+  bullets: string[]
+}
 
 export type GalleryItem = {
   photo_path: string
@@ -60,9 +68,7 @@ export type Workshop = {
   apply_heading: string | null
   apply_intro: string | null
   program: ProgramDay[]
-  schedule: ScheduleRow[]
-  includes: string[]
-  bring: string[]
+  days: WorkshopDay[]
   tariffs: Tariff[]
   gallery: GalleryItem[]
   faq: FaqItem[]
@@ -89,9 +95,14 @@ function normalise(row: WorkshopRow): Workshop {
     apply_heading: row.apply_heading,
     apply_intro: row.apply_intro,
     program: (row.program as ProgramDay[] | null) ?? [],
-    schedule: (row.schedule as ScheduleRow[] | null) ?? [],
-    includes: (row.includes as string[] | null) ?? [],
-    bring: (row.bring as string[] | null) ?? [],
+    // Coerce each day to the full shape. The column was seeded out-of-band, so
+    // defend against rows missing `note`/`bullets` rather than trusting the cast.
+    days: ((row.days as Partial<WorkshopDay>[] | null) ?? []).map((d) => ({
+      day: d.day ?? '',
+      title: d.title ?? '',
+      note: d.note ?? '',
+      bullets: Array.isArray(d.bullets) ? d.bullets : [],
+    })),
     tariffs: (row.tariffs as Tariff[] | null) ?? [],
     gallery: (row.gallery as GalleryItem[] | null) ?? [],
     faq: (row.faq as FaqItem[] | null) ?? [],
