@@ -10,7 +10,11 @@ import { RichTextEditor } from '@/components/rich-text-editor'
 import { RichText } from '@/components/rich-text'
 import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
-import { updateWorkshop, deleteWorkshopApplication } from '@/app/workshop/actions'
+import {
+  updateWorkshop,
+  deleteWorkshopApplication,
+  deleteWorkshopSubscriber,
+} from '@/app/workshop/actions'
 import type {
   Workshop,
   ProgramDay,
@@ -34,9 +38,16 @@ type Application = {
   created_at: string
 }
 
+type Subscriber = {
+  id: string
+  email: string
+  created_at: string
+}
+
 type Props = {
   workshop: Workshop
   applications: Application[]
+  subscribers: Subscriber[]
   supabaseUrl: string
 }
 
@@ -78,7 +89,7 @@ function stripId<T extends { _id: string }>(item: T): Omit<T, '_id'> {
   return rest
 }
 
-export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
+export function WorkshopTab({ workshop, applications, subscribers, supabaseUrl }: Props) {
   const [state, setState] = useState<LocalState>(() => ({
     ...workshop,
     program: workshop.program.map(withId),
@@ -425,6 +436,17 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
           <p className="text-sm text-muted-foreground">Заявок пока нет.</p>
         ) : (
           <ApplicationsTable applications={applications} />
+        )}
+      </Section>
+
+      {/* Subscribers list — emails captured by the closed-sales Subscribe band. */}
+      <Section title="Подписчики">
+        {subscribers.length === 0 ? (
+          <p data-testid="subscribers-empty" className="text-sm text-muted-foreground">
+            Пока никто не подписался.
+          </p>
+        ) : (
+          <SubscribersTable subscribers={subscribers} />
         )}
       </Section>
     </div>
@@ -859,6 +881,59 @@ function ApplicationsTable({ applications }: { applications: Application[] }) {
                   size="sm"
                   variant="ghost"
                   onClick={() => remove(a.id, a.name)}
+                  disabled={pending}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function SubscribersTable({ subscribers }: { subscribers: Subscriber[] }) {
+  const [pending, startTransition] = useTransition()
+  const remove = (id: string, email: string) => {
+    if (!confirm(`Удалить подписчика «${email}»?`)) return
+    startTransition(async () => {
+      await deleteWorkshopSubscriber(id)
+    })
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b text-left text-muted-foreground">
+            <th className="py-2 pr-3 font-medium">Дата</th>
+            <th className="py-2 pr-3 font-medium">Email</th>
+            <th className="py-2 pr-3 font-medium" />
+          </tr>
+        </thead>
+        <tbody>
+          {subscribers.map((s) => (
+            <tr key={s.id} data-testid="subscriber-row" className="border-b align-top">
+              <td className="py-2 pr-3 text-xs text-muted-foreground whitespace-nowrap">
+                {new Date(s.created_at).toLocaleString('ru')}
+              </td>
+              <td className="py-2 pr-3">
+                <a
+                  href={`mailto:${s.email}`}
+                  className="underline underline-offset-2 hover:no-underline"
+                >
+                  {s.email}
+                </a>
+              </td>
+              <td className="py-2 pr-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => remove(s.id, s.email)}
                   disabled={pending}
                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 >

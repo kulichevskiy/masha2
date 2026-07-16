@@ -335,3 +335,19 @@ export async function deleteWorkshopApplication(id: string): Promise<void> {
 
   revalidatePath('/admin')
 }
+
+export async function deleteWorkshopSubscriber(id: string): Promise<void> {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const { error } = await supabase
+    .from('workshop_subscribers')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    throw new Error(`Failed to delete workshop subscriber: ${error.message}`)
+  }
+
+  revalidatePath('/admin')
+}
