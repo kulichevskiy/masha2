@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { SectionNav } from "./section-nav"
 
 export function TopNav() {
   return (
@@ -15,6 +16,8 @@ export function TopNav() {
             </Link>
             <p className="text-s md:text-m font-inter font-normal text-gray-500 text-center tracking-wider md:tracking-widest lowercase mt-0 md:mt-0 leading-relaxed">Portrait and editorial photographer</p>
           </div>
+          {/* Section navigation — sits under the tagline on every public page. */}
+          <SectionNav />
         </div>
       </div>
     </nav>
