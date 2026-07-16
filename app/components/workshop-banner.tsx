@@ -1,6 +1,6 @@
 // Home-page banner — Entry E from the design exploration.
-// Renders nothing when the workshop is hidden; RLS already gates it but we
-// also explicitly guard `is_visible` so the admin reader path can't leak it.
+// Only advertises the workshop while sales are open — when sales_open is false
+// the page still lives at /workshop (in Subscribe mode), but the banner hides.
 
 import Link from 'next/link'
 import { getPublicWorkshop, workshopPhotoUrl } from '../workshop/data'
@@ -9,7 +9,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 
 export async function WorkshopBanner() {
   const workshop = await getPublicWorkshop()
-  if (!workshop || !workshop.is_visible || !workshop.title) return null
+  if (!workshop || !workshop.sales_open || !workshop.title) return null
 
   const heroUrl = workshopPhotoUrl(SUPABASE_URL, workshop.hero_photo_path)
 

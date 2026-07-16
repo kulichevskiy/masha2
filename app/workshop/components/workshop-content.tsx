@@ -6,6 +6,7 @@
 import { RichText } from '@/components/rich-text'
 import { TariffsBand } from './tariffs-band'
 import { ApplyBand } from './apply-band'
+import { SubscribeBand } from './subscribe-band'
 import { IntakeProvider } from './intake-context'
 import type { Workshop } from '../data'
 
@@ -31,7 +32,8 @@ type ChapterKey =
 function buildChapters(
   hasTariffs: boolean,
   hasGallery: boolean,
-  hasFaq: boolean
+  hasFaq: boolean,
+  salesOpen: boolean
 ): { key: ChapterKey; label: string }[] {
   const base: { key: ChapterKey; label: string }[] = [
     { key: 'idea', label: 'The idea' },
@@ -41,7 +43,9 @@ function buildChapters(
   if (hasTariffs) base.push({ key: 'tariffs', label: 'Pricing' })
   if (hasGallery) base.push({ key: 'gallery', label: 'From the practice' })
   if (hasFaq) base.push({ key: 'questions', label: 'Questions' })
-  base.push({ key: 'apply', label: 'Apply' })
+  // The closing chapter is the same slot either way — it just swaps the Apply
+  // form for the Subscribe band (and its label) when sales are closed.
+  base.push({ key: 'apply', label: salesOpen ? 'Apply' : 'Subscribe' })
   return base
 }
 
@@ -91,7 +95,8 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
   const hasGallery = galleryItems.length > 0
   const hasFaq = workshop.faq.length > 0
   const hasTariffs = workshop.tariffs.length > 0
-  const chapters = buildChapters(hasTariffs, hasGallery, hasFaq)
+  const salesOpen = workshop.sales_open
+  const chapters = buildChapters(hasTariffs, hasGallery, hasFaq, salesOpen)
 
   // Hero price: surface both intake prices ("450 € / 600 €") pulled from the
   // short and full/featured tariff rows. Falls back to the single legacy
@@ -190,12 +195,14 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
 
           <div className="mt-6 md:mt-14 flex gap-3 md:gap-4">
             <a
-              href="#apply"
+              href={salesOpen ? '#apply' : '#subscribe'}
               className="bg-white text-black px-0 md:px-14 py-3.5 md:py-4 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase text-center flex-[1.4] md:flex-none md:inline-block hover:bg-white/90 transition-colors"
             >
-              Join the workshop →
+              {salesOpen ? 'Join the workshop →' : 'Notify me →'}
             </a>
-            {(heroPrice || workshop.seats) && (
+            {/* Secondary price/seats pill only when sales are open — with the
+                Apply band gone there's nothing to "save" toward. */}
+            {salesOpen && (heroPrice || workshop.seats) && (
               <span className="bg-transparent text-white border border-white/50 px-0 md:px-10 py-3.5 md:py-4 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase text-center flex-1 md:flex-none md:inline-block">
                 <span className="md:hidden">Save</span>
                 <span className="hidden md:inline">
@@ -360,6 +367,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
           n={chapterN('tariffs')}
           tariffs={workshop.tariffs}
           intro={workshop.tariffs_intro}
+          salesOpen={salesOpen}
         />
       )}
 
@@ -449,8 +457,13 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         </section>
       )}
 
-      {/* ───────── Apply — black plate (picker + form + meta) ───────── */}
-      <ApplyBand n={chapterN('apply')} workshop={workshop} />
+      {/* ───────── Closing band — Apply when sales are open, Subscribe when
+          closed. Both are the black plate that closes the page. ───────── */}
+      {salesOpen ? (
+        <ApplyBand n={chapterN('apply')} workshop={workshop} />
+      ) : (
+        <SubscribeBand n={chapterN('apply')} workshop={workshop} />
+      )}
 
     </div>
     </IntakeProvider>

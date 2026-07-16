@@ -1,5 +1,5 @@
 // Workshop content reader. Two entry points by audience:
-//   - getPublicWorkshop(): RLS-gated (returns null when is_visible = false).
+//   - getPublicWorkshop(): the public /workshop page — always returns the row.
 //   - getAdminWorkshop(): service-role; always returns the row.
 // Both convert the raw row + jsonb columns into a typed Workshop.
 
@@ -53,7 +53,7 @@ export type Tariff = {
 
 export type Workshop = {
   id: string
-  is_visible: boolean
+  sales_open: boolean
   workshop_number: string | null
   title: string | null
   tagline: string | null
@@ -67,6 +67,8 @@ export type Workshop = {
   the_idea_quote: string | null
   apply_heading: string | null
   apply_intro: string | null
+  closed_heading: string | null
+  closed_intro: string | null
   tariffs_intro: string | null
   program: ProgramDay[]
   days: WorkshopDay[]
@@ -81,7 +83,7 @@ export type Workshop = {
 function normalise(row: WorkshopRow): Workshop {
   return {
     id: row.id,
-    is_visible: row.is_visible,
+    sales_open: row.sales_open,
     workshop_number: row.workshop_number,
     title: row.title,
     tagline: row.tagline,
@@ -95,6 +97,8 @@ function normalise(row: WorkshopRow): Workshop {
     the_idea_quote: row.the_idea_quote,
     apply_heading: row.apply_heading,
     apply_intro: row.apply_intro,
+    closed_heading: row.closed_heading,
+    closed_intro: row.closed_intro,
     tariffs_intro: row.tariffs_intro,
     program: (row.program as ProgramDay[] | null) ?? [],
     // Coerce each day to the full shape. The column was seeded out-of-band, so
@@ -113,14 +117,11 @@ function normalise(row: WorkshopRow): Workshop {
 
 export async function getPublicWorkshop(): Promise<Workshop | null> {
   const supabase = await createClient()
-  // Explicit visibility filter. RLS already hides the row for anon, but the
-  // cookie-backed server client picks up the admin's session on /workshop,
-  // and the "Admins can view all workshop" policy would otherwise expose
-  // hidden drafts to logged-in admins on the public route.
+  // The page is always live — sales_open decides Apply vs Subscribe, not
+  // visibility — so there's no filter here: everyone reads the singleton row.
   const { data, error } = await supabase
     .from('workshop')
     .select('*')
-    .eq('is_visible', true)
     .limit(1)
     .maybeSingle()
   if (error || !data) return null

@@ -15,13 +15,20 @@ vi.mock('./workshop-apply-form', () => ({
   WorkshopApplyForm: () => <div data-testid="apply-form-stub">apply form</div>,
 }))
 
+// The Subscribe band is a client component that imports the workshop server
+// action; stub the action so rendering it in jsdom doesn't drag in the
+// server-action import chain. The band itself renders for real.
+vi.mock('../actions', () => ({
+  submitWorkshopSubscription: vi.fn(async () => ({ ok: true })),
+}))
+
 import { WorkshopContent } from './workshop-content'
 import { TariffsBand } from './tariffs-band'
 import { IntakeProvider } from './intake-context'
 
 const SAMPLE: Workshop = {
   id: 'w1',
-  is_visible: true,
+  sales_open: true,
   workshop_number: 'Workshop №01',
   title: 'Portrait Workshop · Berlin',
   tagline: 'Three days inside a working portrait practice.',
@@ -35,6 +42,8 @@ const SAMPLE: Workshop = {
   the_idea_quote: 'People are seen, not just photographed.',
   apply_heading: 'Six seats. One of them is yours?',
   apply_intro: '<p>I read every application.</p>',
+  closed_heading: "The next workshop isn't open yet",
+  closed_intro: '<p>Leave your email and hear first when the next one opens.</p>',
   tariffs_intro:
     '<p>Same group, same room, same studio. The two-day workshop is the conversation and the shooting; the three-day workshop adds the third day — the long edit, where the work becomes a body of work.</p>',
   program: [
@@ -125,6 +134,31 @@ describe('<WorkshopContent />', () => {
     expect(text).toContain('Six seats. One of them is yours?')
     // apply form stub is mounted.
     expect(container.querySelector('[data-testid="apply-form-stub"]')).not.toBeNull()
+  })
+
+  it('swaps the Apply band for the Subscribe band when sales are closed', () => {
+    const workshop: Workshop = { ...SAMPLE, sales_open: false }
+    const { container } = render(
+      <WorkshopContent workshop={workshop} publicUrlFor={() => null} />
+    )
+    const text = container.textContent ?? ''
+
+    // Subscribe band is up: its heading/intro and the notify-me controls show;
+    // the application form does not.
+    expect(container.querySelector('#subscribe')).not.toBeNull()
+    expect(container.querySelector('[data-testid="apply-form-stub"]')).toBeNull()
+    expect(text).toContain("The next workshop isn't open yet")
+    expect(text).toContain('Notify me')
+
+    // Hero CTA points at the subscribe band, not apply.
+    const heroCta = container.querySelector('a[href="#subscribe"]')
+    expect(heroCta).not.toBeNull()
+    expect(heroCta!.textContent).toContain('Notify me')
+    expect(container.querySelector('a[href="#apply"]')).toBeNull()
+
+    // Closing chapter is relabelled in the desktop strip.
+    expect(text).toContain('Subscribe')
+    expect(text).not.toMatch(/—\s*Apply/)
   })
 
   it('shows both intake prices in the hero, derived from the tariffs', () => {
