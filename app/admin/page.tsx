@@ -134,12 +134,23 @@ async function WorkshopTabSection() {
     throw new Error(`Failed to fetch workshop applications: ${error.message}`)
   }
 
+  const { data: subscribers, error: subscribersError } = await supabase
+    .from('workshop_subscribers')
+    .select('id, email, created_at')
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  if (subscribersError) {
+    throw new Error(`Failed to fetch workshop subscribers: ${subscribersError.message}`)
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
   return (
     <WorkshopTab
       workshop={workshop}
       applications={applications ?? []}
+      subscribers={subscribers ?? []}
       supabaseUrl={supabaseUrl}
     />
   )
