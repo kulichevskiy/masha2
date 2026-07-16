@@ -5,9 +5,14 @@ import { GripVertical, Trash2 } from 'lucide-react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { updatePhoto, deletePhoto } from '../actions'
+import {
+  PHOTO_PAGES,
+  PHOTO_PAGE_LABELS,
+  togglePhotoPage,
+  type PhotoPage,
+} from '@/lib/photo-pages'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Photo = Tables<'photos'>
@@ -22,7 +27,11 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
   const [title, setTitle] = useState(photo.title || '')
   const [description, setDescription] = useState(photo.description || '')
   const [altText, setAltText] = useState(photo.alt_text || '')
-  const [isVisible, setIsVisible] = useState(photo.is_visible)
+  // Normalise the stored array to the known sections in canonical order so
+  // toggling stays consistent even if the row carries stray/legacy values.
+  const [pages, setPages] = useState<PhotoPage[]>(
+    PHOTO_PAGES.filter((p) => photo.pages.includes(p))
+  )
   const [isPending, startTransition] = useTransition()
 
   const {
@@ -48,8 +57,7 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
         title?: string | null
         description?: string | null
         alt_text?: string | null
-        is_visible?: boolean
-      } = { is_visible: isVisible }
+      } = {}
 
       if (field === 'title') {
         updates.title = title || null
@@ -83,10 +91,11 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
     }
   }
 
-  const handleToggleVisible = (checked: boolean) => {
-    setIsVisible(checked)
+  const handleTogglePage = (page: PhotoPage) => {
+    const next = togglePhotoPage(pages, page)
+    setPages(next)
     startTransition(async () => {
-      await updatePhoto(photo.id, { is_visible: checked })
+      await updatePhoto(photo.id, { pages: next })
     })
   }
 
@@ -209,13 +218,29 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
         )}
       </td>
 
-      {/* Is Visible */}
-      <td className="p-2 text-center">
-        <Switch
-          checked={isVisible}
-          onCheckedChange={handleToggleVisible}
-          disabled={isPending}
-        />
+      {/* Sections (pages[]) — empty selection hides the photo everywhere */}
+      <td className="p-2">
+        <div className="flex flex-wrap justify-center gap-1.5">
+          {PHOTO_PAGES.map((page) => {
+            const active = pages.includes(page)
+            return (
+              <button
+                key={page}
+                type="button"
+                onClick={() => handleTogglePage(page)}
+                disabled={isPending}
+                aria-pressed={active}
+                className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
+                  active
+                    ? 'border-foreground bg-foreground text-background'
+                    : 'border-input text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                {PHOTO_PAGE_LABELS[page]}
+              </button>
+            )
+          })}
+        </div>
       </td>
 
       {/* Delete */}

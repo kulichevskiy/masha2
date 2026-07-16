@@ -1,5 +1,6 @@
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/server"
+import type { PhotoPage } from "@/lib/photo-pages"
 
 // Row span patterns for visual variety in the masonry grid
 const ROW_SPAN_PATTERNS = [
@@ -15,14 +16,16 @@ const ROW_SPAN_PATTERNS = [
   "row-span-2",
 ]
 
-export async function MasonryGrid() {
+export async function MasonryGrid({ page = 'portraits' }: { page?: PhotoPage }) {
   const supabase = await createClient()
-  
-  // Fetch photos from database, ordered by position
+
+  // Fetch photos tagged onto this section, ordered by position. `contains`
+  // maps to `pages @> {page}` — the photo appears here when the section is one
+  // of its pages. RLS already hides rows with an empty pages array.
   const { data: photos, error } = await supabase
     .from('photos')
     .select('id, storage_path, title, alt_text, position')
-    .eq('is_visible', true)
+    .contains('pages', [page])
     .order('position', { ascending: true })
 
   if (error) {

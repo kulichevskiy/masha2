@@ -86,7 +86,7 @@ export function PhotosTable({ photos: initialPhotos, supabaseUrl }: PhotosTableP
                 Alt текст
               </th>
               <th className="p-2 text-center text-sm font-medium text-muted-foreground">
-                Видимость
+                Разделы
               </th>
               <th className="p-2 text-center text-sm font-medium text-muted-foreground">
                 Действия
