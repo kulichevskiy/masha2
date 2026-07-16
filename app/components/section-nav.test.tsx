@@ -1,0 +1,67 @@
+/**
+ * Site-wide section nav — a centered row of links (PORTRAITS · KIDS · WORKSHOP)
+ * that sits under the wordmark/tagline on every public page. The current
+ * section is marked active (black + underline, aria-current); the others read
+ * muted. Routing: Portraits → /, Kids → /kids, Workshop → /workshop.
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render } from '@testing-library/react'
+import { SectionNav } from './section-nav'
+
+let pathname = '/'
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname,
+}))
+
+beforeEach(() => {
+  pathname = '/'
+})
+
+describe('<SectionNav />', () => {
+  it('renders the three sections with their routes and uppercase labels', () => {
+    const { container } = render(<SectionNav />)
+
+    const portraits = container.querySelector('a[href="/"]')
+    const kids = container.querySelector('a[href="/kids"]')
+    const workshop = container.querySelector('a[href="/workshop"]')
+
+    expect(portraits?.textContent?.toLowerCase()).toContain('portraits')
+    expect(kids?.textContent?.toLowerCase()).toContain('kids')
+    expect(workshop?.textContent?.toLowerCase()).toContain('workshop')
+
+    // Uppercase + wide tracking come from CSS on the row, not literal casing.
+    const nav = container.querySelector('nav')
+    expect(nav?.className).toContain('uppercase')
+    expect(nav?.className).toContain('tracking-widest')
+  })
+
+  it('marks Portraits active on the home route', () => {
+    pathname = '/'
+    const { container } = render(<SectionNav />)
+
+    const portraits = container.querySelector('a[href="/"]')
+    const kids = container.querySelector('a[href="/kids"]')
+
+    expect(portraits?.getAttribute('aria-current')).toBe('page')
+    expect(portraits?.className).toContain('text-black')
+    expect(kids?.getAttribute('aria-current')).toBeNull()
+    expect(kids?.className).toContain('text-gray-500')
+  })
+
+  it('marks Kids active on /kids', () => {
+    pathname = '/kids'
+    const { container } = render(<SectionNav />)
+
+    expect(container.querySelector('a[href="/kids"]')?.getAttribute('aria-current')).toBe('page')
+    // Home must NOT light up on a non-home route (exact match for "/").
+    expect(container.querySelector('a[href="/"]')?.getAttribute('aria-current')).toBeNull()
+  })
+
+  it('marks Workshop active on /workshop', () => {
+    pathname = '/workshop'
+    const { container } = render(<SectionNav />)
+
+    expect(container.querySelector('a[href="/workshop"]')?.getAttribute('aria-current')).toBe('page')
+    expect(container.querySelector('a[href="/"]')?.getAttribute('aria-current')).toBeNull()
+  })
+})
