@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { PhotoPage } from '@/lib/photo-pages'
+import { reassignSlots } from '@/lib/photo-filter'
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>
 
@@ -13,18 +14,27 @@ async function requireAdmin(supabase: ServerSupabase) {
   if (error || !isAdmin) throw new Error('Forbidden')
 }
 
+// Reorder a set of photos. `orderedIds` is the new visual order of whatever the
+// admin sees — the whole table under the `Все` filter, or just the filtered
+// subset otherwise. The subset is renumbered over its own existing position
+// slots so photos outside the current filter never move (see reassignSlots).
 export async function reorderPhotos(orderedIds: string[]) {
   const supabase = await createClient()
 
   await requireAdmin(supabase)
 
-  // Update positions based on the new order
-  const updates = orderedIds.map((id, index) => ({
-    id,
-    position: index + 1,
-  }))
+  const { data: rows, error: fetchError } = await supabase
+    .from('photos')
+    .select('id, position')
+    .in('id', orderedIds)
 
-  // Batch update positions
+  if (fetchError) {
+    throw new Error(`Failed to read positions: ${fetchError.message}`)
+  }
+
+  const currentPositions = new Map((rows ?? []).map((r) => [r.id, r.position]))
+  const updates = reassignSlots(orderedIds, currentPositions)
+
   for (const update of updates) {
     const { error } = await supabase
       .from('photos')
