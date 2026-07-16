@@ -77,21 +77,21 @@ export async function submitWorkshopApplication(
 
   const supabase = createAdminClient()
 
-  // Re-check the visibility gate server-side. The page/banner already disappear
-  // when is_visible flips false, but a stale browser tab can still POST this
-  // action. Without this check, applications would keep landing in the DB after
-  // intake is closed.
+  // Re-check the sales gate server-side. The Apply band is already swapped for
+  // the Subscribe band when sales_open flips false, but a stale browser tab can
+  // still POST this action. Without this check, applications would keep landing
+  // in the DB after sales are closed.
   const { data: workshopRow, error: workshopErr } = await supabase
     .from('workshop')
-    .select('is_visible, tariffs')
+    .select('sales_open, tariffs')
     .limit(1)
     .maybeSingle()
 
   if (workshopErr) {
-    console.error('workshop: failed to read visibility', workshopErr)
+    console.error('workshop: failed to read sales status', workshopErr)
     return { ok: false, error: 'Something went wrong on our side. Please try again later.' }
   }
-  if (!workshopRow || !workshopRow.is_visible) {
+  if (!workshopRow || !workshopRow.sales_open) {
     return { ok: false, error: 'Applications are closed.' }
   }
 
@@ -174,6 +174,106 @@ export async function submitWorkshopApplication(
       to: recipient,
       replyTo: email,
       subject: 'New workshop application',
+      text: body,
+    })
+    if (result.error) {
+      console.error('workshop: resend returned error', result.error)
+    }
+  } catch (err) {
+    console.error('workshop: resend threw', err)
+  }
+
+  return { ok: true }
+}
+
+// Announcement-list capture from the closed-sales Subscribe band. Mirrors
+// submitGiftOrder: honeypot + email validation + per-IP rate limit, a
+// service-role insert into workshop_subscribers, and a best-effort Resend
+// notification to Maria. Deliberately does not gate on sales_open — a straggling
+// subscribe after sales reopen is harmless, and we'd rather capture the address.
+export async function submitWorkshopSubscription(
+  formData: FormData
+): Promise<WorkshopSubmitResult> {
+  // Honeypot — bots that fill the hidden `website` field get silently dropped.
+  const honeypot = (formData.get('website') ?? '').toString()
+  if (honeypot.trim() !== '') return { ok: true }
+
+  const email = (formData.get('email') ?? '').toString().trim()
+  if (!EMAIL_RE.test(email) || email.length > 254) {
+    return { ok: false, error: 'Please enter a valid email.' }
+  }
+
+  const ip = await getClientIp()
+  if (!checkRate(`workshop-subscribe:${ip}`)) {
+    return { ok: false, error: 'Too many requests — try again in a few minutes.' }
+  }
+
+  const h = await headers()
+  const userAgent = h.get('user-agent')?.slice(0, 500) ?? null
+  const ipHash = createHash('sha256')
+    .update(`${ip}:${process.env.BOOKING_IP_SALT ?? ''}`)
+    .digest('hex')
+
+  const supabase = createAdminClient()
+
+  const { error: insertErr } = await supabase.from('workshop_subscribers').insert({
+    email,
+    ip_hash: ipHash,
+    user_agent: userAgent,
+  })
+
+  if (insertErr) {
+    console.error('workshop: subscriber insert failed', insertErr)
+    return { ok: false, error: 'Could not save your email. Please try again.' }
+  }
+
+  const { data: recipientRow, error: recipientErr } = await supabase
+    .from('app_settings')
+    .select('value')
+    .eq('key', 'booking_recipient_email')
+    .maybeSingle()
+
+  if (recipientErr) {
+    // The address is already saved; the notification is best-effort. Log and
+    // return ok so the subscriber sees success.
+    console.error('workshop: failed to read recipient email', recipientErr)
+    return { ok: true }
+  }
+  const recipient = recipientRow?.value?.trim()
+
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey || !recipient) {
+    // Row is already saved — subscriber is not lost; log and move on.
+    if (!apiKey) {
+      console.error('workshop: RESEND_API_KEY is not set; skipping subscriber notification')
+    } else {
+      console.error('workshop: recipient email not configured; skipping subscriber notification')
+    }
+    return { ok: true }
+  }
+
+  // Same display-name-as-sender trick the booking flow uses, so the inbox shows
+  // "subscriber@example.com via workshop"; Reply-To still goes to the subscriber.
+  const fromAddressRaw = process.env.BOOKING_FROM_ADDRESS ?? 'onboarding@resend.dev'
+  const fromAddress = fromAddressRaw.match(/<([^>]+)>/)?.[1]?.trim() ?? fromAddressRaw.trim()
+  const displayName = email.replace(/["<>\r\n]/g, '').slice(0, 80)
+  const from = `"${displayName} via workshop" <${fromAddress}>`
+
+  const body = [
+    'New workshop subscriber',
+    '',
+    `Email: ${email}`,
+    '',
+    `Received: ${new Date().toISOString()}`,
+  ].join('\n')
+
+  try {
+    const resend = new Resend(apiKey)
+    const result = await resend.emails.send({
+      from,
+      to: recipient,
+      replyTo: email,
+      subject: 'New workshop subscriber',
       text: body,
     })
     if (result.error) {

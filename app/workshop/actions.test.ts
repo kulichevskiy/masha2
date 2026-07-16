@@ -16,7 +16,7 @@ const TARIFFS = [
   { key: 'full', name: 'Full intake', price: '600 €' },
 ]
 const mockWorkshopMaybeSingle = vi.fn(async () => ({
-  data: { is_visible: true, tariffs: TARIFFS },
+  data: { sales_open: true, tariffs: TARIFFS },
   error: null,
 }))
 const mockInsert = vi.fn(async () => ({ error: null }))
@@ -76,7 +76,7 @@ describe('submitWorkshopApplication validation', () => {
     mockRecipientMaybeSingle.mockClear()
     mockWorkshopMaybeSingle.mockClear()
     mockWorkshopMaybeSingle.mockResolvedValue({
-      data: { is_visible: true, tariffs: TARIFFS },
+      data: { sales_open: true, tariffs: TARIFFS },
       error: null,
     })
     mockInsert.mockClear()
@@ -122,9 +122,9 @@ describe('submitWorkshopApplication validation', () => {
     expect(mockInsert).not.toHaveBeenCalled()
   })
 
-  it('rejects when the workshop is hidden (closes intake server-side)', async () => {
+  it('rejects when sales are closed (closes intake server-side)', async () => {
     mockWorkshopMaybeSingle.mockResolvedValueOnce({
-      data: { is_visible: false, tariffs: TARIFFS },
+      data: { sales_open: false, tariffs: TARIFFS },
       error: null,
     })
     const submit = await loadAction()

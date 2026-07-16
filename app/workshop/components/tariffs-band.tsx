@@ -19,10 +19,14 @@ export function TariffsBand({
   n,
   tariffs,
   intro,
+  salesOpen = true,
 }: {
   n: number
   tariffs: Tariff[]
   intro: string | null
+  // When false the closing band is Subscribe, not Apply, so the card CTAs point
+  // there and read "Notify me" instead of "Join the … workshop".
+  salesOpen?: boolean
 }) {
   return (
     <section className="bg-[#f2f0ec] px-5 md:px-10 pt-14 md:pt-28 pb-14 md:pb-24">
@@ -50,7 +54,7 @@ export function TariffsBand({
 
         <div className="grid grid-cols-1 md:grid-cols-2 border-t border-black/10 md:border-t-0">
           {tariffs.map((t, i) => (
-            <TariffCard key={t.key} tariff={t} first={i === 0} />
+            <TariffCard key={t.key} tariff={t} first={i === 0} salesOpen={salesOpen} />
           ))}
         </div>
       </div>
@@ -58,7 +62,15 @@ export function TariffsBand({
   )
 }
 
-function TariffCard({ tariff, first }: { tariff: Tariff; first: boolean }) {
+function TariffCard({
+  tariff,
+  first,
+  salesOpen,
+}: {
+  tariff: Tariff
+  first: boolean
+  salesOpen: boolean
+}) {
   const { setIntake } = useIntake()
   const featured = tariff.featured
   // Stacked on mobile → top hairline on every card after the first. Side-by-side
@@ -133,7 +145,7 @@ function TariffCard({ tariff, first }: { tariff: Tariff; first: boolean }) {
       )}
 
       <a
-        href="#apply"
+        href={salesOpen ? '#apply' : '#subscribe'}
         onClick={() => setIntake(tariff.key)}
         className={
           'mt-auto inline-block text-center px-8 py-3.5 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase transition-colors border border-foreground ' +
@@ -142,7 +154,7 @@ function TariffCard({ tariff, first }: { tariff: Tariff; first: boolean }) {
             : 'bg-transparent text-foreground hover:bg-black/5')
         }
       >
-        {`Join the ${tariff.days} workshop`}
+        {salesOpen ? `Join the ${tariff.days} workshop` : 'Notify me'}
       </a>
     </div>
   )

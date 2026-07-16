@@ -251,6 +251,8 @@ export type Database = {
         Row: {
           apply_heading: string | null
           apply_intro: string | null
+          closed_heading: string | null
+          closed_intro: string | null
           created_at: string
           dates: string | null
           days: Json
@@ -259,10 +261,10 @@ export type Database = {
           hero_photo_path: string | null
           id: string
           intro: string | null
-          is_visible: boolean
           location: string | null
           price: string | null
           program: Json
+          sales_open: boolean
           seats: string | null
           tagline: string | null
           tariffs: Json
@@ -276,6 +278,8 @@ export type Database = {
         Insert: {
           apply_heading?: string | null
           apply_intro?: string | null
+          closed_heading?: string | null
+          closed_intro?: string | null
           created_at?: string
           dates?: string | null
           days?: Json
@@ -284,10 +288,10 @@ export type Database = {
           hero_photo_path?: string | null
           id?: string
           intro?: string | null
-          is_visible?: boolean
           location?: string | null
           price?: string | null
           program?: Json
+          sales_open?: boolean
           seats?: string | null
           tagline?: string | null
           tariffs?: Json
@@ -301,6 +305,8 @@ export type Database = {
         Update: {
           apply_heading?: string | null
           apply_intro?: string | null
+          closed_heading?: string | null
+          closed_intro?: string | null
           created_at?: string
           dates?: string | null
           days?: Json
@@ -309,10 +315,10 @@ export type Database = {
           hero_photo_path?: string | null
           id?: string
           intro?: string | null
-          is_visible?: boolean
           location?: string | null
           price?: string | null
           program?: Json
+          sales_open?: boolean
           seats?: string | null
           tagline?: string | null
           tariffs?: Json
@@ -357,6 +363,30 @@ export type Database = {
           ip_hash?: string | null
           message?: string | null
           name?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      workshop_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          ip_hash: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          ip_hash?: string | null
           user_agent?: string | null
         }
         Relationships: []

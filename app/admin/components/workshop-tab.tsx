@@ -99,7 +99,7 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
     startTransition(async () => {
       try {
         await updateWorkshop({
-          is_visible: state.is_visible,
+          sales_open: state.sales_open,
           workshop_number: state.workshop_number,
           title: state.title,
           tagline: state.tagline,
@@ -113,6 +113,8 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
           the_idea_quote: state.the_idea_quote,
           apply_heading: state.apply_heading,
           apply_intro: state.apply_intro,
+          closed_heading: state.closed_heading,
+          closed_intro: state.closed_intro,
           program: state.program.map(stripId),
           days: state.days,
           tariffs_intro: state.tariffs_intro,
@@ -127,12 +129,12 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
     })
   }
 
-  const toggleVisible = (checked: boolean) => {
-    const next = { ...state, is_visible: checked }
+  const toggleSalesOpen = (checked: boolean) => {
+    const next = { ...state, sales_open: checked }
     setState(next)
     startTransition(async () => {
       try {
-        await updateWorkshop({ is_visible: checked })
+        await updateWorkshop({ sales_open: checked })
         setSavedAt(new Date())
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to save')
@@ -146,13 +148,13 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
       <div className="sticky top-0 z-10 bg-background border-b border-border py-3 -mx-4 px-4 sm:-mx-0 sm:px-0 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Switch
-            id="workshop-visible"
-            checked={state.is_visible}
-            onCheckedChange={toggleVisible}
+            id="workshop-sales-open"
+            checked={state.sales_open}
+            onCheckedChange={toggleSalesOpen}
             disabled={pending}
           />
-          <Label htmlFor="workshop-visible" className="cursor-pointer">
-            {state.is_visible ? 'Видим публично' : 'Скрыт'}
+          <Label htmlFor="workshop-sales-open" className="cursor-pointer">
+            {state.sales_open ? 'Продажи открыты' : 'Продажи закрыты'}
           </Label>
         </div>
         <div className="flex items-center gap-3">
@@ -395,6 +397,24 @@ export function WorkshopTab({ workshop, applications, supabaseUrl }: Props) {
           <RichTextEditor
             value={state.apply_intro ?? ''}
             onChange={(html) => save({ apply_intro: html || null })}
+          />
+        </div>
+      </Section>
+
+      {/* Closed-sales Subscribe band — shown on the public page when sales are
+          closed (the toggle above is off). */}
+      <Section title="Когда продажи закрыты">
+        <Field
+          label="Заголовок"
+          value={state.closed_heading ?? ''}
+          onChange={(v) => save({ closed_heading: v || null })}
+          multiline
+        />
+        <div className="flex flex-col gap-1.5">
+          <Label>Текст под заголовком (rich text)</Label>
+          <RichTextEditor
+            value={state.closed_intro ?? ''}
+            onChange={(html) => save({ closed_intro: html || null })}
           />
         </div>
       </Section>
