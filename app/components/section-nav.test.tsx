@@ -1,8 +1,10 @@
 /**
  * Site-wide section nav — a centered row of links (PORTRAITS · KIDS · WORKSHOP)
- * that sits under the wordmark/tagline on every public page. The current
- * section is marked active (black + underline, aria-current); the others read
- * muted. Routing: Portraits → /, Kids → /kids, Workshop → /workshop.
+ * that sits under the wordmark/tagline on every public page. Styled to match the
+ * design source: Bebas Neue uppercase, wide tracking, no glyph separators. The
+ * current section reads full-strength black with a 1px underline (border-bottom)
+ * + aria-current; the others are the same near-black dimmed to 0.45 opacity.
+ * Routing: Portraits → /, Kids → /kids, Workshop → /workshop.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '@testing-library/react'
@@ -29,10 +31,13 @@ describe('<SectionNav />', () => {
     expect(kids?.textContent?.toLowerCase()).toContain('kids')
     expect(workshop?.textContent?.toLowerCase()).toContain('workshop')
 
-    // Uppercase + wide tracking come from CSS on the row, not literal casing.
+    // Bebas Neue + uppercase come from CSS on the row, not literal casing.
     const nav = container.querySelector('nav')
+    expect(nav?.className).toContain('font-bebas-neue')
     expect(nav?.className).toContain('uppercase')
-    expect(nav?.className).toContain('tracking-widest')
+
+    // No glyph separators between items — spacing carries the rhythm.
+    expect(container.textContent).not.toContain('·')
   })
 
   it('marks Portraits active on the home route', () => {
@@ -42,10 +47,13 @@ describe('<SectionNav />', () => {
     const portraits = container.querySelector('a[href="/"]')
     const kids = container.querySelector('a[href="/kids"]')
 
+    // Active: full opacity + underline via border-bottom; inactive: dimmed.
     expect(portraits?.getAttribute('aria-current')).toBe('page')
-    expect(portraits?.className).toContain('text-black')
+    expect(portraits?.className).toContain('border-black')
+    expect(portraits?.className).toContain('opacity-100')
     expect(kids?.getAttribute('aria-current')).toBeNull()
-    expect(kids?.className).toContain('text-gray-500')
+    expect(kids?.className).toContain('opacity-[0.45]')
+    expect(kids?.className).toContain('border-transparent')
   })
 
   it('marks Kids active on /kids', () => {
