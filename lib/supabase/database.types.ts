@@ -217,7 +217,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
-          is_visible: boolean
+          pages: string[]
           position: number
           storage_path: string
           title: string | null
@@ -228,7 +228,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          is_visible?: boolean
+          pages?: string[]
           position?: number
           storage_path: string
           title?: string | null
@@ -239,7 +239,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          is_visible?: boolean
+          pages?: string[]
           position?: number
           storage_path?: string
           title?: string | null

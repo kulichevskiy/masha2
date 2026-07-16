@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import type { PhotoPage } from '@/lib/photo-pages'
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>
 
@@ -44,7 +45,7 @@ export async function updatePhoto(
     title?: string | null
     description?: string | null
     alt_text?: string | null
-    is_visible?: boolean
+    pages?: PhotoPage[]
   }
 ) {
   const supabase = await createClient()
@@ -128,7 +129,7 @@ export async function createPhotosFromUploads(storagePaths: string[]) {
     description: null,
     alt_text: storagePath.replace(/\.[^/.]+$/, ''), // Use filename without extension as default alt_text
     position: startPosition - index, // Decrement to keep order (newest first)
-    is_visible: false, // New photos are hidden by default
+    pages: [] as string[], // New photos are hidden until assigned to a section
   }))
 
   const { error } = await supabase.from('photos').insert(photosToInsert)
