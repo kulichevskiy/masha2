@@ -216,34 +216,40 @@ export type Database = {
           alt_text: string | null
           created_at: string
           description: string | null
+          height: number | null
           id: string
           pages: string[]
           position: number
           storage_path: string
           title: string | null
           updated_at: string
+          width: number | null
         }
         Insert: {
           alt_text?: string | null
           created_at?: string
           description?: string | null
+          height?: number | null
           id?: string
           pages?: string[]
           position?: number
           storage_path: string
           title?: string | null
           updated_at?: string
+          width?: number | null
         }
         Update: {
           alt_text?: string | null
           created_at?: string
           description?: string | null
+          height?: number | null
           id?: string
           pages?: string[]
           position?: number
           storage_path?: string
           title?: string | null
           updated_at?: string
+          width?: number | null
         }
         Relationships: []
       }

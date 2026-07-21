@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { TopNav } from "./components/top-nav";
-import { MasonryGrid } from "./components/ui/masonry-grid";
+import { MasonryGrid, MasonryGridSkeleton } from "./components/ui/masonry-grid";
 import { Footer } from "./components/footer";
 import { FloatingCta } from "./components/floating-cta";
 import { WorkshopBanner } from "./components/workshop-banner";
@@ -21,23 +21,6 @@ export default function Home() {
       <Suspense fallback={null}>
         <FloatingCta />
       </Suspense>
-    </div>
-  );
-}
-
-function MasonryGridSkeleton() {
-  return (
-    <div className="w-full">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-[200px]">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <div
-            key={i}
-            className={`relative overflow-hidden bg-gray-200 animate-pulse ${
-              i % 3 === 2 ? "row-span-3" : "row-span-2"
-            }`}
-          />
-        ))}
-      </div>
     </div>
   );
 }

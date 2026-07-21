@@ -102,9 +102,9 @@ This is a portfolio for a portrait and editorial photographer — **the photogra
 - **Black & white only** on the portfolio grid. Full tonal range, deep blacks, pearly highlights, visible film grain. No color toning, no split tones.
 - **Cinematic, low-light sources.** Window light, overcast sky, interior lamps. Shadows are allowed to go to pure black.
 - **Tight crops + breathing room.** Portraits crop close; editorial frames include negative space (trees, fabric, architecture). Don't compose a frame without **one deliberate empty quadrant**.
-- **No borders, no shadows, no rounded corners on photographs.** Images sit flush to their cell. `overflow-hidden`, `object-cover`.
+- **No borders, no shadows, no rounded corners on photographs.** Each photo fills the column width and is shown at its **natural aspect ratio — the layout never crops it**. `overflow-hidden` on the frame clips only the hover zoom, not the image itself.
 - **Hover is a 5% scale-up over 500 ms.** `transition-transform duration-500 group-hover:scale-105` — the photograph subtly breathes into the viewer's attention.
-- **Masonry cadence.** Three columns on desktop, cells alternate `row-span-2` and `row-span-3` in a repeating 10-cell pattern to produce a calm but not mechanical rhythm. Gap is `4` (16 px). Auto-row height is 200 px.
+- **Masonry cadence.** A CSS multi-column flow — `columns-1 md:columns-2 lg:columns-3` — where photos flow top-to-bottom within a column, then to the next. Each photo sets its own height from its intrinsic dimensions (stored on `photos.width` / `photos.height`), so the rhythm comes from the photographs themselves, not a fixed row pattern. Column gap is `4` (16 px); each photo carries `mb-4` and `break-inside-avoid` so it never splits across columns.
 - **Color photography is permissible only on the booking page**, for the single full-width portrait of Maria herself — and even there it reads warm-neutral, not saturated.
 
 ### Spacing & layout

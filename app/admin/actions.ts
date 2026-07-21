@@ -113,7 +113,16 @@ export async function deletePhoto(id: string) {
   revalidatePath('/admin')
 }
 
-export async function createPhotosFromUploads(storagePaths: string[]) {
+// One uploaded file's storage path plus its intrinsic pixel dimensions, measured
+// client-side before upload. Dimensions may be null if the browser could not
+// decode the image — the feed falls back to a neutral aspect ratio for those.
+export type PhotoUpload = {
+  storagePath: string
+  width: number | null
+  height: number | null
+}
+
+export async function createPhotosFromUploads(uploads: PhotoUpload[]) {
   const supabase = await createClient()
 
   await requireAdmin(supabase)
@@ -133,13 +142,15 @@ export async function createPhotosFromUploads(storagePaths: string[]) {
       : 0
 
   // Create photo records for each uploaded file
-  const photosToInsert = storagePaths.map((storagePath, index) => ({
+  const photosToInsert = uploads.map(({ storagePath, width, height }, index) => ({
     storage_path: storagePath,
     title: null,
     description: null,
     alt_text: storagePath.replace(/\.[^/.]+$/, ''), // Use filename without extension as default alt_text
     position: startPosition - index, // Decrement to keep order (newest first)
     pages: [] as string[], // New photos are hidden until assigned to a section
+    width, // Intrinsic dimensions drive proportional (uncropped) rendering
+    height,
   }))
 
   const { error } = await supabase.from('photos').insert(photosToInsert)
