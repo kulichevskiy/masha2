@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 import { BookingForm } from "./booking-form"
 import { BookingFaq } from "./booking-faq"
 import { RichText } from "@/components/rich-text"
+import { PHOTO_IMAGE_QUALITY } from "@/lib/image-config"
 
 export const metadata = {
   title: "Booking",
@@ -39,6 +40,7 @@ export default async function BookPage() {
             alt="Maria Chevskaya"
             width={800}
             height={600}
+            quality={PHOTO_IMAGE_QUALITY}
             className="w-full"
           />
         </div>

@@ -1,6 +1,7 @@
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/server"
 import { resolveImageDimensions } from "@/lib/image-dimensions"
+import { PHOTO_IMAGE_QUALITY } from "@/lib/image-config"
 import type { PhotoPage } from "@/lib/photo-pages"
 
 // Placeholder aspect ratios for the loading skeleton — a fixed spread of
@@ -82,6 +83,7 @@ export async function MasonryGrid({ page = 'portraits' }: { page?: PhotoPage }) 
               alt={photo.alt}
               width={photo.width}
               height={photo.height}
+              quality={PHOTO_IMAGE_QUALITY}
               className="block h-auto w-full transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
