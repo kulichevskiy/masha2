@@ -146,7 +146,10 @@ export async function createPhotosFromUploads(uploads: PhotoUpload[]) {
     storage_path: storagePath,
     title: null,
     description: null,
-    alt_text: storagePath.replace(/\.[^/.]+$/, ''), // Use filename without extension as default alt_text
+    // Default alt_text is the original filename without its directory prefix or
+    // extension: `photos/<uuid>/IMG_1234.jpg` -> `IMG_1234`. Stripping the prefix
+    // keeps the default readable now that keys are namespaced per upload batch.
+    alt_text: storagePath.replace(/^.*\//, '').replace(/\.[^/.]+$/, ''),
     position: startPosition - index, // Decrement to keep order (newest first)
     pages: [] as string[], // New photos are hidden until assigned to a section
     width, // Intrinsic dimensions drive proportional (uncropped) rendering

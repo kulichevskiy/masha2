@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { RichTextEditor } from '@/components/rich-text-editor'
 import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
+import { newId } from '@/lib/id'
 import {
   updateGiftCertificate,
   deleteGiftCertificateRequest,
@@ -52,13 +53,6 @@ type LocalState = {
   body: string | null
   amounts: LocalAmount[]
   gallery: LocalGalleryItem[]
-}
-
-function newId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID()
-  }
-  return `id-${Math.random().toString(36).slice(2)}-${Date.now()}`
 }
 
 function withId<T>(item: T): WithId<T> {

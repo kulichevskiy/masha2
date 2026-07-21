@@ -10,6 +10,7 @@ import { RichTextEditor } from '@/components/rich-text-editor'
 import { RichText } from '@/components/rich-text'
 import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
+import { newId } from '@/lib/id'
 import {
   updateWorkshop,
   deleteWorkshopApplication,
@@ -71,13 +72,6 @@ type LocalState = Omit<Workshop, 'program' | 'gallery' | 'faq'> & {
   program: LocalProgramDay[]
   gallery: LocalGalleryItem[]
   faq: LocalFaqItem[]
-}
-
-function newId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID()
-  }
-  return `id-${Math.random().toString(36).slice(2)}-${Date.now()}`
 }
 
 function withId<T>(item: T): WithId<T> {
