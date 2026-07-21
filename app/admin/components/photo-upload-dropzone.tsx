@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
+import { newId } from '@/lib/id'
 import { createPhotosFromUploads } from '../actions'
 
 // Read a file's intrinsic pixel dimensions in the browser before upload, so the
@@ -28,8 +29,16 @@ async function measureImage(
 
 export function PhotoUploadDropzone() {
   const router = useRouter()
+  // Namespace every batch under a unique `photos/<uuid>/` prefix so two files
+  // that happen to share a filename (e.g. `IMG_1234.jpg` from two shoots) get
+  // distinct object keys and coexist instead of colliding. The original
+  // filename stays intact and readable inside the key. Bumped after each
+  // successful batch (see below) so a second batch in the same page session
+  // also can't collide. Mirrors the workshop/gift uploaders' sessionId pattern.
+  const [prefix, setPrefix] = useState<string>(() => `photos/${newId()}`)
   const uploadHook = useSupabaseUpload({
     bucketName: 'photos',
+    path: prefix,
     allowedMimeTypes: ['image/*'],
     maxFileSize: 10 * 1024 * 1024, // 10MB
     maxFiles: 50,
@@ -52,14 +61,15 @@ export function PhotoUploadDropzone() {
         newSuccesses.forEach((success) => processedSuccessesRef.current.add(success))
 
         // Measure each uploaded file's intrinsic dimensions, then create the DB
-        // records. File names equal storage paths when no path is specified.
+        // records. The hook reports successes by filename; the full object key
+        // is that filename under the batch prefix (`photos/<uuid>/IMG_1234.jpg`).
         Promise.all(
-          newSuccesses.map(async (storagePath) => {
-            const file = files.find((f) => f.name === storagePath)
+          newSuccesses.map(async (fileName) => {
+            const file = files.find((f) => f.name === fileName)
             const { width, height } = file
               ? await measureImage(file)
               : { width: null, height: null }
-            return { storagePath, width, height }
+            return { storagePath: `${prefix}/${fileName}`, width, height }
           })
         )
           .then((uploads) => createPhotosFromUploads(uploads))
@@ -67,6 +77,10 @@ export function PhotoUploadDropzone() {
             // Clear files to reset dropzone state
             setFiles([])
             processedSuccessesRef.current.clear()
+
+            // Rotate the prefix so a second batch in this same page session
+            // can't collide with the first (mirrors workshop's sessionId bump).
+            setPrefix(`photos/${newId()}`)
 
             // Refresh the page to show new photos
             router.refresh()
@@ -78,7 +92,7 @@ export function PhotoUploadDropzone() {
           })
       }
     }
-  }, [isSuccess, successes, router, setFiles, files])
+  }, [isSuccess, successes, router, setFiles, files, prefix])
 
   return (
     <div className="mb-6">
