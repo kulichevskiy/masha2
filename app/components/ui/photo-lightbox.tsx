@@ -54,6 +54,7 @@ const DEFAULT_COLUMNS = 'columns-1 md:columns-2 lg:columns-3 gap-4'
 const SWIPE_DISTANCE = 50
 const HOVER_PREVIEW_DELAY_MS = 200
 const VIDEO_CONTROLS_IDLE_MS = 2000
+const TOUCH_PREVIEW_DELAY_MS = 500
 
 function isVideo(item: LightboxPhoto): item is LightboxVideo {
   return item.kind === 'video'
@@ -67,6 +68,11 @@ function formatDuration(durationSeconds: number) {
 
 function canPlayHoverPreview() {
   return window.matchMedia('(hover: hover)').matches
+    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+function canPlayTouchPreview() {
+  return !window.matchMedia('(hover: hover)').matches
     && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
@@ -374,44 +380,107 @@ export function PhotoLightboxGrid({
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const consumedSwipeRef = useRef(false)
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const hoverPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const toggleVideoPlaybackRef = useRef<(() => void) | null>(null)
+  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const mosaicRef = useRef<HTMLDivElement | null>(null)
+  const touchCandidateRef = useRef<string | null>(null)
   const initialUrlSyncedRef = useRef(false)
-  const [hoverPreviewId, setHoverPreviewId] = useState<string | null>(null)
+  const [previewId, setPreviewId] = useState<string | null>(null)
   const isOpen = selectedIndex !== null
 
-  const stopHoverPreview = useCallback(() => {
-    if (hoverPreviewTimerRef.current) {
-      clearTimeout(hoverPreviewTimerRef.current)
-      hoverPreviewTimerRef.current = null
+  const stopPreview = useCallback(() => {
+    if (previewTimerRef.current) {
+      clearTimeout(previewTimerRef.current)
+      previewTimerRef.current = null
     }
-    setHoverPreviewId(null)
+    setPreviewId(null)
   }, [])
 
-  const armHoverPreview = useCallback((id: string) => {
-    stopHoverPreview()
-    if (!canPlayHoverPreview()) return
+  const armPreview = useCallback((
+    id: string,
+    delay: number,
+    canPlay: () => boolean,
+  ) => {
+    stopPreview()
+    if (!canPlay()) return
 
-    hoverPreviewTimerRef.current = setTimeout(() => {
-      hoverPreviewTimerRef.current = null
-      if (!canPlayHoverPreview()) return
-      setHoverPreviewId(id)
-    }, HOVER_PREVIEW_DELAY_MS)
-  }, [stopHoverPreview])
+    previewTimerRef.current = setTimeout(() => {
+      previewTimerRef.current = null
+      if (!canPlay()) return
+      setPreviewId(id)
+    }, delay)
+  }, [stopPreview])
+
+  const armHoverPreview = useCallback((id: string) => {
+    armPreview(id, HOVER_PREVIEW_DELAY_MS, canPlayHoverPreview)
+  }, [armPreview])
 
   useEffect(() => {
     const hoverQuery = window.matchMedia('(hover: hover)')
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
 
-    hoverQuery.addEventListener('change', stopHoverPreview)
-    reducedMotionQuery.addEventListener('change', stopHoverPreview)
+    const stopAllPreviews = () => {
+      touchCandidateRef.current = null
+      stopPreview()
+    }
+
+    hoverQuery.addEventListener('change', stopAllPreviews)
+    reducedMotionQuery.addEventListener('change', stopAllPreviews)
 
     return () => {
-      hoverQuery.removeEventListener('change', stopHoverPreview)
-      reducedMotionQuery.removeEventListener('change', stopHoverPreview)
+      hoverQuery.removeEventListener('change', stopAllPreviews)
+      reducedMotionQuery.removeEventListener('change', stopAllPreviews)
     }
-  }, [stopHoverPreview])
+  }, [stopPreview])
+
+  useEffect(() => {
+    const mosaic = mosaicRef.current
+    if (!mosaic || window.matchMedia('(hover: hover)').matches) return
+    if (typeof IntersectionObserver === 'undefined') return
+
+    const centeredVideos = new Set<Element>()
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) centeredVideos.add(entry.target)
+        else centeredVideos.delete(entry.target)
+      }
+
+      let nextElement: Element | null = null
+      let nextDistance = Number.POSITIVE_INFINITY
+      const viewportCenter = window.innerHeight / 2
+
+      for (const element of centeredVideos) {
+        const bounds = element.getBoundingClientRect()
+        const distance = Math.abs(bounds.top + bounds.height / 2 - viewportCenter)
+        if (distance < nextDistance) {
+          nextElement = element
+          nextDistance = distance
+        }
+      }
+
+      const nextId = nextElement?.getAttribute('data-mosaic-video-id') ?? null
+      if (nextId === touchCandidateRef.current) return
+
+      touchCandidateRef.current = nextId
+      stopPreview()
+      if (nextId && canPlayTouchPreview()) {
+        armPreview(nextId, TOUCH_PREVIEW_DELAY_MS, canPlayTouchPreview)
+      }
+    }, {
+      rootMargin: '-45% 0px -45% 0px',
+      threshold: 0,
+    })
+
+    const videos = mosaic.querySelectorAll('[data-mosaic-video-id]')
+    videos.forEach((video) => observer.observe(video))
+
+    return () => {
+      observer.disconnect()
+      touchCandidateRef.current = null
+      centeredVideos.clear()
+    }
+  }, [armPreview, photos, stopPreview])
 
   const indexFromUrl = useCallback(() => {
     const id = new URL(window.location.href).searchParams.get('photo')
@@ -420,7 +489,7 @@ export function PhotoLightboxGrid({
   }, [photos])
 
   const open = useCallback((index: number, opener: HTMLButtonElement) => {
-    stopHoverPreview()
+    stopPreview()
     openerRef.current = opener
     openedByPushRef.current = true
     if (pendingTraversalRef.current) reopenedDuringTraversalRef.current = true
@@ -428,7 +497,7 @@ export function PhotoLightboxGrid({
     selectedIndexRef.current = index
     setSelectedIndex(index)
     window.history.pushState(null, '', photoUrl(photos[index].id))
-  }, [photos, stopHoverPreview])
+  }, [photos, stopPreview])
 
   const close = useCallback(() => {
     if (openedByPushRef.current) {
@@ -621,7 +690,7 @@ export function PhotoLightboxGrid({
 
   useEffect(() => () => {
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current)
-    if (hoverPreviewTimerRef.current) clearTimeout(hoverPreviewTimerRef.current)
+    if (previewTimerRef.current) clearTimeout(previewTimerRef.current)
   }, [])
 
   const revealControls = () => {
@@ -668,7 +737,7 @@ export function PhotoLightboxGrid({
 
   return (
     <div className="w-full">
-      <div className={columnsClassName} inert={isOpen ? true : undefined}>
+      <div ref={mosaicRef} className={columnsClassName} inert={isOpen ? true : undefined}>
         {photos.map((item, index) => (
           <button
             key={item.id}
@@ -677,7 +746,8 @@ export function PhotoLightboxGrid({
             aria-label={`Open ${item.alt}`}
             onClick={(event) => open(index, event.currentTarget)}
             onMouseEnter={isVideo(item) ? () => armHoverPreview(item.id) : undefined}
-            onMouseLeave={isVideo(item) ? stopHoverPreview : undefined}
+            onMouseLeave={isVideo(item) ? stopPreview : undefined}
+            data-mosaic-video-id={isVideo(item) ? item.id : undefined}
             className="group relative mb-4 block w-full cursor-zoom-in break-inside-avoid overflow-hidden border-0 bg-gray-100 p-0 text-left"
           >
             <Image
@@ -689,7 +759,7 @@ export function PhotoLightboxGrid({
               className="block h-auto w-full transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
-            {isVideo(item) && hoverPreviewId === item.id ? (
+            {isVideo(item) && previewId === item.id ? (
               <MosaicVideoPreview video={item} />
             ) : null}
             {isVideo(item) ? (

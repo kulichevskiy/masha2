@@ -102,6 +102,38 @@ function mockChangingMediaPreferences() {
   }
 }
 
+function mockIntersectionObserver() {
+  let callback: IntersectionObserverCallback | null = null
+  const observe = vi.fn()
+  const disconnect = vi.fn()
+
+  class MockIntersectionObserver {
+    readonly root = null
+    readonly rootMargin = ''
+    readonly thresholds = []
+
+    constructor(nextCallback: IntersectionObserverCallback) {
+      callback = nextCallback
+    }
+
+    observe = observe
+    unobserve = vi.fn()
+    disconnect = disconnect
+    takeRecords = vi.fn(() => [])
+  }
+
+  vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)
+
+  return {
+    observe,
+    disconnect,
+    update(entries: Array<{ target: Element; isIntersecting: boolean }>) {
+      if (!callback) throw new Error('IntersectionObserver was not created')
+      callback(entries as IntersectionObserverEntry[], {} as IntersectionObserver)
+    },
+  }
+}
+
 beforeEach(() => {
   window.history.replaceState(null, '', '/')
   window.matchMedia ??= vi.fn()
@@ -114,9 +146,72 @@ afterEach(() => {
   cleanup()
   vi.useRealTimers()
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 
 describe('<PhotoLightboxGrid />', () => {
+  it('plays only the steady central video on touch and opens it on the first tap', () => {
+    vi.useFakeTimers()
+    mockMediaPreferences({ hover: false })
+    const intersection = mockIntersectionObserver()
+    const media = [
+      MIXED_MEDIA[1],
+      { ...MIXED_MEDIA[1], id: 'clip-two', alt: 'Second clip', videoSrc: '/clip-two.mp4' },
+    ]
+    render(<PhotoLightboxGrid photos={media} />)
+    const first = tile('Portrait clip')
+    const second = tile('Second clip')
+    vi.spyOn(first, 'getBoundingClientRect').mockReturnValue({ top: 350, height: 100 } as DOMRect)
+    vi.spyOn(second, 'getBoundingClientRect').mockReturnValue({ top: 650, height: 100 } as DOMRect)
+
+    expect(intersection.observe).toHaveBeenCalledTimes(2)
+
+    act(() => intersection.update([
+      { target: first, isIntersecting: true },
+      { target: second, isIntersecting: true },
+    ]))
+    act(() => vi.advanceTimersByTime(499))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+
+    act(() => intersection.update([
+      { target: first, isIntersecting: false },
+      { target: second, isIntersecting: true },
+    ]))
+    act(() => vi.advanceTimersByTime(499))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+
+    act(() => vi.advanceTimersByTime(1))
+    expect(document.querySelectorAll('video')).toHaveLength(1)
+    expect(document.querySelector('video')).toHaveAttribute('src', '/clip-two.mp4')
+    expect((document.querySelector('video') as HTMLVideoElement).muted).toBe(true)
+
+    act(() => intersection.update([{ target: second, isIntersecting: false }]))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    expect(screen.getByAltText('Second clip')).toBeVisible()
+
+    act(() => intersection.update([{ target: second, isIntersecting: true }]))
+    act(() => vi.advanceTimersByTime(500))
+    fireEvent.click(second)
+    expect(screen.getByRole('dialog', { name: 'Second clip' })).toBeInTheDocument()
+    expect(document.querySelectorAll('video')).toHaveLength(1)
+  })
+
+  it('does not autoplay the central video on touch with reduced motion', () => {
+    vi.useFakeTimers()
+    mockMediaPreferences({ hover: false, reducedMotion: true })
+    const intersection = mockIntersectionObserver()
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+
+    act(() => intersection.update([
+      { target: tile('Portrait clip'), isIntersecting: true },
+    ]))
+    act(() => vi.advanceTimersByTime(1000))
+
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    expect(play).not.toHaveBeenCalled()
+  })
+
   it('starts a silent looping mosaic preview only after a 200 ms hover', () => {
     vi.useFakeTimers()
     const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
