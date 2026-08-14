@@ -174,4 +174,25 @@ describe('<PhotoLightboxGrid />', () => {
     fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
     expect(next).toHaveFocus()
   })
+
+  it('keeps natural forward Tab on the close control inside the dialog on mobile', () => {
+    renderGallery()
+    fireEvent.click(tile('Second portrait'))
+    const close = screen.getByRole('button', { name: 'Close photo' })
+    const nativeGetComputedStyle = window.getComputedStyle.bind(window)
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
+      const style = nativeGetComputedStyle(element)
+      if (element.classList.contains('hidden')) {
+        Object.defineProperty(style, 'display', { value: 'none' })
+      }
+      return style
+    })
+    const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })
+
+    close.focus()
+    document.dispatchEvent(tab)
+
+    expect(tab.defaultPrevented).toBe(true)
+    expect(close).toHaveFocus()
+  })
 })

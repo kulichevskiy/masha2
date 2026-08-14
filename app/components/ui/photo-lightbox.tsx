@@ -136,7 +136,10 @@ export function PhotoLightboxGrid({
       const dialog = closeButtonRef.current?.closest('[role="dialog"]')
       const focusable = Array.from(
         dialog?.querySelectorAll<HTMLElement>('button:not([disabled])') ?? []
-      )
+      ).filter((element) => {
+        const style = window.getComputedStyle(element)
+        return style.display !== 'none' && style.visibility !== 'hidden'
+      })
       if (focusable.length === 0) return
 
       const first = focusable[0]
