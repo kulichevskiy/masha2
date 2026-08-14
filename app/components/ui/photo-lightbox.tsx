@@ -13,13 +13,27 @@ import {
 import { createPortal } from 'react-dom'
 import { PHOTO_IMAGE_QUALITY } from '@/lib/image-config'
 
-export type LightboxPhoto = {
+type LightboxImage = {
   id: string
   src: string
   alt: string
   width: number
   height: number
+  kind?: 'photo'
 }
+
+type LightboxVideo = {
+  id: string
+  kind: 'video'
+  src: string
+  videoSrc: string
+  alt: string
+  width: number
+  height: number
+  durationSeconds: number
+}
+
+export type LightboxPhoto = LightboxImage | LightboxVideo
 
 type PhotoLightboxGridProps = {
   photos: LightboxPhoto[]
@@ -28,6 +42,46 @@ type PhotoLightboxGridProps = {
 
 const DEFAULT_COLUMNS = 'columns-1 md:columns-2 lg:columns-3 gap-4'
 const SWIPE_DISTANCE = 50
+
+function isVideo(item: LightboxPhoto): item is LightboxVideo {
+  return item.kind === 'video'
+}
+
+function formatDuration(durationSeconds: number) {
+  const seconds = Math.max(0, Math.round(durationSeconds))
+  const minutes = Math.floor(seconds / 60)
+  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`
+}
+
+function LightboxVideoPlayer({ video }: { video: LightboxVideo }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const element = videoRef.current
+    if (!element) return
+
+    element.currentTime = 0
+    element.muted = false
+
+    return () => {
+      element.pause()
+      element.currentTime = 0
+    }
+  }, [video.id])
+
+  return (
+    <video
+      ref={videoRef}
+      src={video.videoSrc}
+      poster={video.src}
+      controls
+      autoPlay
+      playsInline
+      preload="none"
+      className="h-auto max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] object-contain"
+    />
+  )
+}
 
 function photoUrl(id: string | null) {
   const url = new URL(window.location.href)
@@ -310,6 +364,14 @@ export function PhotoLightboxGrid({
               className="block h-auto w-full transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
+            {isVideo(item) ? (
+              <span
+                className="pointer-events-none absolute bottom-2 right-2 font-roboto-mono text-xs text-white/70"
+                style={{ textShadow: '0 1px 3px rgb(0 0 0 / 0.65)' }}
+              >
+                {formatDuration(item.durationSeconds)}
+              </span>
+            ) : null}
           </button>
         ))}
       </div>
@@ -327,16 +389,20 @@ export function PhotoLightboxGrid({
           data-close-pending={closePending || undefined}
           data-photo-lightbox-root=""
         >
-          <Image
-            src={photo.src}
-            alt={photo.alt}
-            width={photo.width}
-            height={photo.height}
-            quality={PHOTO_IMAGE_QUALITY}
-            priority
-            className="h-auto max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] object-contain"
-            sizes="100vw"
-          />
+          {isVideo(photo) ? (
+            <LightboxVideoPlayer key={photo.id} video={photo} />
+          ) : (
+            <Image
+              src={photo.src}
+              alt={photo.alt}
+              width={photo.width}
+              height={photo.height}
+              quality={PHOTO_IMAGE_QUALITY}
+              priority
+              className="h-auto max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] object-contain"
+              sizes="100vw"
+            />
+          )}
 
           <button
             ref={closeButtonRef}
