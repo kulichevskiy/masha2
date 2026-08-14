@@ -42,7 +42,7 @@ type PhotoLightboxGridProps = {
 
 const DEFAULT_COLUMNS = 'columns-1 md:columns-2 lg:columns-3 gap-4'
 const SWIPE_DISTANCE = 50
-const INTERACTIVE_MEDIA_SELECTOR = 'video, audio'
+const NATIVE_VIDEO_CONTROLS_HEIGHT = 48
 
 function isVideo(item: LightboxPhoto): item is LightboxVideo {
   return item.kind === 'video'
@@ -262,11 +262,6 @@ export function PhotoLightboxGrid({
       }
 
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-        if (
-          event.target instanceof Element &&
-          event.target.closest(INTERACTIVE_MEDIA_SELECTOR)
-        ) return
-
         event.preventDefault()
         navigate(event.key === 'ArrowLeft' ? -1 : 1)
         return
@@ -321,15 +316,27 @@ export function PhotoLightboxGrid({
 
   const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
     consumedSwipeRef.current = false
+    const touch = event.touches[0]
     if (
       event.target instanceof Element &&
-      event.target.closest(`button, a, input, select, textarea, ${INTERACTIVE_MEDIA_SELECTOR}`)
+      event.target.closest('button, a, input, select, textarea')
     ) {
       touchStartRef.current = null
       return
     }
 
-    const touch = event.touches[0]
+    const video = event.target instanceof Element ? event.target.closest('video[controls]') : null
+    if (video && touch) {
+      const bounds = video.getBoundingClientRect()
+      const inNativeControls = bounds.height > 0 &&
+        touch.clientY >= bounds.bottom - NATIVE_VIDEO_CONTROLS_HEIGHT &&
+        touch.clientY <= bounds.bottom
+      if (inNativeControls) {
+        touchStartRef.current = null
+        return
+      }
+    }
+
     touchStartRef.current = { x: touch.clientX, y: touch.clientY }
   }
 

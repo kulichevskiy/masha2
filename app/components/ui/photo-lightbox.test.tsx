@@ -85,18 +85,40 @@ describe('<PhotoLightboxGrid />', () => {
     expect(window.location.search).toBe('?photo=clip')
   })
 
-  it('leaves arrow keys and touch gestures on native video controls alone', () => {
+  it('navigates with an arrow key while the video is focused and resets it', () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
     fireEvent.click(tile('Portrait clip'))
     const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
     const video = dialog.querySelector('video') as HTMLVideoElement
+    video.currentTime = 8
+    video.focus()
 
     fireEvent.keyDown(video, { key: 'ArrowRight' })
+
+    expect(screen.getByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
+    expect(pause).toHaveBeenCalled()
+    expect(video.currentTime).toBe(0)
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    expect(window.location.search).toBe('?photo=three')
+  })
+
+  it('navigates with a swipe on the video surface and resets it', () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
+    const video = dialog.querySelector('video') as HTMLVideoElement
+    video.currentTime = 8
+
     fireEvent.touchStart(video, { touches: [{ clientX: 250, clientY: 100 }] })
     fireEvent.touchEnd(video, { changedTouches: [{ clientX: 100, clientY: 105 }] })
 
-    expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
-    expect(window.location.search).toBe('?photo=clip')
+    expect(screen.getByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
+    expect(pause).toHaveBeenCalled()
+    expect(video.currentTime).toBe(0)
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    expect(window.location.search).toBe('?photo=three')
   })
 
   it('includes native video controls in the dialog focus cycle', () => {
