@@ -387,6 +387,9 @@ export function PhotoLightboxGrid({
   const touchCandidateRef = useRef<string | null>(null)
   const initialUrlSyncedRef = useRef(false)
   const [previewId, setPreviewId] = useState<string | null>(null)
+  const [hasHover, setHasHover] = useState<boolean | null>(null)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean | null>(null)
+  const [viewportHeight, setViewportHeight] = useState(0)
   const isOpen = selectedIndex !== null
 
   const stopPreview = useCallback(() => {
@@ -420,32 +423,34 @@ export function PhotoLightboxGrid({
     const hoverQuery = window.matchMedia('(hover: hover)')
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
 
-    const stopAllPreviews = () => {
+    const syncPreviewPreferences = () => {
       touchCandidateRef.current = null
       stopPreview()
+      setHasHover(hoverQuery.matches)
+      setPrefersReducedMotion(reducedMotionQuery.matches)
     }
+    const syncViewportHeight = () => setViewportHeight(window.innerHeight)
 
-    hoverQuery.addEventListener('change', stopAllPreviews)
-    reducedMotionQuery.addEventListener('change', stopAllPreviews)
+    syncPreviewPreferences()
+    syncViewportHeight()
+    hoverQuery.addEventListener('change', syncPreviewPreferences)
+    reducedMotionQuery.addEventListener('change', syncPreviewPreferences)
+    window.addEventListener('resize', syncViewportHeight)
 
     return () => {
-      hoverQuery.removeEventListener('change', stopAllPreviews)
-      reducedMotionQuery.removeEventListener('change', stopAllPreviews)
+      hoverQuery.removeEventListener('change', syncPreviewPreferences)
+      reducedMotionQuery.removeEventListener('change', syncPreviewPreferences)
+      window.removeEventListener('resize', syncViewportHeight)
     }
   }, [stopPreview])
 
   useEffect(() => {
     const mosaic = mosaicRef.current
-    if (!mosaic || window.matchMedia('(hover: hover)').matches) return
+    if (!mosaic || hasHover !== false || prefersReducedMotion !== false || isOpen || !viewportHeight) return
     if (typeof IntersectionObserver === 'undefined') return
 
     const centeredVideos = new Set<Element>()
-    const observer = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) centeredVideos.add(entry.target)
-        else centeredVideos.delete(entry.target)
-      }
-
+    const reevaluateCandidate = () => {
       let nextElement: Element | null = null
       let nextDistance = Number.POSITIVE_INFINITY
       const viewportCenter = window.innerHeight / 2
@@ -467,20 +472,30 @@ export function PhotoLightboxGrid({
       if (nextId && canPlayTouchPreview()) {
         armPreview(nextId, TOUCH_PREVIEW_DELAY_MS, canPlayTouchPreview)
       }
+    }
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) centeredVideos.add(entry.target)
+        else centeredVideos.delete(entry.target)
+      }
+      reevaluateCandidate()
     }, {
-      rootMargin: '-45% 0px -45% 0px',
+      rootMargin: `${-viewportHeight * 0.45}px 0px ${-viewportHeight * 0.45}px 0px`,
       threshold: 0,
     })
 
     const videos = mosaic.querySelectorAll('[data-mosaic-video-id]')
     videos.forEach((video) => observer.observe(video))
+    window.addEventListener('scroll', reevaluateCandidate, { passive: true })
 
     return () => {
+      window.removeEventListener('scroll', reevaluateCandidate)
       observer.disconnect()
       touchCandidateRef.current = null
       centeredVideos.clear()
+      stopPreview()
     }
-  }, [armPreview, photos, stopPreview])
+  }, [armPreview, hasHover, isOpen, photos, prefersReducedMotion, stopPreview, viewportHeight])
 
   const indexFromUrl = useCallback(() => {
     const id = new URL(window.location.href).searchParams.get('photo')
@@ -489,6 +504,7 @@ export function PhotoLightboxGrid({
   }, [photos])
 
   const open = useCallback((index: number, opener: HTMLButtonElement) => {
+    touchCandidateRef.current = null
     stopPreview()
     openerRef.current = opener
     openedByPushRef.current = true

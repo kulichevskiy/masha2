@@ -106,14 +106,16 @@ function mockIntersectionObserver() {
   let callback: IntersectionObserverCallback | null = null
   const observe = vi.fn()
   const disconnect = vi.fn()
+  const options: IntersectionObserverInit[] = []
 
   class MockIntersectionObserver {
     readonly root = null
     readonly rootMargin = ''
     readonly thresholds = []
 
-    constructor(nextCallback: IntersectionObserverCallback) {
+    constructor(nextCallback: IntersectionObserverCallback, nextOptions?: IntersectionObserverInit) {
       callback = nextCallback
+      options.push(nextOptions ?? {})
     }
 
     observe = observe
@@ -127,6 +129,7 @@ function mockIntersectionObserver() {
   return {
     observe,
     disconnect,
+    options,
     update(entries: Array<{ target: Element; isIntersecting: boolean }>) {
       if (!callback) throw new Error('IntersectionObserver was not created')
       callback(entries as IntersectionObserverEntry[], {} as IntersectionObserver)
@@ -199,17 +202,87 @@ describe('<PhotoLightboxGrid />', () => {
   it('does not autoplay the central video on touch with reduced motion', () => {
     vi.useFakeTimers()
     mockMediaPreferences({ hover: false, reducedMotion: true })
-    const intersection = mockIntersectionObserver()
+    mockIntersectionObserver()
     const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
 
-    act(() => intersection.update([
-      { target: tile('Portrait clip'), isIntersecting: true },
-    ]))
     act(() => vi.advanceTimersByTime(1000))
 
     expect(document.querySelector('video')).not.toBeInTheDocument()
     expect(play).not.toHaveBeenCalled()
+  })
+
+  it('uses viewport-height pixels for the central zone and updates them on resize', () => {
+    mockMediaPreferences({ hover: false })
+    const intersection = mockIntersectionObserver()
+    vi.stubGlobal('innerHeight', 800)
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+
+    expect(intersection.options.at(-1)?.rootMargin).toBe('-360px 0px -360px 0px')
+
+    vi.stubGlobal('innerHeight', 1000)
+    fireEvent(window, new Event('resize'))
+    expect(intersection.options.at(-1)?.rootMargin).toBe('-450px 0px -450px 0px')
+    expect(intersection.disconnect).toHaveBeenCalled()
+  })
+
+  it('resets the touch timer when scrolling changes the nearest central tile', () => {
+    vi.useFakeTimers()
+    mockMediaPreferences({ hover: false })
+    const intersection = mockIntersectionObserver()
+    const media = [
+      MIXED_MEDIA[1],
+      { ...MIXED_MEDIA[1], id: 'clip-two', alt: 'Second clip', videoSrc: '/clip-two.mp4' },
+    ]
+    render(<PhotoLightboxGrid photos={media} />)
+    const first = tile('Portrait clip')
+    const second = tile('Second clip')
+    let firstTop = 350
+    let secondTop = 550
+    vi.spyOn(first, 'getBoundingClientRect').mockImplementation(() => ({ top: firstTop, height: 100 } as DOMRect))
+    vi.spyOn(second, 'getBoundingClientRect').mockImplementation(() => ({ top: secondTop, height: 100 } as DOMRect))
+
+    act(() => intersection.update([
+      { target: first, isIntersecting: true },
+      { target: second, isIntersecting: true },
+    ]))
+    act(() => vi.advanceTimersByTime(250))
+    firstTop = 150
+    secondTop = 350
+    fireEvent.scroll(window)
+    act(() => vi.advanceTimersByTime(499))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    act(() => vi.advanceTimersByTime(1))
+    expect(document.querySelector('video')).toHaveAttribute('src', '/clip-two.mp4')
+  })
+
+  it('starts touch observation when hover capability changes', () => {
+    const setPreference = mockChangingMediaPreferences()
+    const intersection = mockIntersectionObserver()
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    expect(intersection.observe).not.toHaveBeenCalled()
+
+    act(() => setPreference('(hover: hover)', false))
+    expect(intersection.observe).toHaveBeenCalledTimes(1)
+  })
+
+  it('re-arms the same central tile after the lightbox closes', () => {
+    vi.useFakeTimers()
+    mockMediaPreferences({ hover: false })
+    const intersection = mockIntersectionObserver()
+    render(<PhotoLightboxGrid photos={[MIXED_MEDIA[1]]} />)
+    const videoTile = tile('Portrait clip')
+    vi.spyOn(videoTile, 'getBoundingClientRect').mockReturnValue({ top: 350, height: 100 } as DOMRect)
+
+    act(() => intersection.update([{ target: videoTile, isIntersecting: true }]))
+    fireEvent.click(videoTile)
+    window.history.replaceState(null, '', '/')
+    fireEvent.popState(window)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    act(() => intersection.update([{ target: videoTile, isIntersecting: true }]))
+    act(() => vi.advanceTimersByTime(500))
+    expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
   })
 
   it('starts a silent looping mosaic preview only after a 200 ms hover', () => {
