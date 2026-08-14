@@ -250,7 +250,7 @@ export function PhotoLightboxGrid({
     controlsTimerRef.current = setTimeout(() => setControlsVisible(false), 1600)
   }
 
-  const onBackdropMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+  const onBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) close()
   }
 
@@ -312,7 +312,7 @@ export function PhotoLightboxGrid({
           role="dialog"
           aria-modal="true"
           aria-label={photo.alt}
-          onMouseDown={onBackdropMouseDown}
+          onClick={onBackdropClick}
           onMouseMove={revealControls}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}

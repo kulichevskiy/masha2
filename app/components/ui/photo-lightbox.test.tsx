@@ -146,9 +146,19 @@ describe('<PhotoLightboxGrid />', () => {
     expect(screen.getByRole('dialog', { name: 'First portrait' })).toBeInTheDocument()
   })
 
+  it('does not dismiss when a drag starts on the backdrop', () => {
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined)
+    renderGallery()
+    fireEvent.click(tile('Second portrait'))
+
+    fireEvent.mouseDown(screen.getByRole('dialog'))
+
+    expect(back).not.toHaveBeenCalled()
+  })
+
   it.each([
     ['Escape', () => fireEvent.keyDown(document, { key: 'Escape' })],
-    ['the backdrop', (dialog: HTMLElement) => fireEvent.mouseDown(dialog)],
+    ['the backdrop', (dialog: HTMLElement) => fireEvent.click(dialog)],
     ['the close control', () => fireEvent.click(screen.getByRole('button', { name: 'Close photo' }))],
   ])('closes with %s, goes Back, and restores focus', async (_method, close) => {
     const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined)
@@ -168,7 +178,7 @@ describe('<PhotoLightboxGrid />', () => {
 
   it.each([
     ['Escape', () => fireEvent.keyDown(document, { key: 'Escape' })],
-    ['the backdrop', (dialog: HTMLElement) => fireEvent.mouseDown(dialog)],
+    ['the backdrop', (dialog: HTMLElement) => fireEvent.click(dialog)],
     ['the close control', () => fireEvent.click(screen.getByRole('button', { name: 'Close photo' }))],
   ])('uses Back for a direct-link dismissal with %s in Strict Mode', async (_method, close) => {
     window.history.replaceState(null, '', '/?photo=two')
