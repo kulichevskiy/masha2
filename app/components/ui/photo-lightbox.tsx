@@ -110,6 +110,12 @@ function MosaicVideoPreview({ video }: { video: LightboxVideo }) {
   )
 }
 
+function formatPlaybackTime(currentTime: number) {
+  const seconds = Math.max(0, Math.floor(currentTime))
+  const minutes = Math.floor(seconds / 60)
+  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`
+}
+
 type LightboxVideoPlayerProps = {
   video: LightboxVideo
   muted: boolean
@@ -260,6 +266,7 @@ function LightboxVideoPlayer({
         muted={muted}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
+        onEnded={() => setIsPlaying(false)}
         onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
         onLoadedMetadata={syncDuration}
         onDurationChange={syncDuration}
@@ -306,7 +313,7 @@ function LightboxVideoPlayer({
           <input
             type="range"
             aria-label="Video progress"
-            aria-valuetext={`${formatDuration(currentTime)} of ${formatDuration(duration)}`}
+            aria-valuetext={`${formatPlaybackTime(currentTime)} of ${formatDuration(duration)}`}
             min="0"
             max={duration || 0}
             step="0.01"
@@ -316,7 +323,7 @@ function LightboxVideoPlayer({
           />
         </div>
         <span className="shrink-0 font-roboto-mono text-xs tabular-nums text-white">
-          {formatDuration(currentTime)} / {formatDuration(duration)}
+          {formatPlaybackTime(currentTime)} / {formatDuration(duration)}
         </span>
         <button
           type="button"
@@ -632,7 +639,7 @@ export function PhotoLightboxGrid({
     consumedSwipeRef.current = false
     const touch = event.touches[0]
     const target = event.target instanceof Element ? event.target : null
-    if (target?.closest('button, a, input, select, textarea')) {
+    if (target?.closest('[role="toolbar"], button, a, input, select, textarea')) {
       touchStartRef.current = null
       return
     }

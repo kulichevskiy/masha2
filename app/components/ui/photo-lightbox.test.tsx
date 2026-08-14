@@ -322,6 +322,9 @@ describe('<PhotoLightboxGrid />', () => {
     video.currentTime = 4.2
     fireEvent.timeUpdate(video)
     expect(within(controls).getByText('0:04 / 0:13')).toBeInTheDocument()
+    video.currentTime = 4.6
+    fireEvent.timeUpdate(video)
+    expect(within(controls).getByText('0:04 / 0:13')).toBeInTheDocument()
     fireEvent.change(within(controls).getByRole('slider', { name: 'Video progress' }), {
       target: { value: '9.5' },
     })
@@ -336,6 +339,19 @@ describe('<PhotoLightboxGrid />', () => {
     Object.defineProperty(player, 'requestFullscreen', { configurable: true, value: requestFullscreen })
     fireEvent.click(within(controls).getByRole('button', { name: 'Enter fullscreen' }))
     expect(requestFullscreen).toHaveBeenCalledOnce()
+  })
+
+  it('offers replay after playback completes', () => {
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const video = screen.getByRole('dialog', { name: 'Portrait clip' })
+      .querySelector('video') as HTMLVideoElement
+
+    fireEvent.ended(video)
+    fireEvent.click(screen.getByRole('button', { name: 'Play video' }))
+
+    expect(video.play).toHaveBeenCalledTimes(2)
+    expect(screen.getByRole('button', { name: 'Pause video' })).toBeInTheDocument()
   })
 
   it('shows the control layer on movement or touch and hides it after a short idle period', () => {
@@ -391,13 +407,22 @@ describe('<PhotoLightboxGrid />', () => {
     expect(window.location.search).toBe('?photo=three')
   })
 
-  it('does not turn gestures on custom video controls into gallery navigation', () => {
+  it('does not turn gestures anywhere on the video toolbar into gallery navigation', () => {
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
     fireEvent.click(tile('Portrait clip'))
-    const progress = screen.getByRole('slider', { name: 'Video progress' })
+    const toolbar = screen.getByRole('toolbar', { name: 'Video controls' })
+    const time = within(toolbar).getByText('0:00 / 0:13')
+    const decoration = toolbar.querySelector('[aria-hidden="true"]') as HTMLElement
 
-    fireEvent.touchStart(progress, { touches: [{ clientX: 250, clientY: 475 }] })
-    fireEvent.touchEnd(progress, { changedTouches: [{ clientX: 100, clientY: 475 }] })
+    for (const target of [
+      screen.getByRole('slider', { name: 'Video progress' }),
+      time,
+      decoration,
+      toolbar,
+    ]) {
+      fireEvent.touchStart(target, { touches: [{ clientX: 250, clientY: 475 }] })
+      fireEvent.touchEnd(target, { changedTouches: [{ clientX: 100, clientY: 475 }] })
+    }
 
     expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
     expect(window.location.search).toBe('?photo=clip')
