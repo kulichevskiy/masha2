@@ -63,6 +63,9 @@ function LightboxVideoPlayer({ video }: { video: LightboxVideo }) {
 
     element.currentTime = 0
     element.muted = false
+    // Without a user activation (e.g. a ?photo= deep link) browsers reject
+    // audible autoplay; leave the poster with controls up for a manual play.
+    element.play()?.catch(() => undefined)
 
     return () => {
       element.pause()
@@ -79,6 +82,9 @@ function LightboxVideoPlayer({ video }: { video: LightboxVideo }) {
       autoPlay
       playsInline
       preload="none"
+      width={video.width}
+      height={video.height}
+      style={{ aspectRatio: `${video.width} / ${video.height}` }}
       className="h-auto max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] object-contain"
     />
   )

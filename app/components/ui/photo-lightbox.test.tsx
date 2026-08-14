@@ -44,6 +44,7 @@ function tile(name: string) {
 beforeEach(() => {
   window.history.replaceState(null, '', '/')
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
 })
 
 afterEach(() => {
@@ -80,6 +81,10 @@ describe('<PhotoLightboxGrid />', () => {
     expect(video).toHaveAttribute('controls')
     expect(video).toHaveAttribute('autoplay')
     expect(video).toHaveAttribute('preload', 'none')
+    expect(video).toHaveAttribute('width', '1080')
+    expect(video).toHaveAttribute('height', '1920')
+    expect(video).toHaveStyle({ aspectRatio: '1080 / 1920' })
+    expect(video.play).toHaveBeenCalled()
     expect(video.currentTime).toBe(0)
     expect(video.muted).toBe(false)
     expect(window.location.search).toBe('?photo=clip')
