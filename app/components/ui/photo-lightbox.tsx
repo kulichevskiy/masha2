@@ -67,6 +67,9 @@ function MosaicVideoPreview({ video }: { video: LightboxVideo }) {
     const element = videoRef.current
     if (!element) return
 
+    // Strict Mode replays setup after cleanup, so restore the source that the
+    // cleanup removes before starting playback again.
+    element.setAttribute('src', video.videoSrc)
     // Keep this assignment next to play() as a second line of defence against
     // audio, even if the JSX attributes are changed later.
     element.muted = true
@@ -79,7 +82,7 @@ function MosaicVideoPreview({ video }: { video: LightboxVideo }) {
       element.currentTime = 0
       element.removeAttribute('src')
     }
-  }, [])
+  }, [video.videoSrc])
 
   return (
     <video

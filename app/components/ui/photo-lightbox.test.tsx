@@ -129,6 +129,20 @@ describe('<PhotoLightboxGrid />', () => {
     expect(screen.getByAltText('Portrait clip')).toBeVisible()
   })
 
+  it('keeps the hover preview source during Strict Mode effect replay', () => {
+    vi.useFakeTimers()
+    render(
+      <StrictMode>
+        <PhotoLightboxGrid photos={MIXED_MEDIA} />
+      </StrictMode>,
+    )
+
+    fireEvent.mouseEnter(tile('Portrait clip'))
+    act(() => vi.advanceTimersByTime(200))
+
+    expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
+  })
+
   it('does not load a quick pass-over and stops the previous preview when another tile arms', () => {
     vi.useFakeTimers()
     const media = [
