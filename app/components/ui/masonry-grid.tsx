@@ -36,6 +36,7 @@ export async function MasonryGrid({ page = 'portraits' }: { page?: PhotoPage }) 
     .select('id, storage_path, title, alt_text, position, width, height')
     .contains('pages', [page])
     .order('position', { ascending: true })
+    .order('id', { ascending: true })
 
   if (error) {
     console.error('Error fetching photos:', error)
