@@ -85,7 +85,7 @@ describe('<PhotoLightboxGrid />', () => {
     expect(window.location.search).toBe('?photo=clip')
   })
 
-  it('navigates with an arrow key while the video is focused and resets it', () => {
+  it('leaves arrow keys to the focused native video controls', () => {
     const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
     fireEvent.click(tile('Portrait clip'))
@@ -94,16 +94,16 @@ describe('<PhotoLightboxGrid />', () => {
     video.currentTime = 8
     video.focus()
 
-    fireEvent.keyDown(video, { key: 'ArrowRight' })
+    const handled = fireEvent.keyDown(video, { key: 'ArrowRight' })
 
-    expect(screen.getByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
-    expect(pause).toHaveBeenCalled()
-    expect(video.currentTime).toBe(0)
-    expect(document.querySelector('video')).not.toBeInTheDocument()
-    expect(window.location.search).toBe('?photo=three')
+    expect(handled).toBe(true)
+    expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
+    expect(pause).not.toHaveBeenCalled()
+    expect(video.currentTime).toBe(8)
+    expect(window.location.search).toBe('?photo=clip')
   })
 
-  it('navigates with a swipe on the video surface and resets it', () => {
+  it('leaves touch gestures on the video to its native controls', () => {
     const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
     fireEvent.click(tile('Portrait clip'))
@@ -114,11 +114,10 @@ describe('<PhotoLightboxGrid />', () => {
     fireEvent.touchStart(video, { touches: [{ clientX: 250, clientY: 100 }] })
     fireEvent.touchEnd(video, { changedTouches: [{ clientX: 100, clientY: 105 }] })
 
-    expect(screen.getByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
-    expect(pause).toHaveBeenCalled()
-    expect(video.currentTime).toBe(0)
-    expect(document.querySelector('video')).not.toBeInTheDocument()
-    expect(window.location.search).toBe('?photo=three')
+    expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
+    expect(pause).not.toHaveBeenCalled()
+    expect(video.currentTime).toBe(8)
+    expect(window.location.search).toBe('?photo=clip')
   })
 
   it('includes native video controls in the dialog focus cycle', () => {
