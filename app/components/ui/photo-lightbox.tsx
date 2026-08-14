@@ -180,8 +180,22 @@ export function PhotoLightboxGrid({
 
     hoverPreviewTimerRef.current = setTimeout(() => {
       hoverPreviewTimerRef.current = null
+      if (!canPlayHoverPreview()) return
       setHoverPreviewId(id)
     }, HOVER_PREVIEW_DELAY_MS)
+  }, [stopHoverPreview])
+
+  useEffect(() => {
+    const hoverQuery = window.matchMedia('(hover: hover)')
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+
+    hoverQuery.addEventListener('change', stopHoverPreview)
+    reducedMotionQuery.addEventListener('change', stopHoverPreview)
+
+    return () => {
+      hoverQuery.removeEventListener('change', stopHoverPreview)
+      reducedMotionQuery.removeEventListener('change', stopHoverPreview)
+    }
   }, [stopHoverPreview])
 
   const indexFromUrl = useCallback(() => {

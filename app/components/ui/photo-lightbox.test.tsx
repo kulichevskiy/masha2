@@ -60,6 +60,34 @@ function mockMediaPreferences({
   }))
 }
 
+function mockChangingMediaPreferences() {
+  const matches = new Map([
+    ['(hover: hover)', true],
+    ['(prefers-reduced-motion: reduce)', false],
+  ])
+  const listeners = new Map<string, Set<EventListener>>()
+
+  vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+    get matches() { return matches.get(query) ?? false },
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: (_type, listener) => {
+      const queryListeners = listeners.get(query) ?? new Set<EventListener>()
+      queryListeners.add(listener as EventListener)
+      listeners.set(query, queryListeners)
+    },
+    removeEventListener: (_type, listener) => listeners.get(query)?.delete(listener as EventListener),
+    dispatchEvent: vi.fn(),
+  }))
+
+  return (query: '(hover: hover)' | '(prefers-reduced-motion: reduce)', value: boolean) => {
+    matches.set(query, value)
+    listeners.get(query)?.forEach((listener) => listener(new Event('change')))
+  }
+}
+
 beforeEach(() => {
   window.history.replaceState(null, '', '/')
   window.matchMedia ??= vi.fn()
@@ -142,6 +170,27 @@ describe('<PhotoLightboxGrid />', () => {
     expect(play).not.toHaveBeenCalled()
     fireEvent.click(tile('Portrait clip'))
     expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
+  })
+
+  it('cancels pending and active previews when media preferences change', () => {
+    vi.useFakeTimers()
+    const setPreference = mockChangingMediaPreferences()
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    const videoTile = tile('Portrait clip')
+
+    fireEvent.mouseEnter(videoTile)
+    act(() => vi.advanceTimersByTime(100))
+    act(() => setPreference('(prefers-reduced-motion: reduce)', true))
+    act(() => vi.advanceTimersByTime(100))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+
+    act(() => setPreference('(prefers-reduced-motion: reduce)', false))
+    fireEvent.mouseEnter(videoTile)
+    act(() => vi.advanceTimersByTime(200))
+    expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
+
+    act(() => setPreference('(hover: hover)', false))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
   })
 
   it('stops a hovering preview and opens the lightbox at 0:00 with sound', () => {
