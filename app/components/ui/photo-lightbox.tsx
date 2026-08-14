@@ -316,7 +316,7 @@ export function PhotoLightboxGrid({
           onMouseMove={revealControls}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4"
+          className="fixed inset-0 z-[100] flex touch-pan-y items-center justify-center bg-black/95 p-4"
           data-close-pending={closePending || undefined}
           data-photo-lightbox-root=""
         >

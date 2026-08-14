@@ -106,6 +106,7 @@ describe('<PhotoLightboxGrid />', () => {
     renderGallery()
     fireEvent.click(tile('First portrait'))
     const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveClass('touch-pan-y')
 
     fireEvent.touchStart(dialog, { touches: [{ clientX: 250, clientY: 100 }] })
     fireEvent.touchEnd(dialog, { changedTouches: [{ clientX: 100, clientY: 105 }] })
