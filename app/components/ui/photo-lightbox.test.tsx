@@ -143,9 +143,43 @@ describe('<PhotoLightboxGrid />', () => {
 
     close(screen.getByRole('dialog'))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-close-pending', 'true')
     expect(back).toHaveBeenCalledOnce()
+    window.history.replaceState(null, '', '/')
+    fireEvent.popState(window)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     await waitFor(() => expect(opener).toHaveFocus())
+  })
+
+  it('keeps a reopened lightbox when a pending close traversal arrives', () => {
+    vi.spyOn(window.history, 'back').mockImplementation(() => undefined)
+    renderGallery()
+    const opener = tile('Second portrait')
+    fireEvent.click(opener)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close photo' }))
+    fireEvent.click(opener)
+
+    window.history.replaceState(null, '', '/')
+    fireEvent.popState(window)
+
+    expect(window.location.pathname + window.location.search).toBe('/?photo=two')
+    expect(screen.getByRole('dialog', { name: 'Second portrait' })).toBeInTheDocument()
+  })
+
+  it('completes one-press Back after navigation in both URL and dialog state', () => {
+    vi.spyOn(window.history, 'back').mockImplementation(() => undefined)
+    renderGallery()
+    fireEvent.click(tile('First portrait'))
+    fireEvent.keyDown(document, { key: 'ArrowRight' })
+    expect(window.location.search).toBe('?photo=two')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close photo' }))
+    window.history.replaceState(null, '', '/')
+    fireEvent.popState(window)
+
+    expect(window.location.pathname + window.location.search).toBe('/')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('closes when browser Back removes photo state', () => {
@@ -159,13 +193,14 @@ describe('<PhotoLightboxGrid />', () => {
   })
 
   it('traps Tab focus inside the open dialog', () => {
-    renderGallery()
-    fireEvent.click(tile('Second portrait'))
-    const gallery = tile('First portrait').parentElement
+    const { container } = renderGallery()
+    const opener = tile('Second portrait')
+    fireEvent.click(opener)
     const close = screen.getByRole('button', { name: 'Close photo' })
     const next = screen.getByRole('button', { name: 'Next photo' })
 
-    expect(gallery).toHaveAttribute('inert')
+    expect(container).toHaveAttribute('inert')
+    expect(container).toHaveAttribute('aria-hidden', 'true')
     next.focus()
     fireEvent.keyDown(document, { key: 'Tab' })
     expect(close).toHaveFocus()
@@ -173,6 +208,28 @@ describe('<PhotoLightboxGrid />', () => {
     close.focus()
     fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
     expect(next).toHaveFocus()
+  })
+
+  it('isolates and restores every application sibling behind the portal', () => {
+    const navigation = document.createElement('nav')
+    const footer = document.createElement('footer')
+    navigation.setAttribute('aria-hidden', 'false')
+    document.body.append(navigation, footer)
+    renderGallery()
+
+    fireEvent.click(tile('First portrait'))
+    expect(navigation).toHaveAttribute('inert')
+    expect(navigation).toHaveAttribute('aria-hidden', 'true')
+    expect(footer).toHaveAttribute('inert')
+    expect(footer).toHaveAttribute('aria-hidden', 'true')
+
+    window.history.replaceState(null, '', '/')
+    fireEvent.popState(window)
+    expect(navigation).not.toHaveAttribute('inert')
+    expect(navigation).toHaveAttribute('aria-hidden', 'false')
+    expect(footer).not.toHaveAttribute('aria-hidden')
+    navigation.remove()
+    footer.remove()
   })
 
   it('keeps natural forward Tab on the close control inside the dialog on mobile', () => {

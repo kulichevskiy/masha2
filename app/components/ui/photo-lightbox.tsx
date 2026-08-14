@@ -10,6 +10,7 @@ import {
   type MouseEvent,
   type TouchEvent,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { PHOTO_IMAGE_QUALITY } from '@/lib/image-config'
 
 export type LightboxPhoto = {
@@ -46,9 +47,13 @@ export function PhotoLightboxGrid({
 }: PhotoLightboxGridProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [controlsVisible, setControlsVisible] = useState(false)
+  const [closePending, setClosePending] = useState(false)
   const openerRef = useRef<HTMLButtonElement | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   const openedByPushRef = useRef(false)
+  const pendingTraversalRef = useRef(false)
+  const reopenedDuringTraversalRef = useRef(false)
+  const selectedIndexRef = useRef<number | null>(null)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isOpen = selectedIndex !== null
@@ -62,20 +67,25 @@ export function PhotoLightboxGrid({
   const open = useCallback((index: number, opener: HTMLButtonElement) => {
     openerRef.current = opener
     openedByPushRef.current = true
+    if (pendingTraversalRef.current) reopenedDuringTraversalRef.current = true
+    setClosePending(false)
+    selectedIndexRef.current = index
     setSelectedIndex(index)
     window.history.pushState(null, '', photoUrl(photos[index].id))
   }, [photos])
 
   const close = useCallback(() => {
-    setSelectedIndex(null)
-
     if (openedByPushRef.current) {
-      openedByPushRef.current = false
+      if (pendingTraversalRef.current) return
+      pendingTraversalRef.current = true
+      setClosePending(true)
       window.history.back()
       return
     }
 
     window.history.replaceState(null, '', photoUrl(null))
+    selectedIndexRef.current = null
+    setSelectedIndex(null)
   }, [])
 
   const navigate = useCallback((direction: -1 | 1) => {
@@ -86,20 +96,64 @@ export function PhotoLightboxGrid({
       if (next === current) return current
 
       window.history.replaceState(null, '', photoUrl(photos[next].id))
+      selectedIndexRef.current = next
       return next
     })
   }, [photos])
 
   useEffect(() => {
     const syncFromUrl = () => {
+      if (pendingTraversalRef.current) {
+        pendingTraversalRef.current = false
+        setClosePending(false)
+
+        if (reopenedDuringTraversalRef.current) {
+          reopenedDuringTraversalRef.current = false
+          const current = selectedIndexRef.current
+          if (current !== null) {
+            window.history.replaceState(null, '', photoUrl(photos[current].id))
+          }
+          return
+        }
+      }
+
       openedByPushRef.current = false
-      setSelectedIndex(indexFromUrl())
+      const index = indexFromUrl()
+      selectedIndexRef.current = index
+      setSelectedIndex(index)
     }
 
     syncFromUrl()
     window.addEventListener('popstate', syncFromUrl)
     return () => window.removeEventListener('popstate', syncFromUrl)
-  }, [indexFromUrl])
+  }, [indexFromUrl, photos])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const siblings = Array.from(document.body.children).filter(
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement && !element.hasAttribute('data-photo-lightbox-root')
+    )
+    const previous = siblings.map((element) => ({
+      element,
+      inert: element.hasAttribute('inert'),
+      ariaHidden: element.getAttribute('aria-hidden'),
+    }))
+
+    for (const element of siblings) {
+      element.setAttribute('inert', '')
+      element.setAttribute('aria-hidden', 'true')
+    }
+
+    return () => {
+      for (const { element, inert, ariaHidden } of previous) {
+        if (!inert) element.removeAttribute('inert')
+        if (ariaHidden === null) element.removeAttribute('aria-hidden')
+        else element.setAttribute('aria-hidden', ariaHidden)
+      }
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return
@@ -227,7 +281,7 @@ export function PhotoLightboxGrid({
         ))}
       </div>
 
-      {photo && selectedIndex !== null ? (
+      {photo && selectedIndex !== null ? createPortal(
         <div
           role="dialog"
           aria-modal="true"
@@ -237,6 +291,8 @@ export function PhotoLightboxGrid({
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4"
+          data-close-pending={closePending || undefined}
+          data-photo-lightbox-root=""
         >
           <Image
             src={photo.src}
@@ -278,7 +334,8 @@ export function PhotoLightboxGrid({
           >
             <ChevronRight aria-hidden="true" strokeWidth={1} className="size-10" />
           </button>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </div>
   )
