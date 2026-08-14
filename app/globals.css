@@ -145,3 +145,36 @@
     @apply bg-background text-foreground;
   }
 }
+
+.lightbox-video-progress::-webkit-slider-runnable-track {
+  height: 1px;
+  background: transparent;
+}
+
+.lightbox-video-progress::-webkit-slider-thumb {
+  width: 8px;
+  height: 8px;
+  margin-top: -3.5px;
+  appearance: none;
+  border: 0;
+  border-radius: 0;
+  background: white;
+}
+
+.lightbox-video-progress::-moz-range-track {
+  height: 1px;
+  background: transparent;
+}
+
+.lightbox-video-progress::-moz-range-progress {
+  height: 1px;
+  background: transparent;
+}
+
+.lightbox-video-progress::-moz-range-thumb {
+  width: 8px;
+  height: 8px;
+  border: 0;
+  border-radius: 0;
+  background: white;
+}

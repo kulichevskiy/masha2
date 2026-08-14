@@ -33,6 +33,20 @@ const MIXED_MEDIA: LightboxPhoto[] = [
   PHOTOS[2],
 ]
 
+const VIDEO_MEDIA: LightboxPhoto[] = [
+  MIXED_MEDIA[1],
+  {
+    id: 'second-clip',
+    kind: 'video',
+    src: '/second-clip-poster.jpg',
+    videoSrc: '/second-clip.mp4',
+    alt: 'Second portrait clip',
+    width: 1920,
+    height: 1080,
+    durationSeconds: 24,
+  },
+]
+
 function renderGallery() {
   return render(<PhotoLightboxGrid photos={PHOTOS} />)
 }
@@ -241,7 +255,7 @@ describe('<PhotoLightboxGrid />', () => {
     expect(duration).toHaveStyle({ textShadow: '0 1px 3px rgb(0 0 0 / 0.65)' })
   })
 
-  it('opens a video from 0:00 with sound and native controls', () => {
+  it('opens a video from 0:00 with sound and site-native controls', () => {
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
 
     fireEvent.click(tile('Portrait clip'))
@@ -250,7 +264,7 @@ describe('<PhotoLightboxGrid />', () => {
     const video = dialog.querySelector('video') as HTMLVideoElement
     expect(video).toHaveAttribute('src', '/clip.mp4')
     expect(video).toHaveAttribute('poster', '/clip-poster.jpg')
-    expect(video).toHaveAttribute('controls')
+    expect(video).not.toHaveAttribute('controls')
     expect(video).toHaveAttribute('autoplay')
     expect(video).toHaveAttribute('preload', 'none')
     expect(video).toHaveAttribute('width', '1080')
@@ -259,25 +273,118 @@ describe('<PhotoLightboxGrid />', () => {
     expect(video.play).toHaveBeenCalled()
     expect(video.currentTime).toBe(0)
     expect(video.muted).toBe(false)
+    const controls = screen.getByRole('toolbar', { name: 'Video controls' })
+    expect(within(controls).getAllByRole('button').map((button) => button.getAttribute('aria-label')))
+      .toEqual(['Mute video', 'Pause video', 'Enter fullscreen'])
+    expect(within(controls).getByText('0:00 / 0:13')).toHaveClass('font-roboto-mono')
+    expect(within(controls).getByRole('slider', { name: 'Video progress' })).toHaveClass(
+      'rounded-none'
+    )
     expect(window.location.search).toBe('?photo=clip')
   })
 
-  it('uses arrow keys for gallery navigation when the video is focused', () => {
+  it('uses Space for playback and arrow keys to seek instead of navigating the gallery', () => {
     const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
     fireEvent.click(tile('Portrait clip'))
     const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
     const video = dialog.querySelector('video') as HTMLVideoElement
     video.currentTime = 8
-    video.focus()
+    Object.defineProperty(video, 'duration', { configurable: true, value: 12.75 })
+    expect(screen.getByRole('button', { name: 'Close photo' })).toHaveFocus()
 
-    const handled = fireEvent.keyDown(video, { key: 'ArrowRight' })
+    expect(fireEvent.keyDown(video, { key: 'ArrowRight' })).toBe(false)
+    expect(video.currentTime).toBe(12.75)
+    expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
 
-    expect(handled).toBe(false)
-    expect(screen.getByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
+    fireEvent.keyDown(video, { key: 'ArrowLeft' })
+    expect(video.currentTime).toBe(7.75)
+
+    expect(fireEvent.keyDown(document.activeElement as HTMLElement, { key: ' ' })).toBe(false)
     expect(pause).toHaveBeenCalled()
-    expect(video.currentTime).toBe(0)
-    expect(window.location.search).toBe('?photo=three')
+    expect(window.location.search).toBe('?photo=clip')
+  })
+
+  it('plays, pauses, seeks, updates time, mutes immediately, and enters fullscreen', () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
+    const video = dialog.querySelector('video') as HTMLVideoElement
+    Object.defineProperty(video, 'duration', { configurable: true, value: 12.75 })
+    const controls = screen.getByRole('toolbar', { name: 'Video controls' })
+
+    fireEvent.click(within(controls).getByRole('button', { name: 'Pause video' }))
+    expect(pause).toHaveBeenCalled()
+    fireEvent.click(within(controls).getByRole('button', { name: 'Play video' }))
+    expect(video.play).toHaveBeenCalledTimes(2)
+
+    video.currentTime = 4.2
+    fireEvent.timeUpdate(video)
+    expect(within(controls).getByText('0:04 / 0:13')).toBeInTheDocument()
+    video.currentTime = 4.6
+    fireEvent.timeUpdate(video)
+    expect(within(controls).getByText('0:04 / 0:13')).toBeInTheDocument()
+    fireEvent.change(within(controls).getByRole('slider', { name: 'Video progress' }), {
+      target: { value: '9.5' },
+    })
+    expect(video.currentTime).toBe(9.5)
+
+    fireEvent.click(within(controls).getByRole('button', { name: 'Mute video' }))
+    expect(video.muted).toBe(true)
+    expect(within(controls).getByRole('button', { name: 'Unmute video' })).toBeInTheDocument()
+
+    const player = video.parentElement as HTMLElement
+    const requestFullscreen = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(player, 'requestFullscreen', { configurable: true, value: requestFullscreen })
+    fireEvent.click(within(controls).getByRole('button', { name: 'Enter fullscreen' }))
+    expect(requestFullscreen).toHaveBeenCalledOnce()
+  })
+
+  it('offers replay after playback completes', () => {
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const video = screen.getByRole('dialog', { name: 'Portrait clip' })
+      .querySelector('video') as HTMLVideoElement
+
+    fireEvent.ended(video)
+    fireEvent.click(screen.getByRole('button', { name: 'Play video' }))
+
+    expect(video.play).toHaveBeenCalledTimes(2)
+    expect(screen.getByRole('button', { name: 'Pause video' })).toBeInTheDocument()
+  })
+
+  it('shows the control layer on movement or touch and hides it after a short idle period', () => {
+    vi.useFakeTimers()
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const video = screen.getByRole('dialog').querySelector('video') as HTMLVideoElement
+    const controls = screen.getByRole('toolbar', { name: 'Video controls' })
+
+    expect(controls).toHaveClass('opacity-100')
+    act(() => vi.advanceTimersByTime(2001))
+    expect(controls).toHaveClass('opacity-0')
+    fireEvent.mouseMove(video)
+    expect(controls).toHaveClass('opacity-100')
+    act(() => vi.advanceTimersByTime(2001))
+    fireEvent.touchStart(video, { touches: [{ clientX: 100, clientY: 100 }] })
+    expect(controls).toHaveClass('opacity-100')
+    vi.useRealTimers()
+  })
+
+  it('keeps mute state while navigating from one clip to the next', () => {
+    render(<PhotoLightboxGrid photos={VIDEO_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const firstVideo = screen.getByRole('dialog').querySelector('video') as HTMLVideoElement
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mute video' }))
+    expect(firstVideo.muted).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Next photo' }))
+
+    const secondVideo = screen.getByRole('dialog', { name: 'Second portrait clip' })
+      .querySelector('video') as HTMLVideoElement
+    expect(secondVideo.muted).toBe(true)
+    expect(screen.getByRole('button', { name: 'Unmute video' })).toBeInTheDocument()
   })
 
   it('navigates with a horizontal swipe across the video surface', () => {
@@ -300,30 +407,33 @@ describe('<PhotoLightboxGrid />', () => {
     expect(window.location.search).toBe('?photo=three')
   })
 
-  it('leaves gestures on the native video control strip untouched', () => {
+  it('does not turn gestures anywhere on the video toolbar into gallery navigation', () => {
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
     fireEvent.click(tile('Portrait clip'))
-    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
-    const video = dialog.querySelector('video') as HTMLVideoElement
-    vi.spyOn(video, 'getBoundingClientRect').mockReturnValue({
-      top: 0, right: 300, bottom: 500, left: 0, width: 300, height: 500, x: 0, y: 0,
-      toJSON: () => ({}),
-    })
+    const toolbar = screen.getByRole('toolbar', { name: 'Video controls' })
+    const time = within(toolbar).getByText('0:00 / 0:13')
+    const decoration = toolbar.querySelector('[aria-hidden="true"]') as HTMLElement
 
-    fireEvent.touchStart(video, { touches: [{ clientX: 250, clientY: 475 }] })
-    fireEvent.touchEnd(video, { changedTouches: [{ clientX: 100, clientY: 475 }] })
+    for (const target of [
+      screen.getByRole('slider', { name: 'Video progress' }),
+      time,
+      decoration,
+      toolbar,
+    ]) {
+      fireEvent.touchStart(target, { touches: [{ clientX: 250, clientY: 475 }] })
+      fireEvent.touchEnd(target, { changedTouches: [{ clientX: 100, clientY: 475 }] })
+    }
 
     expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
     expect(window.location.search).toBe('?photo=clip')
   })
 
-  it('includes native video controls in the dialog focus cycle', () => {
+  it('includes custom video controls in the dialog focus cycle', () => {
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
     fireEvent.click(tile('Portrait clip'))
-    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
-    const video = dialog.querySelector('video') as HTMLVideoElement
     const next = screen.getByRole('button', { name: 'Next photo' })
-    const focus = vi.spyOn(video, 'focus')
+    const mute = screen.getByRole('button', { name: 'Mute video' })
+    const focus = vi.spyOn(mute, 'focus')
 
     next.focus()
     fireEvent.keyDown(next, { key: 'Tab' })
@@ -331,14 +441,14 @@ describe('<PhotoLightboxGrid />', () => {
     expect(focus).toHaveBeenCalled()
   })
 
-  it('stops and resets a video when arrow navigation moves to a photo', () => {
+  it('stops and resets a video when a navigation control moves to a photo', () => {
     const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
     fireEvent.click(tile('Portrait clip'))
     const video = screen.getByRole('dialog').querySelector('video') as HTMLVideoElement
     video.currentTime = 8
 
-    fireEvent.keyDown(document, { key: 'ArrowRight' })
+    fireEvent.click(screen.getByRole('button', { name: 'Next photo' }))
 
     expect(screen.getByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
     expect(pause).toHaveBeenCalled()
