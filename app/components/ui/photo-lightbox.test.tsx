@@ -121,6 +121,20 @@ describe('<PhotoLightboxGrid />', () => {
     expect(screen.getByRole('dialog', { name: 'First portrait' })).toBeInTheDocument()
   })
 
+  it('does not dismiss on the synthesized backdrop click after a swipe', () => {
+    renderGallery()
+    fireEvent.click(tile('First portrait'))
+    const dialog = screen.getByRole('dialog')
+
+    fireEvent.touchStart(dialog, { touches: [{ clientX: 250, clientY: 100 }] })
+    fireEvent.touchEnd(dialog, { changedTouches: [{ clientX: 100, clientY: 105 }] })
+    fireEvent.click(dialog)
+
+    expect(screen.getByRole('dialog', { name: 'Second portrait' })).not.toHaveAttribute(
+      'data-close-pending'
+    )
+  })
+
   it('does not treat a gesture on a navigation control as a swipe', () => {
     renderGallery()
     fireEvent.click(tile('First portrait'))

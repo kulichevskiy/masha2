@@ -55,6 +55,7 @@ export function PhotoLightboxGrid({
   const reopenedDuringTraversalRef = useRef(false)
   const selectedIndexRef = useRef<number | null>(null)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const consumedSwipeRef = useRef(false)
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const initialUrlSyncedRef = useRef(false)
   const isOpen = selectedIndex !== null
@@ -251,10 +252,15 @@ export function PhotoLightboxGrid({
   }
 
   const onBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (consumedSwipeRef.current) {
+      consumedSwipeRef.current = false
+      return
+    }
     if (event.target === event.currentTarget) close()
   }
 
   const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    consumedSwipeRef.current = false
     if (
       event.target instanceof Element &&
       event.target.closest('button, a, input, select, textarea')
@@ -277,6 +283,7 @@ export function PhotoLightboxGrid({
     const vertical = touch.clientY - start.y
     if (Math.abs(horizontal) < SWIPE_DISTANCE || Math.abs(horizontal) <= Math.abs(vertical)) return
 
+    consumedSwipeRef.current = true
     navigate(horizontal < 0 ? 1 : -1)
   }
 
@@ -316,7 +323,7 @@ export function PhotoLightboxGrid({
           onMouseMove={revealControls}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
-          className="fixed inset-0 z-[100] flex touch-pan-y items-center justify-center bg-black/95 p-4"
+          className="fixed inset-0 z-[100] flex touch-pan-y items-center justify-center bg-black p-4"
           data-close-pending={closePending || undefined}
           data-photo-lightbox-root=""
         >
