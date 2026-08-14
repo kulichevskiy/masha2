@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PhotoLightboxGrid, type LightboxPhoto } from './photo-lightbox'
@@ -41,18 +41,127 @@ function tile(name: string) {
   return screen.getByRole('button', { name: `Open ${name}` })
 }
 
+function mockMediaPreferences({
+  hover = true,
+  reducedMotion = false,
+}: {
+  hover?: boolean
+  reducedMotion?: boolean
+} = {}) {
+  vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+    matches: query === '(hover: hover)' ? hover : reducedMotion,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }))
+}
+
 beforeEach(() => {
   window.history.replaceState(null, '', '/')
+  window.matchMedia ??= vi.fn()
+  mockMediaPreferences()
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
   vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
 })
 
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
   vi.restoreAllMocks()
 })
 
 describe('<PhotoLightboxGrid />', () => {
+  it('starts a silent looping mosaic preview only after a 200 ms hover', () => {
+    vi.useFakeTimers()
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    const videoTile = tile('Portrait clip')
+
+    fireEvent.mouseEnter(videoTile)
+    act(() => vi.advanceTimersByTime(199))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    expect(play).not.toHaveBeenCalled()
+
+    act(() => vi.advanceTimersByTime(1))
+    const preview = document.querySelector('video') as HTMLVideoElement
+    expect(preview).toHaveAttribute('src', '/clip.mp4')
+    expect(preview).toHaveAttribute('preload', 'none')
+    expect(preview).toHaveAttribute('loop')
+    expect(preview).toHaveAttribute('playsinline')
+    expect(preview).not.toHaveAttribute('controls')
+    expect(preview.muted).toBe(true)
+    expect(play).toHaveBeenCalledOnce()
+
+    fireEvent.mouseLeave(videoTile)
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    expect(screen.getByAltText('Portrait clip')).toBeVisible()
+  })
+
+  it('does not load a quick pass-over and stops the previous preview when another tile arms', () => {
+    vi.useFakeTimers()
+    const media = [
+      MIXED_MEDIA[1],
+      { ...MIXED_MEDIA[1], id: 'clip-two', alt: 'Second clip', videoSrc: '/clip-two.mp4' },
+    ]
+    render(<PhotoLightboxGrid photos={media} />)
+
+    fireEvent.mouseEnter(tile('Portrait clip'))
+    act(() => vi.advanceTimersByTime(100))
+    fireEvent.mouseLeave(tile('Portrait clip'))
+    act(() => vi.advanceTimersByTime(200))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+
+    fireEvent.mouseEnter(tile('Portrait clip'))
+    act(() => vi.advanceTimersByTime(200))
+    expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
+
+    fireEvent.mouseEnter(tile('Second clip'))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    act(() => vi.advanceTimersByTime(200))
+    expect(document.querySelectorAll('video')).toHaveLength(1)
+    expect(document.querySelector('video')).toHaveAttribute('src', '/clip-two.mp4')
+  })
+
+  it.each([
+    ['a device without hover', { hover: false, reducedMotion: false }],
+    ['reduced motion', { hover: true, reducedMotion: true }],
+  ])('keeps the poster on %s', (_label, preferences) => {
+    vi.useFakeTimers()
+    mockMediaPreferences(preferences)
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+
+    fireEvent.mouseEnter(tile('Portrait clip'))
+    act(() => vi.advanceTimersByTime(500))
+
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    expect(play).not.toHaveBeenCalled()
+    fireEvent.click(tile('Portrait clip'))
+    expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
+  })
+
+  it('stops a hovering preview and opens the lightbox at 0:00 with sound', () => {
+    vi.useFakeTimers()
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    const videoTile = tile('Portrait clip')
+    fireEvent.mouseEnter(videoTile)
+    act(() => vi.advanceTimersByTime(200))
+    const preview = document.querySelector('video') as HTMLVideoElement
+    preview.currentTime = 7
+
+    fireEvent.click(videoTile)
+
+    const videos = document.querySelectorAll('video')
+    expect(videos).toHaveLength(1)
+    expect(videos[0]).toBe(screen.getByRole('dialog', { name: 'Portrait clip' }).querySelector('video'))
+    expect(videos[0].currentTime).toBe(0)
+    expect(videos[0].muted).toBe(false)
+  })
+
   it('renders a natural-ratio optimized poster and duration without loading video bytes', () => {
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
 

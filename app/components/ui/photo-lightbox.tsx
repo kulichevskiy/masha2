@@ -43,6 +43,7 @@ type PhotoLightboxGridProps = {
 const DEFAULT_COLUMNS = 'columns-1 md:columns-2 lg:columns-3 gap-4'
 const SWIPE_DISTANCE = 50
 const NATIVE_VIDEO_CONTROLS_HEIGHT = 48
+const HOVER_PREVIEW_DELAY_MS = 200
 
 function isVideo(item: LightboxPhoto): item is LightboxVideo {
   return item.kind === 'video'
@@ -52,6 +53,48 @@ function formatDuration(durationSeconds: number) {
   const seconds = Math.max(0, Math.round(durationSeconds))
   const minutes = Math.floor(seconds / 60)
   return `${minutes}:${String(seconds % 60).padStart(2, '0')}`
+}
+
+function canPlayHoverPreview() {
+  return window.matchMedia('(hover: hover)').matches
+    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+function MosaicVideoPreview({ video }: { video: LightboxVideo }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const element = videoRef.current
+    if (!element) return
+
+    // Keep this assignment next to play() as a second line of defence against
+    // audio, even if the JSX attributes are changed later.
+    element.muted = true
+    element.defaultMuted = true
+    element.currentTime = 0
+    element.play()?.catch(() => undefined)
+
+    return () => {
+      element.pause()
+      element.currentTime = 0
+      element.removeAttribute('src')
+    }
+  }, [])
+
+  return (
+    <video
+      ref={videoRef}
+      src={video.videoSrc}
+      poster={video.src}
+      muted
+      loop
+      playsInline
+      preload="none"
+      aria-hidden="true"
+      tabIndex={-1}
+      className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+    />
+  )
 }
 
 function LightboxVideoPlayer({ video }: { video: LightboxVideo }) {
@@ -118,8 +161,28 @@ export function PhotoLightboxGrid({
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const consumedSwipeRef = useRef(false)
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hoverPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const initialUrlSyncedRef = useRef(false)
+  const [hoverPreviewId, setHoverPreviewId] = useState<string | null>(null)
   const isOpen = selectedIndex !== null
+
+  const stopHoverPreview = useCallback(() => {
+    if (hoverPreviewTimerRef.current) {
+      clearTimeout(hoverPreviewTimerRef.current)
+      hoverPreviewTimerRef.current = null
+    }
+    setHoverPreviewId(null)
+  }, [])
+
+  const armHoverPreview = useCallback((id: string) => {
+    stopHoverPreview()
+    if (!canPlayHoverPreview()) return
+
+    hoverPreviewTimerRef.current = setTimeout(() => {
+      hoverPreviewTimerRef.current = null
+      setHoverPreviewId(id)
+    }, HOVER_PREVIEW_DELAY_MS)
+  }, [stopHoverPreview])
 
   const indexFromUrl = useCallback(() => {
     const id = new URL(window.location.href).searchParams.get('photo')
@@ -128,6 +191,7 @@ export function PhotoLightboxGrid({
   }, [photos])
 
   const open = useCallback((index: number, opener: HTMLButtonElement) => {
+    stopHoverPreview()
     openerRef.current = opener
     openedByPushRef.current = true
     if (pendingTraversalRef.current) reopenedDuringTraversalRef.current = true
@@ -135,7 +199,7 @@ export function PhotoLightboxGrid({
     selectedIndexRef.current = index
     setSelectedIndex(index)
     window.history.pushState(null, '', photoUrl(photos[index].id))
-  }, [photos])
+  }, [photos, stopHoverPreview])
 
   const close = useCallback(() => {
     if (openedByPushRef.current) {
@@ -304,6 +368,7 @@ export function PhotoLightboxGrid({
 
   useEffect(() => () => {
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current)
+    if (hoverPreviewTimerRef.current) clearTimeout(hoverPreviewTimerRef.current)
   }, [])
 
   const revealControls = () => {
@@ -368,6 +433,8 @@ export function PhotoLightboxGrid({
             aria-haspopup="dialog"
             aria-label={`Open ${item.alt}`}
             onClick={(event) => open(index, event.currentTarget)}
+            onMouseEnter={isVideo(item) ? () => armHoverPreview(item.id) : undefined}
+            onMouseLeave={isVideo(item) ? stopHoverPreview : undefined}
             className="group relative mb-4 block w-full cursor-zoom-in break-inside-avoid overflow-hidden border-0 bg-gray-100 p-0 text-left"
           >
             <Image
@@ -379,9 +446,12 @@ export function PhotoLightboxGrid({
               className="block h-auto w-full transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
+            {isVideo(item) && hoverPreviewId === item.id ? (
+              <MosaicVideoPreview video={item} />
+            ) : null}
             {isVideo(item) ? (
               <span
-                className="pointer-events-none absolute bottom-2 right-2 font-roboto-mono text-xs text-white/70"
+                className="pointer-events-none absolute bottom-2 right-2 z-10 font-roboto-mono text-xs text-white/70"
                 style={{ textShadow: '0 1px 3px rgb(0 0 0 / 0.65)' }}
               >
                 {formatDuration(item.durationSeconds)}
