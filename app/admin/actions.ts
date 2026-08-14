@@ -82,7 +82,7 @@ export async function deletePhoto(id: string) {
   // Get photo to find storage path
   const { data: photo, error: fetchError } = await supabase
     .from('photos')
-    .select('storage_path')
+    .select('kind, storage_path, poster_path')
     .eq('id', id)
     .single()
 
@@ -91,13 +91,16 @@ export async function deletePhoto(id: string) {
   }
 
   // Delete from storage
+  const bucket = photo.kind === 'video' ? 'videos' : 'photos'
+  const storagePaths = [photo.storage_path, photo.poster_path].filter(
+    (path): path is string => Boolean(path)
+  )
   const { error: storageError } = await supabase.storage
-    .from('photos')
-    .remove([photo.storage_path])
+    .from(bucket)
+    .remove(storagePaths)
 
   if (storageError) {
-    // Log but don't fail - the file might already be deleted
-    console.error('Storage deletion error:', storageError)
+    throw new Error(`Failed to delete stored media: ${storageError.message}`)
   }
 
   // Delete from database
@@ -116,19 +119,26 @@ export async function deletePhoto(id: string) {
 // One uploaded file's storage path plus its intrinsic pixel dimensions, measured
 // client-side before upload. Dimensions may be null if the browser could not
 // decode the image — the feed falls back to a neutral aspect ratio for those.
-export type PhotoUpload = {
-  storagePath: string
-  width: number | null
-  height: number | null
-}
+export type PhotoUpload =
+  | { storagePath: string; kind?: 'photo'; width: number | null; height: number | null; posterPath?: null; durationSeconds?: null }
+  | { storagePath: string; kind: 'video'; width: number; height: number; posterPath: string; durationSeconds: number }
 
 export async function createPhotosFromUploads(uploads: PhotoUpload[]) {
   const supabase = await createClient()
 
   await requireAdmin(supabase)
 
+  for (const upload of uploads) {
+    const validVideo = upload.kind === 'video' &&
+      Boolean(upload.posterPath) && Number.isFinite(upload.durationSeconds) && upload.durationSeconds > 0 &&
+      Number.isInteger(upload.width) && upload.width > 0 && Number.isInteger(upload.height) && upload.height > 0
+    const validPhoto = (upload.kind === undefined || upload.kind === 'photo') &&
+      upload.posterPath == null && upload.durationSeconds == null
+    if (!validVideo && !validPhoto) throw new Error('Invalid media upload metadata')
+  }
+
   // Get the minimum position to place new photos at the top
-  const { data: minPositionData, error: minPositionError } = await supabase
+  const { data: minPositionData } = await supabase
     .from('photos')
     .select('position')
     .order('position', { ascending: true })
@@ -142,18 +152,21 @@ export async function createPhotosFromUploads(uploads: PhotoUpload[]) {
       : 0
 
   // Create photo records for each uploaded file
-  const photosToInsert = uploads.map(({ storagePath, width, height }, index) => ({
-    storage_path: storagePath,
+  const photosToInsert = uploads.map((upload, index) => ({
+    storage_path: upload.storagePath,
+    kind: upload.kind ?? 'photo',
+    poster_path: upload.posterPath ?? null,
+    duration_seconds: upload.durationSeconds ?? null,
     title: null,
     description: null,
     // Default alt_text is the original filename without its directory prefix or
     // extension: `photos/<uuid>/IMG_1234.jpg` -> `IMG_1234`. Stripping the prefix
     // keeps the default readable now that keys are namespaced per upload batch.
-    alt_text: storagePath.replace(/^.*\//, '').replace(/\.[^/.]+$/, ''),
+    alt_text: upload.storagePath.replace(/^.*\//, '').replace(/\.[^/.]+$/, ''),
     position: startPosition - index, // Decrement to keep order (newest first)
     pages: [] as string[], // New photos are hidden until assigned to a section
-    width, // Intrinsic dimensions drive proportional (uncropped) rendering
-    height,
+    width: upload.width, // Intrinsic dimensions drive proportional (uncropped) rendering
+    height: upload.height,
   }))
 
   const { error } = await supabase.from('photos').insert(photosToInsert)

@@ -48,6 +48,16 @@ type UseSupabaseUploadOptions = {
    * When set to false, an error is thrown if the object already exists. Defaults to `false`
    */
   upsert?: boolean
+  /** Resolve a different bucket/object path for individual files in a mixed batch. */
+  resolveUploadTarget?: (file: File) => {
+    bucketName: string
+    objectPath: string
+    cacheControl?: string
+    upload?: (file: File) => Promise<{ error: { message: string } | null }>
+  }
+  /** Prepare/decode files before any source object is uploaded. */
+  prepareFiles?: (files: File[]) => Promise<void>
+  validator?: (file: File) => FileError | readonly FileError[] | null
 }
 
 type UseSupabaseUploadReturn = ReturnType<typeof useSupabaseUpload>
@@ -61,6 +71,9 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
     maxFiles = 1,
     cacheControl = 3600,
     upsert = false,
+    resolveUploadTarget,
+    prepareFiles,
+    validator,
   } = options
 
   const [files, setFiles] = useState<FileWithPreview[]>([])
@@ -104,10 +117,14 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
   const dropzoneProps = useDropzone({
     onDrop,
     noClick: true,
-    accept: allowedMimeTypes.reduce((acc, type) => ({ ...acc, [type]: [] }), {}),
+    accept: allowedMimeTypes.reduce(
+      (acc, type) => ({ ...acc, [type]: type === 'video/mp4' ? ['.mp4'] : [] }),
+      {}
+    ),
     maxSize: maxFileSize,
     maxFiles: maxFiles,
     multiple: maxFiles !== 1,
+    validator,
   })
 
   const onUpload = useCallback(async () => {
@@ -120,41 +137,77 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
       filesWithErrors.length > 0
         ? [
             ...files.filter((f) => filesWithErrors.includes(f.name)),
-            ...files.filter((f) => !successes.includes(f.name)),
+            ...files.filter(
+              (f) => !filesWithErrors.includes(f.name) && !successes.includes(f.name)
+            ),
           ]
         : files
 
-    const responses = await Promise.all(
-      filesToUpload.map(async (file) => {
-        const { error } = await supabase.storage
-          .from(bucketName)
-          .upload(!!path ? `${path}/${file.name}` : file.name, file, {
-            cacheControl: cacheControl.toString(),
-            upsert,
-          })
-        if (error) {
-          return { name: file.name, message: error.message }
-        } else {
-          return { name: file.name, message: undefined }
-        }
-      })
-    )
+    try {
+      await prepareFiles?.(filesToUpload)
 
-    const responseErrors = responses.filter((x) => x.message !== undefined)
-    // if there were errors previously, this function tried to upload the files again so we should clear/overwrite the existing errors.
-    setErrors(responseErrors)
+      const responses = await Promise.all(
+        filesToUpload.map(async (file) => {
+          try {
+            const target = resolveUploadTarget?.(file)
+            const { error } = target?.upload
+              ? await target.upload(file)
+              : await supabase.storage
+                  .from(target?.bucketName ?? bucketName)
+                  .upload(target?.objectPath ?? (!!path ? `${path}/${file.name}` : file.name), file, {
+                    cacheControl: target?.cacheControl ?? cacheControl.toString(),
+                    upsert,
+                  })
+            return { name: file.name, message: error?.message }
+          } catch (error) {
+            return {
+              name: file.name,
+              message: error instanceof Error ? error.message : 'Не удалось загрузить файл',
+            }
+          }
+        })
+      )
 
-    const responseSuccesses = responses.filter((x) => x.message === undefined)
-    const newSuccesses = Array.from(
-      new Set([...successes, ...responseSuccesses.map((x) => x.name)])
-    )
-    setSuccesses(newSuccesses)
+      const responseErrors = responses.filter(
+        (response): response is { name: string; message: string } => response.message !== undefined
+      )
+      // if there were errors previously, this function tried to upload the files again so we should clear/overwrite the existing errors.
+      setErrors(responseErrors)
 
-    setLoading(false)
-  }, [files, path, bucketName, errors, successes])
+      const responseSuccesses = responses.filter((x) => x.message === undefined)
+      const newSuccesses = Array.from(
+        new Set([...successes, ...responseSuccesses.map((x) => x.name)])
+      )
+      setSuccesses(newSuccesses)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось загрузить файл'
+      setErrors(filesToUpload.map((file) => ({ name: file.name, message })))
+    } finally {
+      setLoading(false)
+    }
+  }, [
+    files,
+    path,
+    bucketName,
+    errors,
+    successes,
+    cacheControl,
+    upsert,
+    resolveUploadTarget,
+    prepareFiles,
+    setLoading,
+    setErrors,
+    setSuccesses,
+  ])
+
+  const failUploads = useCallback((fileNames: string[], message: string) => {
+    setSuccesses((current) => current.filter((name) => !fileNames.includes(name)))
+    setErrors(fileNames.map((name) => ({ name, message })))
+  }, [setErrors, setSuccesses])
 
   useEffect(() => {
     if (files.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset errors when the controlled file list is emptied
       setErrors([])
     }
 
@@ -172,7 +225,7 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
         setFiles(newFiles)
       }
     }
-  }, [files.length, setFiles, maxFiles])
+  }, [files, setFiles, maxFiles])
 
   return {
     files,
@@ -182,6 +235,7 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
     loading,
     errors,
     setErrors,
+    failUploads,
     onUpload,
     maxFileSize: maxFileSize,
     maxFiles: maxFiles,

@@ -8,19 +8,25 @@ import { PHOTO_PAGES, PHOTO_PAGE_LABELS } from './photo-pages'
 
 // Filter values shown across the top of the table, in display order. `all` and
 // `hidden` bracket the per-section filters; `hidden` means an empty pages array.
-export const PHOTO_FILTERS = ['all', ...PHOTO_PAGES, 'hidden'] as const
+export const PHOTO_FILTERS = ['all', ...PHOTO_PAGES, 'video', 'hidden'] as const
 
 export type PhotoFilter = (typeof PHOTO_FILTERS)[number]
 
 export const PHOTO_FILTER_LABELS: Record<PhotoFilter, string> = {
   all: 'Все',
   ...PHOTO_PAGE_LABELS,
+  video: 'Видео',
   hidden: 'Скрытые',
 }
 
 // Whether a photo's pages array belongs in the given filter view.
-export function matchesFilter(pages: string[], filter: PhotoFilter): boolean {
+export function matchesFilter(
+  pages: string[],
+  filter: PhotoFilter,
+  kind: 'photo' | 'video' | string = 'photo'
+): boolean {
   if (filter === 'all') return true
+  if (filter === 'video') return kind === 'video'
   if (filter === 'hidden') return pages.length === 0
   return pages.includes(filter)
 }

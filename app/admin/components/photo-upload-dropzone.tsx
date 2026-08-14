@@ -1,31 +1,17 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
 import { newId } from '@/lib/id'
+import { createClient } from '@/lib/supabase/client'
+import { isMp4File, prepareMediaUpload } from '@/lib/media-upload'
+import { uploadImmutableObject } from '@/lib/immutable-storage-upload'
 import { createPhotosFromUploads } from '../actions'
 
-// Read a file's intrinsic pixel dimensions in the browser before upload, so the
-// public feed can render it at its natural aspect ratio without cropping.
-// `imageOrientation: 'from-image'` applies EXIF orientation, so a rotated photo
-// reports its *displayed* dimensions — matching how the browser renders <img>
-// (image-orientation: from-image) and how the backfill script stores them.
-// Returns nulls if the browser cannot decode the image — the feed falls back to
-// a neutral aspect ratio for those.
-async function measureImage(
-  file: File
-): Promise<{ width: number | null; height: number | null }> {
-  try {
-    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
-    const dimensions = { width: bitmap.width, height: bitmap.height }
-    bitmap.close()
-    return dimensions
-  } catch {
-    return { width: null, height: null }
-  }
-}
+const supabase = createClient()
+const PHOTO_MAX_BYTES = 10 * 1024 * 1024
 
 export function PhotoUploadDropzone() {
   const router = useRouter()
@@ -38,15 +24,15 @@ export function PhotoUploadDropzone() {
   // fresh `useSupabaseUpload` instance (empty `successes`/`files`) instead of
   // mutating `path` on a hook whose `successes` accumulates across batches —
   // mirrors the workshop/gift uploaders' sessionId-keyed pattern.
-  const [prefix, setPrefix] = useState<string>(() => `photos/${newId()}`)
+  const [sessionId, setSessionId] = useState<string>(() => newId())
 
   return (
     <div className="mb-6">
       <UploadSession
-        key={prefix}
-        prefix={prefix}
+        key={sessionId}
+        sessionId={sessionId}
         onBatchComplete={() => {
-          setPrefix(`photos/${newId()}`)
+          setSessionId(newId())
           router.refresh()
         }}
       />
@@ -55,22 +41,46 @@ export function PhotoUploadDropzone() {
 }
 
 function UploadSession({
-  prefix,
+  sessionId,
   onBatchComplete,
 }: {
-  prefix: string
+  sessionId: string
   onBatchComplete: () => void
 }) {
+  const preparedRef = useRef(new Map<File, Awaited<ReturnType<typeof prepareMediaUpload>>>())
+  const prepareFiles = useCallback(async (files: File[]) => {
+    const prepared = await Promise.all(files.map((file) => prepareMediaUpload(file)))
+    files.forEach((file, index) => preparedRef.current.set(file, prepared[index]))
+  }, [])
+
+  const resolveUploadTarget = useCallback((file: File) =>
+    isMp4File(file)
+      ? {
+          bucketName: 'videos',
+          objectPath: `videos/${sessionId}/${file.name}`,
+          upload: (source: File) => uploadImmutableObject(
+            supabase, 'videos', `videos/${sessionId}/${file.name}`, source, 'video/mp4'
+          ),
+        }
+      : { bucketName: 'photos', objectPath: `photos/${sessionId}/${file.name}` },
+  [sessionId])
+
   const uploadHook = useSupabaseUpload({
     bucketName: 'photos',
-    path: prefix,
-    allowedMimeTypes: ['image/*'],
-    maxFileSize: 10 * 1024 * 1024, // 10MB
+    path: `photos/${sessionId}`,
+    allowedMimeTypes: ['image/*', 'video/mp4'],
+    maxFileSize: 25 * 1024 * 1024,
     maxFiles: 50,
     upsert: false,
+    validator: (file) =>
+      !isMp4File(file) && file.type.startsWith('image/') && file.size > PHOTO_MAX_BYTES
+        ? { code: 'file-too-large', message: 'Фотография больше чем 10 МБ' }
+        : null,
+    prepareFiles,
+    resolveUploadTarget,
   })
 
-  const { files, isSuccess, successes } = uploadHook
+  const { files, isSuccess, successes, failUploads } = uploadHook
   const firedRef = useRef(false)
 
   // After successful upload, create database records. This fires once per
@@ -85,29 +95,83 @@ function UploadSession({
     // Measure each uploaded file's intrinsic dimensions, then create the DB
     // records. The hook reports successes by filename; the full object key
     // is that filename under the batch prefix (`photos/<uuid>/IMG_1234.jpg`).
-    Promise.all(
-      successes.map(async (fileName) => {
+    const createdObjects: { bucket: string; path: string }[] = successes.map((fileName) => {
+      const file = files.find((candidate) => candidate.name === fileName)
+      const bucket = file && isMp4File(file) ? 'videos' : 'photos'
+      return { bucket, path: `${bucket}/${sessionId}/${fileName}` }
+    })
+
+    const finishBatch = async () => {
+      const uploads = []
+      for (const fileName of successes) {
         const file = files.find((f) => f.name === fileName)
-        const { width, height } = file
-          ? await measureImage(file)
-          : { width: null, height: null }
-        return { storagePath: `${prefix}/${fileName}`, width, height }
-      })
-    )
-      .then((uploads) => createPhotosFromUploads(uploads))
+        if (!file) throw new Error(`Не найден исходный файл ${fileName}`)
+
+        const prepared = preparedRef.current.get(file)
+        if (!prepared) throw new Error(`Файл ${fileName} не был подготовлен`)
+        if (prepared.kind === 'photo') {
+          uploads.push({
+            storagePath: `photos/${sessionId}/${fileName}`,
+            kind: 'photo' as const,
+            width: prepared.width,
+            height: prepared.height,
+          })
+          continue
+        }
+
+        const posterName = `${fileName}.poster.jpg`
+        const posterPath = `videos/${sessionId}/${posterName}`
+        const { error } = await uploadImmutableObject(
+          supabase, 'videos', posterPath, prepared.poster, 'image/jpeg'
+        )
+        if (error) throw new Error(`Failed to upload video poster: ${error.message}`)
+        createdObjects.push({ bucket: 'videos', path: posterPath })
+
+        uploads.push({
+          storagePath: `videos/${sessionId}/${fileName}`,
+          kind: 'video' as const,
+          posterPath,
+          durationSeconds: prepared.durationSeconds,
+          width: prepared.width,
+          height: prepared.height,
+        })
+      }
+      await createPhotosFromUploads(uploads)
+    }
+
+    finishBatch()
       .then(() => {
         onBatchComplete()
       })
-      .catch((error) => {
+      .catch(async (error) => {
         console.error('Failed to create photo records:', error)
+        const cleanupResults = await Promise.all(
+          ['photos', 'videos'].map(async (bucket) => {
+            const paths = createdObjects.filter((object) => object.bucket === bucket).map((object) => object.path)
+            if (!paths.length) return null
+            try {
+              const { error: cleanupError } = await supabase.storage.from(bucket).remove(paths)
+              return cleanupError ? `${bucket}: ${cleanupError.message}` : null
+            } catch (cleanupError) {
+              const message = cleanupError instanceof Error ? cleanupError.message : 'неизвестная ошибка'
+              return `${bucket}: ${message}`
+            }
+          })
+        )
+        const cleanupErrors = cleanupResults.filter((result): result is string => result !== null)
+        if (cleanupErrors.length > 0) {
+          failUploads(successes, `Не удалось очистить загруженные файлы: ${cleanupErrors.join('; ')}`)
+          return
+        }
+        failUploads(successes, error instanceof Error ? error.message : 'Не удалось завершить загрузку')
         firedRef.current = false
       })
-  }, [isSuccess, successes, files, prefix, onBatchComplete])
+  }, [isSuccess, successes, files, sessionId, onBatchComplete, failUploads])
 
   return (
     <Dropzone {...uploadHook}>
-      <DropzoneEmptyState />
-      <DropzoneContent />
+      <DropzoneEmptyState media />
+      <DropzoneContent media />
     </Dropzone>
   )
 }

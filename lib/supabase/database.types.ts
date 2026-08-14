@@ -216,9 +216,12 @@ export type Database = {
           alt_text: string | null
           created_at: string
           description: string | null
+          duration_seconds: number | null
           height: number | null
           id: string
+          kind: string
           pages: string[]
+          poster_path: string | null
           position: number
           storage_path: string
           title: string | null
@@ -229,9 +232,12 @@ export type Database = {
           alt_text?: string | null
           created_at?: string
           description?: string | null
+          duration_seconds?: number | null
           height?: number | null
           id?: string
+          kind?: string
           pages?: string[]
+          poster_path?: string | null
           position?: number
           storage_path: string
           title?: string | null
@@ -242,9 +248,12 @@ export type Database = {
           alt_text?: string | null
           created_at?: string
           description?: string | null
+          duration_seconds?: number | null
           height?: number | null
           id?: string
+          kind?: string
           pages?: string[]
+          poster_path?: string | null
           position?: number
           storage_path?: string
           title?: string | null

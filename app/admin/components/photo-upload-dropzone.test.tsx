@@ -8,24 +8,56 @@
  * first batch's stale `successes` before the second file ever uploaded. A
  * fresh `UploadSession` instance per batch (`key={prefix}`) fixes that.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
-import { render, fireEvent, waitFor, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest'
+import { render, fireEvent, waitFor, screen, cleanup } from '@testing-library/react'
 
-const mockUpload = vi.fn(async () => ({ error: null }))
+type StorageError = { message: string }
+type StorageResult = { error: StorageError | null }
+type UploadMock = (
+  bucket: string,
+  path: string,
+  file: File,
+  options: { cacheControl: string; upsert: boolean }
+) => Promise<StorageResult>
+type RemoveMock = (bucket: string, paths: string[]) => Promise<StorageResult>
+
+const mockUpload = vi.fn<UploadMock>().mockResolvedValue({ error: null })
+const mockRemove = vi.fn<RemoveMock>().mockResolvedValue({ error: null })
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
+    auth: { getSession: async () => ({ data: { session: { access_token: 'token' } } }) },
     storage: {
-      from: () => ({ upload: (...args: unknown[]) => mockUpload(...args) }),
+      from: (bucket: string) => ({
+        upload: (path: string, file: File, options: { cacheControl: string; upsert: boolean }) =>
+          mockUpload(bucket, path, file, options),
+        remove: (paths: string[]) => mockRemove(bucket, paths),
+      }),
     },
   }),
+}))
+
+vi.mock('@/lib/media-upload', () => ({
+  isMp4File: (file: File) =>
+    file.type.toLowerCase() === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4'),
+  prepareMediaUpload: async (file: File) =>
+    file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4')
+      ? {
+          kind: 'video',
+          width: 720,
+          height: 1280,
+          durationSeconds: 12.75,
+          poster: new Blob(['poster'], { type: 'image/jpeg' }),
+        }
+      : { kind: 'photo', width: 800, height: 600 },
 }))
 
 const mockRefresh = vi.fn()
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: mockRefresh }) }))
 
-const mockCreatePhotosFromUploads = vi.fn(async () => undefined)
+type UploadRow = { storagePath: string; [key: string]: unknown }
+const mockCreatePhotosFromUploads = vi.fn<(uploads: UploadRow[]) => Promise<void>>().mockResolvedValue(undefined)
 vi.mock('../actions', () => ({
-  createPhotosFromUploads: (...args: unknown[]) => mockCreatePhotosFromUploads(...args),
+  createPhotosFromUploads: (uploads: UploadRow[]) => mockCreatePhotosFromUploads(uploads),
 }))
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,22 +69,28 @@ beforeAll(async () => {
   ;({ PhotoUploadDropzone } = await import('./photo-upload-dropzone'))
 })
 
-function makeFile(name: string) {
-  return new File(['x'], name, { type: 'image/png' })
+afterEach(cleanup)
+
+function makeFile(name: string, type = 'image/png') {
+  return new File(['x'], name, { type })
 }
 
 async function dropAndUpload(container: HTMLElement, file: File) {
   const input = container.querySelector('input[type="file"]') as HTMLInputElement
   fireEvent.change(input, { target: { files: [file] } })
-  const button = await screen.findByRole('button', { name: /Загрузить фотографии/ })
+  const button = await screen.findByRole('button', { name: /Загрузить/ })
   fireEvent.click(button)
 }
 
 describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
   beforeEach(() => {
     mockUpload.mockClear()
+    mockRemove.mockClear()
+    mockRemove.mockResolvedValue({ error: null })
     mockRefresh.mockClear()
     mockCreatePhotosFromUploads.mockClear()
+    mockCreatePhotosFromUploads.mockResolvedValue(undefined)
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 200 })))
   })
 
   it('creates exactly one correct row per batch, with no phantom row from a stale prior batch', async () => {
@@ -61,7 +99,9 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
     await dropAndUpload(container, makeFile('A.jpg'))
 
     await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(1))
-    const firstUploads = mockCreatePhotosFromUploads.mock.calls[0][0] as { storagePath: string }[]
+    const firstUploads = mockCreatePhotosFromUploads.mock.calls[0]?.[0]
+    expect(firstUploads).toBeDefined()
+    if (!firstUploads) throw new Error('Expected first upload call')
     expect(firstUploads).toHaveLength(1)
     expect(firstUploads[0].storagePath).toMatch(/^photos\/[^/]+\/A\.jpg$/)
 
@@ -73,7 +113,9 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
     await dropAndUpload(container, makeFile('B.jpg'))
 
     await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(2))
-    const secondUploads = mockCreatePhotosFromUploads.mock.calls[1][0] as { storagePath: string }[]
+    const secondUploads = mockCreatePhotosFromUploads.mock.calls[1]?.[0]
+    expect(secondUploads).toBeDefined()
+    if (!secondUploads) throw new Error('Expected second upload call')
 
     // Only the real, freshly-uploaded B.jpg should be recorded — not a
     // phantom row carried over from the first batch's A.jpg.
@@ -85,5 +127,117 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
     expect(firstUploads[0].storagePath.split('/')[1]).not.toBe(
       secondUploads[0].storagePath.split('/')[1]
     )
+  })
+
+  it('uploads an mp4 and generated poster to videos with immutable caching, then creates video metadata', async () => {
+    const { container } = render(<PhotoUploadDropzone />)
+
+    await dropAndUpload(container, makeFile('clip.mp4', 'video/mp4'))
+
+    await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(1))
+    const uploads = mockCreatePhotosFromUploads.mock.calls[0]?.[0]
+    expect(uploads).toEqual([
+      expect.objectContaining({
+        kind: 'video',
+        storagePath: expect.stringMatching(/^videos\/[^/]+\/clip\.mp4$/),
+        posterPath: expect.stringMatching(/^videos\/[^/]+\/clip\.mp4\.poster\.jpg$/),
+        durationSeconds: 12.75,
+        width: 720,
+        height: 1280,
+      }),
+    ])
+
+    const fetchCalls = vi.mocked(fetch).mock.calls
+    expect(fetchCalls).toHaveLength(2)
+    for (const [, init] of fetchCalls) {
+      expect(new Headers(init?.headers).get('Cache-Control')).toBe(
+        'public, max-age=31536000, immutable'
+      )
+    }
+  })
+
+  it('shows a rejected custom upload and clears the loading state', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('network unavailable'))
+    const { container } = render(<PhotoUploadDropzone />)
+
+    await dropAndUpload(container, makeFile('clip.mp4', 'video/mp4'))
+
+    expect(await screen.findByText(/network unavailable/)).toBeTruthy()
+    expect((screen.getByRole('button', { name: /Загрузить/ }) as HTMLButtonElement).disabled).toBe(false)
+    expect(mockCreatePhotosFromUploads).not.toHaveBeenCalled()
+  })
+
+  it('cleans up source and poster objects and allows retry when row insertion fails', async () => {
+    mockCreatePhotosFromUploads
+      .mockRejectedValueOnce(new Error('database unavailable'))
+      .mockResolvedValueOnce(undefined)
+    const { container } = render(<PhotoUploadDropzone />)
+
+    await dropAndUpload(container, makeFile('clip.mp4', 'video/mp4'))
+
+    await waitFor(() => expect(mockRemove).toHaveBeenCalledWith(
+      'videos',
+      expect.arrayContaining([
+        expect.stringMatching(/clip\.mp4$/),
+        expect.stringMatching(/clip\.mp4\.poster\.jpg$/),
+      ])
+    ))
+    expect(await screen.findByText(/database unavailable/)).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /Загрузить/ }))
+    await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1))
+  })
+
+  it('surfaces a cleanup failure and does not retry against immutable objects', async () => {
+    mockCreatePhotosFromUploads.mockRejectedValue(new Error('database unavailable'))
+    mockRemove.mockResolvedValue({ error: { message: 'storage unavailable' } })
+    const { container } = render(<PhotoUploadDropzone />)
+
+    await dropAndUpload(container, makeFile('clip.mp4', 'video/mp4'))
+
+    expect(await screen.findByText(/Не удалось очистить загруженные файлы.*storage unavailable/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Загрузить/ }))
+
+    await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(1))
+    expect(mockRefresh).not.toHaveBeenCalled()
+  })
+
+  it('rejects an mp4 larger than 25 MB with a clear message', async () => {
+    const { container } = render(<PhotoUploadDropzone />)
+    const file = makeFile('too-large.mp4', 'video/mp4')
+    Object.defineProperty(file, 'size', { value: 25 * 1024 * 1024 + 1 })
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [file] } })
+
+    expect(await screen.findByText(/Файл больше чем 25 МБ/)).toBeTruthy()
+    expect((screen.getByRole('button', { name: /Загрузить/ }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('recognizes an mp4 by extension when the browser supplies no MIME type', async () => {
+    const { container } = render(<PhotoUploadDropzone />)
+
+    await dropAndUpload(container, makeFile('clip.MP4', ''))
+
+    await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(1))
+    expect(mockCreatePhotosFromUploads).toHaveBeenCalledWith([
+      expect.objectContaining({
+        kind: 'video',
+        storagePath: expect.stringMatching(/clip\.MP4$/),
+        posterPath: expect.stringMatching(/clip\.MP4\.poster\.jpg$/),
+      }),
+    ])
+  })
+
+  it('keeps the existing 10 MB limit for photos', async () => {
+    const { container } = render(<PhotoUploadDropzone />)
+    const file = makeFile('too-large.jpg', 'image/jpeg')
+    Object.defineProperty(file, 'size', { value: 10 * 1024 * 1024 + 1 })
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [file] } })
+
+    expect(await screen.findByText(/Фотография больше чем 10 МБ/)).toBeTruthy()
   })
 })
