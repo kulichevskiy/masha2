@@ -232,15 +232,18 @@ function LightboxVideoPlayer({
     const player = playerRef.current
     const element = videoRef.current
     if (!player || !element) return
+    const enterIosFullscreen = () => {
+      // iPhone Safari hands fullscreen video off to the system player.
+      const iosVideo = element as HTMLVideoElement & { webkitEnterFullscreen?: () => void }
+      iosVideo.webkitEnterFullscreen?.()
+    }
 
     if (document.fullscreenElement === player) {
       document.exitFullscreen?.().catch(() => undefined)
     } else if (player.requestFullscreen) {
-      player.requestFullscreen().catch(() => undefined)
+      player.requestFullscreen().catch(enterIosFullscreen)
     } else {
-      // iPhone Safari hands fullscreen video off to the system player.
-      const iosVideo = element as HTMLVideoElement & { webkitEnterFullscreen?: () => void }
-      iosVideo.webkitEnterFullscreen?.()
+      enterIosFullscreen()
     }
     revealControls()
   }
