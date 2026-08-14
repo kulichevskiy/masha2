@@ -37,8 +37,10 @@ vi.mock('@/lib/supabase/client', () => ({
 }))
 
 vi.mock('@/lib/media-upload', () => ({
+  isMp4File: (file: File) =>
+    file.type.toLowerCase() === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4'),
   prepareMediaUpload: async (file: File) =>
-    file.type === 'video/mp4'
+    file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4')
       ? {
           kind: 'video',
           width: 720,
@@ -138,7 +140,7 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
       expect.objectContaining({
         kind: 'video',
         storagePath: expect.stringMatching(/^videos\/[^/]+\/clip\.mp4$/),
-        posterPath: expect.stringMatching(/^videos\/[^/]+\/clip\.poster\.jpg$/),
+        posterPath: expect.stringMatching(/^videos\/[^/]+\/clip\.mp4\.poster\.jpg$/),
         durationSeconds: 12.75,
         width: 720,
         height: 1280,
@@ -177,7 +179,7 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
       'videos',
       expect.arrayContaining([
         expect.stringMatching(/clip\.mp4$/),
-        expect.stringMatching(/clip\.poster\.jpg$/),
+        expect.stringMatching(/clip\.mp4\.poster\.jpg$/),
       ])
     ))
     expect(await screen.findByText(/database unavailable/)).toBeTruthy()
@@ -211,6 +213,21 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
 
     expect(await screen.findByText(/Файл больше чем 25 МБ/)).toBeTruthy()
     expect((screen.getByRole('button', { name: /Загрузить/ }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('recognizes an mp4 by extension when the browser supplies no MIME type', async () => {
+    const { container } = render(<PhotoUploadDropzone />)
+
+    await dropAndUpload(container, makeFile('clip.MP4', ''))
+
+    await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(1))
+    expect(mockCreatePhotosFromUploads).toHaveBeenCalledWith([
+      expect.objectContaining({
+        kind: 'video',
+        storagePath: expect.stringMatching(/clip\.MP4$/),
+        posterPath: expect.stringMatching(/clip\.MP4\.poster\.jpg$/),
+      }),
+    ])
   })
 
   it('keeps the existing 10 MB limit for photos', async () => {

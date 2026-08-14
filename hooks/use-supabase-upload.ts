@@ -117,7 +117,10 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
   const dropzoneProps = useDropzone({
     onDrop,
     noClick: true,
-    accept: allowedMimeTypes.reduce((acc, type) => ({ ...acc, [type]: [] }), {}),
+    accept: allowedMimeTypes.reduce(
+      (acc, type) => ({ ...acc, [type]: type === 'video/mp4' ? ['.mp4'] : [] }),
+      {}
+    ),
     maxSize: maxFileSize,
     maxFiles: maxFiles,
     multiple: maxFiles !== 1,
@@ -134,7 +137,9 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
       filesWithErrors.length > 0
         ? [
             ...files.filter((f) => filesWithErrors.includes(f.name)),
-            ...files.filter((f) => !successes.includes(f.name)),
+            ...files.filter(
+              (f) => !filesWithErrors.includes(f.name) && !successes.includes(f.name)
+            ),
           ]
         : files
 

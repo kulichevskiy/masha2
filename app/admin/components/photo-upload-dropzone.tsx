@@ -6,7 +6,7 @@ import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
 import { newId } from '@/lib/id'
 import { createClient } from '@/lib/supabase/client'
-import { prepareMediaUpload } from '@/lib/media-upload'
+import { isMp4File, prepareMediaUpload } from '@/lib/media-upload'
 import { uploadImmutableObject } from '@/lib/immutable-storage-upload'
 import { createPhotosFromUploads } from '../actions'
 
@@ -54,7 +54,7 @@ function UploadSession({
   }, [])
 
   const resolveUploadTarget = useCallback((file: File) =>
-    file.type === 'video/mp4'
+    isMp4File(file)
       ? {
           bucketName: 'videos',
           objectPath: `videos/${sessionId}/${file.name}`,
@@ -73,7 +73,7 @@ function UploadSession({
     maxFiles: 50,
     upsert: false,
     validator: (file) =>
-      file.type.startsWith('image/') && file.size > PHOTO_MAX_BYTES
+      !isMp4File(file) && file.type.startsWith('image/') && file.size > PHOTO_MAX_BYTES
         ? { code: 'file-too-large', message: 'Фотография больше чем 10 МБ' }
         : null,
     prepareFiles,
@@ -97,7 +97,8 @@ function UploadSession({
     // is that filename under the batch prefix (`photos/<uuid>/IMG_1234.jpg`).
     const createdObjects: { bucket: string; path: string }[] = successes.map((fileName) => {
       const file = files.find((candidate) => candidate.name === fileName)
-      return { bucket: file?.type === 'video/mp4' ? 'videos' : 'photos', path: `${file?.type === 'video/mp4' ? 'videos' : 'photos'}/${sessionId}/${fileName}` }
+      const bucket = file && isMp4File(file) ? 'videos' : 'photos'
+      return { bucket, path: `${bucket}/${sessionId}/${fileName}` }
     })
 
     const finishBatch = async () => {
@@ -118,7 +119,7 @@ function UploadSession({
           continue
         }
 
-        const posterName = fileName.replace(/\.[^/.]+$/, '') + '.poster.jpg'
+        const posterName = `${fileName}.poster.jpg`
         const posterPath = `videos/${sessionId}/${posterName}`
         const { error } = await uploadImmutableObject(
           supabase, 'videos', posterPath, prepared.poster, 'image/jpeg'

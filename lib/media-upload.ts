@@ -12,6 +12,12 @@ export type PreparedMediaUpload =
       poster: Blob
     }
 
+const VIDEO_READ_TIMEOUT_MS = 10_000
+
+export function isMp4File(file: File): boolean {
+  return file.type.toLowerCase() === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4')
+}
+
 async function measureImage(file: File): Promise<PreparedMediaUpload> {
   try {
     const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
@@ -28,8 +34,13 @@ function prepareVideo(file: File): Promise<PreparedMediaUpload> {
     const video = document.createElement('video')
     const objectUrl = URL.createObjectURL(file)
     let settled = false
+    const timeout = window.setTimeout(
+      () => fail('Не удалось прочитать видео'),
+      VIDEO_READ_TIMEOUT_MS
+    )
 
     const cleanup = () => {
+      window.clearTimeout(timeout)
       video.removeEventListener('loadedmetadata', handleMetadata)
       video.removeEventListener('loadeddata', capturePoster)
       video.removeEventListener('error', handleError)
@@ -100,5 +111,5 @@ function prepareVideo(file: File): Promise<PreparedMediaUpload> {
 }
 
 export function prepareMediaUpload(file: File): Promise<PreparedMediaUpload> {
-  return file.type === 'video/mp4' ? prepareVideo(file) : measureImage(file)
+  return isMp4File(file) ? prepareVideo(file) : measureImage(file)
 }
