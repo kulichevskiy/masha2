@@ -1,7 +1,17 @@
 'use client'
 
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Maximize,
+  Minimize,
+  Pause,
+  Play,
+  Volume2,
+  VolumeX,
+  X,
+} from 'lucide-react'
 import {
   useCallback,
   useEffect,
@@ -42,8 +52,8 @@ type PhotoLightboxGridProps = {
 
 const DEFAULT_COLUMNS = 'columns-1 md:columns-2 lg:columns-3 gap-4'
 const SWIPE_DISTANCE = 50
-const NATIVE_VIDEO_CONTROLS_HEIGHT = 48
 const HOVER_PREVIEW_DELAY_MS = 200
+const VIDEO_CONTROLS_IDLE_MS = 2000
 
 function isVideo(item: LightboxPhoto): item is LightboxVideo {
   return item.kind === 'video'
@@ -100,39 +110,228 @@ function MosaicVideoPreview({ video }: { video: LightboxVideo }) {
   )
 }
 
-function LightboxVideoPlayer({ video }: { video: LightboxVideo }) {
-  const videoRef = useRef<HTMLVideoElement>(null)
+type LightboxVideoPlayerProps = {
+  video: LightboxVideo
+  muted: boolean
+  onMutedChange: (muted: boolean) => void
+  videoRef: React.RefObject<HTMLVideoElement | null>
+  togglePlaybackRef: React.RefObject<(() => void) | null>
+}
+
+function LightboxVideoPlayer({
+  video,
+  muted,
+  onMutedChange,
+  videoRef,
+  togglePlaybackRef,
+}: LightboxVideoPlayerProps) {
+  const playerRef = useRef<HTMLDivElement>(null)
+  const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [controlsVisible, setControlsVisible] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(true)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(video.durationSeconds)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  const revealControls = useCallback(() => {
+    setControlsVisible(true)
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current)
+    controlsTimerRef.current = setTimeout(
+      () => setControlsVisible(false),
+      VIDEO_CONTROLS_IDLE_MS
+    )
+  }, [])
 
   useEffect(() => {
     const element = videoRef.current
     if (!element) return
 
     element.currentTime = 0
-    element.muted = false
     // Without a user activation (e.g. a ?photo= deep link) browsers reject
-    // audible autoplay; leave the poster with controls up for a manual play.
-    element.play()?.catch(() => undefined)
+    // audible autoplay; leave the poster with our controls up for a manual play.
+    element.play()?.catch(() => setIsPlaying(false))
 
     return () => {
       element.pause()
       element.currentTime = 0
     }
-  }, [video.id])
+  }, [video.id, videoRef])
+
+  useEffect(() => {
+    const element = videoRef.current
+    if (element) element.muted = muted
+  }, [muted, video.id, videoRef])
+
+  useEffect(() => {
+    controlsTimerRef.current = setTimeout(
+      () => setControlsVisible(false),
+      VIDEO_CONTROLS_IDLE_MS
+    )
+    return () => {
+      if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current)
+    }
+  }, [])
+
+  const togglePlayback = useCallback(() => {
+    const element = videoRef.current
+    if (!element) return
+
+    if (isPlaying) {
+      element.pause()
+      setIsPlaying(false)
+    } else {
+      setIsPlaying(true)
+      element.play()?.catch(() => setIsPlaying(false))
+    }
+    revealControls()
+  }, [isPlaying, revealControls, videoRef])
+
+  useEffect(() => {
+    togglePlaybackRef.current = togglePlayback
+    return () => {
+      togglePlaybackRef.current = null
+    }
+  }, [togglePlayback, togglePlaybackRef])
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === playerRef.current)
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }, [])
+
+  const syncDuration = () => {
+    const mediaDuration = videoRef.current?.duration
+    setDuration(
+      mediaDuration && Number.isFinite(mediaDuration) ? mediaDuration : video.durationSeconds
+    )
+  }
+
+  const seek = (nextTime: number) => {
+    const element = videoRef.current
+    if (!element) return
+    element.currentTime = nextTime
+    setCurrentTime(nextTime)
+  }
+
+  const toggleMuted = () => {
+    const nextMuted = !muted
+    if (videoRef.current) videoRef.current.muted = nextMuted
+    onMutedChange(nextMuted)
+    revealControls()
+  }
+
+  const toggleFullscreen = () => {
+    const player = playerRef.current
+    const element = videoRef.current
+    if (!player || !element) return
+
+    if (document.fullscreenElement === player) {
+      document.exitFullscreen?.().catch(() => undefined)
+    } else if (player.requestFullscreen) {
+      player.requestFullscreen().catch(() => undefined)
+    } else {
+      // iPhone Safari hands fullscreen video off to the system player.
+      const iosVideo = element as HTMLVideoElement & { webkitEnterFullscreen?: () => void }
+      iosVideo.webkitEnterFullscreen?.()
+    }
+    revealControls()
+  }
+
+  const progress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0
 
   return (
-    <video
-      ref={videoRef}
-      src={video.videoSrc}
-      poster={video.src}
-      controls
-      autoPlay
-      playsInline
-      preload="none"
-      width={video.width}
-      height={video.height}
-      style={{ aspectRatio: `${video.width} / ${video.height}` }}
-      className="h-auto max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] object-contain"
-    />
+    <div
+      ref={playerRef}
+      onMouseMove={revealControls}
+      onTouchStart={revealControls}
+      className="relative flex max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] items-center justify-center"
+    >
+      <video
+        ref={videoRef}
+        src={video.videoSrc}
+        poster={video.src}
+        autoPlay
+        playsInline
+        preload="none"
+        width={video.width}
+        height={video.height}
+        muted={muted}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+        onLoadedMetadata={syncDuration}
+        onDurationChange={syncDuration}
+        style={{ aspectRatio: `${video.width} / ${video.height}` }}
+        className="block h-auto max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] object-contain"
+      />
+
+      <div
+        role="toolbar"
+        aria-label="Video controls"
+        className={`absolute inset-x-0 bottom-0 flex items-center gap-2 p-3 text-white transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 ${controlsVisible ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+      >
+        <button
+          type="button"
+          aria-label={muted ? 'Unmute video' : 'Mute video'}
+          onClick={toggleMuted}
+          className="flex size-9 shrink-0 items-center justify-center rounded-none border-0 bg-transparent p-0 text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-white"
+        >
+          {muted ? (
+            <VolumeX aria-hidden="true" strokeWidth={1.5} className="size-5" />
+          ) : (
+            <Volume2 aria-hidden="true" strokeWidth={1.5} className="size-5" />
+          )}
+        </button>
+        <button
+          type="button"
+          aria-label={isPlaying ? 'Pause video' : 'Play video'}
+          onClick={togglePlayback}
+          className="flex size-9 shrink-0 items-center justify-center rounded-none border-0 bg-transparent p-0 text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-white"
+        >
+          {isPlaying ? (
+            <Pause aria-hidden="true" strokeWidth={1.5} className="size-5" />
+          ) : (
+            <Play aria-hidden="true" strokeWidth={1.5} className="size-5" />
+          )}
+        </button>
+        <div className="relative flex h-6 min-w-12 flex-1 items-center">
+          <span aria-hidden="true" className="absolute h-px w-full bg-white/40" />
+          <span
+            aria-hidden="true"
+            className="absolute h-px bg-white"
+            style={{ width: `${progress}%` }}
+          />
+          <input
+            type="range"
+            aria-label="Video progress"
+            aria-valuetext={`${formatDuration(currentTime)} of ${formatDuration(duration)}`}
+            min="0"
+            max={duration || 0}
+            step="0.01"
+            value={Math.min(currentTime, duration || 0)}
+            onChange={(event) => seek(Number(event.currentTarget.value))}
+            className="lightbox-video-progress absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-none bg-transparent"
+          />
+        </div>
+        <span className="shrink-0 font-roboto-mono text-xs tabular-nums text-white">
+          {formatDuration(currentTime)} / {formatDuration(duration)}
+        </span>
+        <button
+          type="button"
+          aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          onClick={toggleFullscreen}
+          className="flex size-9 shrink-0 items-center justify-center rounded-none border-0 bg-transparent p-0 text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-white"
+        >
+          {isFullscreen ? (
+            <Minimize aria-hidden="true" strokeWidth={1.5} className="size-5" />
+          ) : (
+            <Maximize aria-hidden="true" strokeWidth={1.5} className="size-5" />
+          )}
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -155,6 +354,7 @@ export function PhotoLightboxGrid({
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [controlsVisible, setControlsVisible] = useState(false)
   const [closePending, setClosePending] = useState(false)
+  const [videoMuted, setVideoMuted] = useState(false)
   const openerRef = useRef<HTMLButtonElement | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   const openedByPushRef = useRef(false)
@@ -165,6 +365,8 @@ export function PhotoLightboxGrid({
   const consumedSwipeRef = useRef(false)
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hoverPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const toggleVideoPlaybackRef = useRef<(() => void) | null>(null)
   const initialUrlSyncedRef = useRef(false)
   const [hoverPreviewId, setHoverPreviewId] = useState<string | null>(null)
   const isOpen = selectedIndex !== null
@@ -348,8 +550,32 @@ export function PhotoLightboxGrid({
         return
       }
 
+      const current = selectedIndexRef.current
+      const currentItem = current === null ? null : photos[current]
+      const activeVideo = currentItem && isVideo(currentItem) ? videoRef.current : null
+      if (activeVideo && (event.key === ' ' || event.code === 'Space')) {
+        const target = event.target instanceof Element ? event.target : null
+        if (target?.closest('[role="toolbar"] button')) return
+        event.preventDefault()
+        toggleVideoPlaybackRef.current?.()
+        return
+      }
+
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         event.preventDefault()
+        if (activeVideo && currentItem && isVideo(currentItem)) {
+          // Video owns keyboard arrows; chevrons and swipes still navigate items.
+          const mediaDuration = activeVideo.duration
+          const duration = Number.isFinite(mediaDuration)
+            ? mediaDuration
+            : currentItem.durationSeconds
+          const delta = event.key === 'ArrowLeft' ? -5 : 5
+          activeVideo.currentTime = Math.max(
+            0,
+            Math.min(duration, activeVideo.currentTime + delta)
+          )
+          return
+        }
         navigate(event.key === 'ArrowLeft' ? -1 : 1)
         return
       }
@@ -358,7 +584,7 @@ export function PhotoLightboxGrid({
 
       const dialog = closeButtonRef.current?.closest('[role="dialog"]')
       const focusable = Array.from(
-        dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), video[controls]') ?? []
+        dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])') ?? []
       ).filter((element) => {
         const style = window.getComputedStyle(element)
         return style.display !== 'none' && style.visibility !== 'hidden'
@@ -381,7 +607,7 @@ export function PhotoLightboxGrid({
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [close, isOpen, navigate])
+  }, [close, isOpen, navigate, photos])
 
   useEffect(() => () => {
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current)
@@ -409,16 +635,6 @@ export function PhotoLightboxGrid({
     if (target?.closest('button, a, input, select, textarea')) {
       touchStartRef.current = null
       return
-    }
-
-    const video = target?.closest('video[controls]')
-    if (video) {
-      const bounds = video.getBoundingClientRect()
-      const controlsTop = bounds.bottom - NATIVE_VIDEO_CONTROLS_HEIGHT
-      if (touch.clientY >= controlsTop && touch.clientY <= bounds.bottom) {
-        touchStartRef.current = null
-        return
-      }
     }
 
     touchStartRef.current = { x: touch.clientX, y: touch.clientY }
@@ -492,7 +708,14 @@ export function PhotoLightboxGrid({
           data-photo-lightbox-root=""
         >
           {isVideo(photo) ? (
-            <LightboxVideoPlayer key={photo.id} video={photo} />
+            <LightboxVideoPlayer
+              key={photo.id}
+              video={photo}
+              muted={videoMuted}
+              onMutedChange={setVideoMuted}
+              videoRef={videoRef}
+              togglePlaybackRef={toggleVideoPlaybackRef}
+            />
           ) : (
             <Image
               src={photo.src}
