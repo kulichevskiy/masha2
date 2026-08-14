@@ -172,6 +172,14 @@ export function PhotoLightboxGrid({
   }
 
   const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (
+      event.target instanceof Element &&
+      event.target.closest('button, a, input, select, textarea')
+    ) {
+      touchStartRef.current = null
+      return
+    }
+
     const touch = event.touches[0]
     touchStartRef.current = { x: touch.clientX, y: touch.clientY }
   }
@@ -193,7 +201,7 @@ export function PhotoLightboxGrid({
 
   return (
     <div className="w-full">
-      <div className={columnsClassName}>
+      <div className={columnsClassName} inert={isOpen ? true : undefined}>
         {photos.map((item, index) => (
           <button
             key={item.id}

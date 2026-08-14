@@ -105,6 +105,18 @@ describe('<PhotoLightboxGrid />', () => {
     expect(screen.getByRole('dialog', { name: 'First portrait' })).toBeInTheDocument()
   })
 
+  it('does not treat a gesture on a navigation control as a swipe', () => {
+    renderGallery()
+    fireEvent.click(tile('First portrait'))
+    const next = screen.getByRole('button', { name: 'Next photo' })
+
+    fireEvent.touchStart(next, { touches: [{ clientX: 250, clientY: 100 }] })
+    fireEvent.touchEnd(next, { changedTouches: [{ clientX: 100, clientY: 105 }] })
+    fireEvent.click(next)
+
+    expect(screen.getByRole('dialog', { name: 'Second portrait' })).toBeInTheDocument()
+  })
+
   it('reveals quiet desktop chevrons on mouse movement and navigates on click', () => {
     renderGallery()
     fireEvent.click(tile('Second portrait'))
@@ -149,9 +161,11 @@ describe('<PhotoLightboxGrid />', () => {
   it('traps Tab focus inside the open dialog', () => {
     renderGallery()
     fireEvent.click(tile('Second portrait'))
+    const gallery = tile('First portrait').parentElement
     const close = screen.getByRole('button', { name: 'Close photo' })
     const next = screen.getByRole('button', { name: 'Next photo' })
 
+    expect(gallery).toHaveAttribute('inert')
     next.focus()
     fireEvent.keyDown(document, { key: 'Tab' })
     expect(close).toHaveFocus()
