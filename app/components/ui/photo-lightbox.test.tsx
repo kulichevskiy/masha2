@@ -48,26 +48,40 @@ describe('<PhotoLightboxGrid />', () => {
     expect(screen.getByRole('button', { name: 'Close photo' })).toHaveFocus()
   })
 
-  it('opens a valid photo from the initial URL without pushing another entry', async () => {
-    window.history.replaceState(null, '', '/?photo=three')
+  it('normalizes a valid initial photo URL into a base and photo history entry', async () => {
+    window.history.replaceState(null, '', '/?lang=en&photo=three')
     const pushState = vi.spyOn(window.history, 'pushState')
+    const replaceState = vi.spyOn(window.history, 'replaceState')
 
     renderGallery()
 
     expect(await screen.findByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
-    expect(pushState).not.toHaveBeenCalled()
+    expect(replaceState).toHaveBeenCalledWith(null, '', '/?lang=en')
+    expect(pushState).toHaveBeenCalledWith(null, '', '/?lang=en&photo=three')
   })
 
-  it('removes a direct-link photo parameter when the close control is used', async () => {
+  it('removes an unknown photo parameter while preserving other query parameters', () => {
+    window.history.replaceState(null, '', '/?lang=en&photo=missing')
+    const replaceState = vi.spyOn(window.history, 'replaceState')
+
+    renderGallery()
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(window.location.pathname + window.location.search).toBe('/?lang=en')
+    expect(replaceState).toHaveBeenCalledWith(null, '', '/?lang=en')
+  })
+
+  it('closes a direct-link lightbox with actual browser Back traversal', async () => {
     window.history.replaceState(null, '', '/?lang=en&photo=two')
-    const back = vi.spyOn(window.history, 'back')
     renderGallery()
 
     await screen.findByRole('dialog', { name: 'Second portrait' })
-    fireEvent.click(screen.getByRole('button', { name: 'Close photo' }))
+    window.history.back()
 
-    expect(window.location.pathname + window.location.search).toBe('/?lang=en')
-    expect(back).not.toHaveBeenCalled()
+    await waitFor(() => {
+      expect(window.location.pathname + window.location.search).toBe('/?lang=en')
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
   })
 
   it('navigates in array order with keys, replaces URL state, and clamps at the edges', () => {

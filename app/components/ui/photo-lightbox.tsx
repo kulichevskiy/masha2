@@ -56,6 +56,7 @@ export function PhotoLightboxGrid({
   const selectedIndexRef = useRef<number | null>(null)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const initialUrlSyncedRef = useRef(false)
   const isOpen = selectedIndex !== null
 
   const indexFromUrl = useCallback(() => {
@@ -119,6 +120,20 @@ export function PhotoLightboxGrid({
 
       openedByPushRef.current = false
       const index = indexFromUrl()
+
+      if (index === null) {
+        const url = new URL(window.location.href)
+        if (url.searchParams.has('photo')) {
+          window.history.replaceState(window.history.state, '', photoUrl(null))
+        }
+      } else if (!initialUrlSyncedRef.current) {
+        const currentUrl = photoUrl(photos[index].id)
+        window.history.replaceState(window.history.state, '', photoUrl(null))
+        window.history.pushState(window.history.state, '', currentUrl)
+        openedByPushRef.current = true
+      }
+
+      initialUrlSyncedRef.current = true
       selectedIndexRef.current = index
       setSelectedIndex(index)
     }
