@@ -1,8 +1,7 @@
-import Image from "next/image"
 import { createClient } from "@/lib/supabase/server"
 import { resolveImageDimensions } from "@/lib/image-dimensions"
-import { PHOTO_IMAGE_QUALITY } from "@/lib/image-config"
 import type { PhotoPage } from "@/lib/photo-pages"
+import { PhotoLightboxGrid } from "./photo-lightbox"
 
 // Placeholder aspect ratios for the loading skeleton — a fixed spread of
 // portrait/square shapes so the columns read as a photo feed, not a grid of
@@ -38,6 +37,7 @@ export async function MasonryGrid({ page = 'portraits' }: { page?: PhotoPage }) 
     .eq('kind', 'photo')
     .contains('pages', [page])
     .order('position', { ascending: true })
+    .order('id', { ascending: true })
 
   if (error) {
     console.error('Error fetching photos:', error)
@@ -72,26 +72,7 @@ export async function MasonryGrid({ page = 'portraits' }: { page?: PhotoPage }) 
   })
 
   return (
-    <div className="w-full">
-      <div className={COLUMNS}>
-        {photosWithUrls.map((photo) => (
-          <div
-            key={photo.id}
-            className="relative mb-4 overflow-hidden bg-gray-100 break-inside-avoid group"
-          >
-            <Image
-              src={photo.src}
-              alt={photo.alt}
-              width={photo.width}
-              height={photo.height}
-              quality={PHOTO_IMAGE_QUALITY}
-              className="block h-auto w-full transition-transform duration-500 group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          </div>
-        ))}
-      </div>
-    </div>
+    <PhotoLightboxGrid photos={photosWithUrls} columnsClassName={COLUMNS} />
   )
 }
 
