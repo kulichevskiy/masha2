@@ -103,7 +103,7 @@ export function PhotoLightboxGrid({
   }, [photos])
 
   useEffect(() => {
-    const syncFromUrl = () => {
+    const syncFromUrl = (fromPopState = false) => {
       if (pendingTraversalRef.current) {
         pendingTraversalRef.current = false
         setClosePending(false)
@@ -118,7 +118,7 @@ export function PhotoLightboxGrid({
         }
       }
 
-      openedByPushRef.current = false
+      if (fromPopState) openedByPushRef.current = false
       const index = indexFromUrl()
 
       if (index === null) {
@@ -139,30 +139,41 @@ export function PhotoLightboxGrid({
     }
 
     syncFromUrl()
-    window.addEventListener('popstate', syncFromUrl)
-    return () => window.removeEventListener('popstate', syncFromUrl)
+    const onPopState = () => syncFromUrl(true)
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
   }, [indexFromUrl, photos])
 
   useEffect(() => {
     if (!isOpen) return
 
-    const siblings = Array.from(document.body.children).filter(
-      (element): element is HTMLElement =>
-        element instanceof HTMLElement && !element.hasAttribute('data-photo-lightbox-root')
-    )
-    const previous = siblings.map((element) => ({
-      element,
-      inert: element.hasAttribute('inert'),
-      ariaHidden: element.getAttribute('aria-hidden'),
-    }))
-
-    for (const element of siblings) {
+    const previous = new Map<HTMLElement, { inert: boolean; ariaHidden: string | null }>()
+    const isolate = (element: HTMLElement) => {
+      if (element.hasAttribute('data-photo-lightbox-root') || previous.has(element)) return
+      previous.set(element, {
+        inert: element.hasAttribute('inert'),
+        ariaHidden: element.getAttribute('aria-hidden'),
+      })
       element.setAttribute('inert', '')
       element.setAttribute('aria-hidden', 'true')
     }
 
+    for (const element of document.body.children) {
+      if (element instanceof HTMLElement) isolate(element)
+    }
+
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node instanceof HTMLElement) isolate(node)
+        }
+      }
+    })
+    observer.observe(document.body, { childList: true })
+
     return () => {
-      for (const { element, inert, ariaHidden } of previous) {
+      observer.disconnect()
+      for (const [element, { inert, ariaHidden }] of previous) {
         if (!inert) element.removeAttribute('inert')
         if (ariaHidden === null) element.removeAttribute('aria-hidden')
         else element.setAttribute('aria-hidden', ariaHidden)

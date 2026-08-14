@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PhotoLightboxGrid, type LightboxPhoto } from './photo-lightbox'
 
@@ -165,6 +166,26 @@ describe('<PhotoLightboxGrid />', () => {
     await waitFor(() => expect(opener).toHaveFocus())
   })
 
+  it.each([
+    ['Escape', () => fireEvent.keyDown(document, { key: 'Escape' })],
+    ['the backdrop', (dialog: HTMLElement) => fireEvent.mouseDown(dialog)],
+    ['the close control', () => fireEvent.click(screen.getByRole('button', { name: 'Close photo' }))],
+  ])('uses Back for a direct-link dismissal with %s in Strict Mode', async (_method, close) => {
+    window.history.replaceState(null, '', '/?photo=two')
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined)
+    render(
+      <StrictMode>
+        <PhotoLightboxGrid photos={PHOTOS} />
+      </StrictMode>
+    )
+
+    const dialog = await screen.findByRole('dialog', { name: 'Second portrait' })
+    close(dialog)
+
+    expect(back).toHaveBeenCalledOnce()
+    expect(dialog).toHaveAttribute('data-close-pending', 'true')
+  })
+
   it('keeps a reopened lightbox when a pending close traversal arrives', () => {
     vi.spyOn(window.history, 'back').mockImplementation(() => undefined)
     renderGallery()
@@ -244,6 +265,24 @@ describe('<PhotoLightboxGrid />', () => {
     expect(footer).not.toHaveAttribute('aria-hidden')
     navigation.remove()
     footer.remove()
+  })
+
+  it('isolates body content mounted after the lightbox opens and restores it', async () => {
+    renderGallery()
+    fireEvent.click(tile('First portrait'))
+    const latePortal = document.createElement('aside')
+
+    document.body.append(latePortal)
+
+    await waitFor(() => {
+      expect(latePortal).toHaveAttribute('inert')
+      expect(latePortal).toHaveAttribute('aria-hidden', 'true')
+    })
+    window.history.replaceState(null, '', '/')
+    fireEvent.popState(window)
+    expect(latePortal).not.toHaveAttribute('inert')
+    expect(latePortal).not.toHaveAttribute('aria-hidden')
+    latePortal.remove()
   })
 
   it('keeps natural forward Tab on the close control inside the dialog on mobile', () => {
