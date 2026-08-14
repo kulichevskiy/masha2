@@ -85,6 +85,34 @@ describe('<PhotoLightboxGrid />', () => {
     expect(window.location.search).toBe('?photo=clip')
   })
 
+  it('leaves arrow keys and touch gestures on native video controls alone', () => {
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
+    const video = dialog.querySelector('video') as HTMLVideoElement
+
+    fireEvent.keyDown(video, { key: 'ArrowRight' })
+    fireEvent.touchStart(video, { touches: [{ clientX: 250, clientY: 100 }] })
+    fireEvent.touchEnd(video, { changedTouches: [{ clientX: 100, clientY: 105 }] })
+
+    expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
+    expect(window.location.search).toBe('?photo=clip')
+  })
+
+  it('includes native video controls in the dialog focus cycle', () => {
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
+    const video = dialog.querySelector('video') as HTMLVideoElement
+    const next = screen.getByRole('button', { name: 'Next photo' })
+    const focus = vi.spyOn(video, 'focus')
+
+    next.focus()
+    fireEvent.keyDown(next, { key: 'Tab' })
+
+    expect(focus).toHaveBeenCalled()
+  })
+
   it('stops and resets a video when arrow navigation moves to a photo', () => {
     const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)

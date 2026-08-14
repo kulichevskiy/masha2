@@ -42,6 +42,7 @@ type PhotoLightboxGridProps = {
 
 const DEFAULT_COLUMNS = 'columns-1 md:columns-2 lg:columns-3 gap-4'
 const SWIPE_DISTANCE = 50
+const INTERACTIVE_MEDIA_SELECTOR = 'video, audio'
 
 function isVideo(item: LightboxPhoto): item is LightboxVideo {
   return item.kind === 'video'
@@ -261,6 +262,11 @@ export function PhotoLightboxGrid({
       }
 
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        if (
+          event.target instanceof Element &&
+          event.target.closest(INTERACTIVE_MEDIA_SELECTOR)
+        ) return
+
         event.preventDefault()
         navigate(event.key === 'ArrowLeft' ? -1 : 1)
         return
@@ -270,7 +276,7 @@ export function PhotoLightboxGrid({
 
       const dialog = closeButtonRef.current?.closest('[role="dialog"]')
       const focusable = Array.from(
-        dialog?.querySelectorAll<HTMLElement>('button:not([disabled])') ?? []
+        dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), video[controls]') ?? []
       ).filter((element) => {
         const style = window.getComputedStyle(element)
         return style.display !== 'none' && style.visibility !== 'hidden'
@@ -317,7 +323,7 @@ export function PhotoLightboxGrid({
     consumedSwipeRef.current = false
     if (
       event.target instanceof Element &&
-      event.target.closest('button, a, input, select, textarea')
+      event.target.closest(`button, a, input, select, textarea, ${INTERACTIVE_MEDIA_SELECTOR}`)
     ) {
       touchStartRef.current = null
       return
