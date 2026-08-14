@@ -63,7 +63,11 @@ function mockMediaPreferences({
   reducedMotion?: boolean
 } = {}) {
   vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
-    matches: query === '(hover: hover)' ? hover : reducedMotion,
+    matches: query === '(hover: hover)'
+      ? hover
+      : query === '(any-pointer: coarse)'
+        ? !hover
+        : reducedMotion,
     media: query,
     onchange: null,
     addListener: vi.fn(),
@@ -77,6 +81,7 @@ function mockMediaPreferences({
 function mockChangingMediaPreferences() {
   const matches = new Map([
     ['(hover: hover)', true],
+    ['(any-pointer: coarse)', false],
     ['(prefers-reduced-motion: reduce)', false],
   ])
   const listeners = new Map<string, Set<EventListener>>()
@@ -96,7 +101,7 @@ function mockChangingMediaPreferences() {
     dispatchEvent: vi.fn(),
   }))
 
-  return (query: '(hover: hover)' | '(prefers-reduced-motion: reduce)', value: boolean) => {
+  return (query: '(hover: hover)' | '(any-pointer: coarse)' | '(prefers-reduced-motion: reduce)', value: boolean) => {
     matches.set(query, value)
     listeners.get(query)?.forEach((listener) => listener(new Event('change')))
   }
@@ -256,13 +261,61 @@ describe('<PhotoLightboxGrid />', () => {
     expect(document.querySelector('video')).toHaveAttribute('src', '/clip-two.mp4')
   })
 
-  it('starts touch observation when hover capability changes', () => {
+  it('waits for scrolling to stop when the same tall tile remains central', () => {
+    vi.useFakeTimers()
+    mockMediaPreferences({ hover: false })
+    const intersection = mockIntersectionObserver()
+    render(<PhotoLightboxGrid photos={[MIXED_MEDIA[1]]} />)
+    const videoTile = tile('Portrait clip')
+    vi.spyOn(videoTile, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 800 } as DOMRect)
+
+    act(() => intersection.update([{ target: videoTile, isIntersecting: true }]))
+    act(() => vi.advanceTimersByTime(400))
+    fireEvent.scroll(window)
+    act(() => vi.advanceTimersByTime(400))
+    fireEvent.scroll(window)
+    act(() => vi.advanceTimersByTime(499))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+
+    act(() => vi.advanceTimersByTime(1))
+    expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
+  })
+
+  it('supports touch-centered playback on a hybrid device with hover', () => {
+    vi.useFakeTimers()
+    mockMediaPreferences({ hover: true })
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      matches: query === '(hover: hover)' || query === '(any-pointer: coarse)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }))
+    const intersection = mockIntersectionObserver()
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    const videoTile = tile('Portrait clip')
+    vi.spyOn(videoTile, 'getBoundingClientRect').mockReturnValue({ top: 350, height: 100 } as DOMRect)
+
+    act(() => intersection.update([{ target: videoTile, isIntersecting: true }]))
+    act(() => vi.advanceTimersByTime(500))
+    expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
+
+    fireEvent.mouseLeave(videoTile)
+    fireEvent.mouseEnter(videoTile)
+    act(() => vi.advanceTimersByTime(200))
+    expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
+  })
+
+  it('starts touch observation when touch capability changes', () => {
     const setPreference = mockChangingMediaPreferences()
     const intersection = mockIntersectionObserver()
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
     expect(intersection.observe).not.toHaveBeenCalled()
 
-    act(() => setPreference('(hover: hover)', false))
+    act(() => setPreference('(any-pointer: coarse)', true))
     expect(intersection.observe).toHaveBeenCalledTimes(1)
   })
 

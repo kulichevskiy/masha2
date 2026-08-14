@@ -72,7 +72,7 @@ function canPlayHoverPreview() {
 }
 
 function canPlayTouchPreview() {
-  return !window.matchMedia('(hover: hover)').matches
+  return (navigator.maxTouchPoints > 0 || window.matchMedia('(any-pointer: coarse)').matches)
     && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
@@ -387,7 +387,7 @@ export function PhotoLightboxGrid({
   const touchCandidateRef = useRef<string | null>(null)
   const initialUrlSyncedRef = useRef(false)
   const [previewId, setPreviewId] = useState<string | null>(null)
-  const [hasHover, setHasHover] = useState<boolean | null>(null)
+  const [hasTouch, setHasTouch] = useState<boolean | null>(null)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean | null>(null)
   const [viewportHeight, setViewportHeight] = useState(0)
   const isOpen = selectedIndex !== null
@@ -421,12 +421,13 @@ export function PhotoLightboxGrid({
 
   useEffect(() => {
     const hoverQuery = window.matchMedia('(hover: hover)')
+    const touchQuery = window.matchMedia('(any-pointer: coarse)')
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
 
     const syncPreviewPreferences = () => {
       touchCandidateRef.current = null
       stopPreview()
-      setHasHover(hoverQuery.matches)
+      setHasTouch(navigator.maxTouchPoints > 0 || touchQuery.matches)
       setPrefersReducedMotion(reducedMotionQuery.matches)
     }
     const syncViewportHeight = () => setViewportHeight(window.innerHeight)
@@ -434,11 +435,13 @@ export function PhotoLightboxGrid({
     syncPreviewPreferences()
     syncViewportHeight()
     hoverQuery.addEventListener('change', syncPreviewPreferences)
+    touchQuery.addEventListener('change', syncPreviewPreferences)
     reducedMotionQuery.addEventListener('change', syncPreviewPreferences)
     window.addEventListener('resize', syncViewportHeight)
 
     return () => {
       hoverQuery.removeEventListener('change', syncPreviewPreferences)
+      touchQuery.removeEventListener('change', syncPreviewPreferences)
       reducedMotionQuery.removeEventListener('change', syncPreviewPreferences)
       window.removeEventListener('resize', syncViewportHeight)
     }
@@ -446,11 +449,11 @@ export function PhotoLightboxGrid({
 
   useEffect(() => {
     const mosaic = mosaicRef.current
-    if (!mosaic || hasHover !== false || prefersReducedMotion !== false || isOpen || !viewportHeight) return
+    if (!mosaic || hasTouch !== true || prefersReducedMotion !== false || isOpen || !viewportHeight) return
     if (typeof IntersectionObserver === 'undefined') return
 
     const centeredVideos = new Set<Element>()
-    const reevaluateCandidate = () => {
+    const reevaluateCandidate = (resetTimer = false) => {
       let nextElement: Element | null = null
       let nextDistance = Number.POSITIVE_INFINITY
       const viewportCenter = window.innerHeight / 2
@@ -465,7 +468,7 @@ export function PhotoLightboxGrid({
       }
 
       const nextId = nextElement?.getAttribute('data-mosaic-video-id') ?? null
-      if (nextId === touchCandidateRef.current) return
+      if (!resetTimer && nextId === touchCandidateRef.current) return
 
       touchCandidateRef.current = nextId
       stopPreview()
@@ -486,16 +489,17 @@ export function PhotoLightboxGrid({
 
     const videos = mosaic.querySelectorAll('[data-mosaic-video-id]')
     videos.forEach((video) => observer.observe(video))
-    window.addEventListener('scroll', reevaluateCandidate, { passive: true })
+    const onScroll = () => reevaluateCandidate(true)
+    window.addEventListener('scroll', onScroll, { passive: true })
 
     return () => {
-      window.removeEventListener('scroll', reevaluateCandidate)
+      window.removeEventListener('scroll', onScroll)
       observer.disconnect()
       touchCandidateRef.current = null
       centeredVideos.clear()
       stopPreview()
     }
-  }, [armPreview, hasHover, isOpen, photos, prefersReducedMotion, stopPreview, viewportHeight])
+  }, [armPreview, hasTouch, isOpen, photos, prefersReducedMotion, stopPreview, viewportHeight])
 
   const indexFromUrl = useCallback(() => {
     const id = new URL(window.location.href).searchParams.get('photo')
