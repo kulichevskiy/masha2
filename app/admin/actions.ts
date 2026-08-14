@@ -100,8 +100,7 @@ export async function deletePhoto(id: string) {
     .remove(storagePaths)
 
   if (storageError) {
-    // Log but don't fail - the file might already be deleted
-    console.error('Storage deletion error:', storageError)
+    throw new Error(`Failed to delete stored media: ${storageError.message}`)
   }
 
   // Delete from database
@@ -120,19 +119,23 @@ export async function deletePhoto(id: string) {
 // One uploaded file's storage path plus its intrinsic pixel dimensions, measured
 // client-side before upload. Dimensions may be null if the browser could not
 // decode the image — the feed falls back to a neutral aspect ratio for those.
-export type PhotoUpload = {
-  storagePath: string
-  width: number | null
-  height: number | null
-  kind?: 'photo' | 'video'
-  posterPath?: string | null
-  durationSeconds?: number | null
-}
+export type PhotoUpload =
+  | { storagePath: string; kind?: 'photo'; width: number | null; height: number | null; posterPath?: null; durationSeconds?: null }
+  | { storagePath: string; kind: 'video'; width: number; height: number; posterPath: string; durationSeconds: number }
 
 export async function createPhotosFromUploads(uploads: PhotoUpload[]) {
   const supabase = await createClient()
 
   await requireAdmin(supabase)
+
+  for (const upload of uploads) {
+    const validVideo = upload.kind === 'video' &&
+      Boolean(upload.posterPath) && Number.isFinite(upload.durationSeconds) && upload.durationSeconds > 0 &&
+      Number.isInteger(upload.width) && upload.width > 0 && Number.isInteger(upload.height) && upload.height > 0
+    const validPhoto = (upload.kind === undefined || upload.kind === 'photo') &&
+      upload.posterPath == null && upload.durationSeconds == null
+    if (!validVideo && !validPhoto) throw new Error('Invalid media upload metadata')
+  }
 
   // Get the minimum position to place new photos at the top
   const { data: minPositionData } = await supabase

@@ -12,11 +12,14 @@ import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
 import { render, fireEvent, waitFor, screen } from '@testing-library/react'
 
 const mockUpload = vi.fn(async () => ({ error: null }))
+const mockRemove = vi.fn(async () => ({ error: null }))
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
+    auth: { getSession: async () => ({ data: { session: { access_token: 'token' } } }) },
     storage: {
       from: (bucket: string) => ({
         upload: (...args: unknown[]) => mockUpload(bucket, ...args),
+        remove: (paths: string[]) => mockRemove(bucket, paths),
       }),
     },
   }),
@@ -66,8 +69,10 @@ async function dropAndUpload(container: HTMLElement, file: File) {
 describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
   beforeEach(() => {
     mockUpload.mockClear()
+    mockRemove.mockClear()
     mockRefresh.mockClear()
     mockCreatePhotosFromUploads.mockClear()
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 200 })))
   })
 
   it('creates exactly one correct row per batch, with no phantom row from a stale prior batch', async () => {
@@ -120,18 +125,35 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
       }),
     ])
 
-    expect(mockUpload).toHaveBeenCalledWith(
+    const fetchCalls = vi.mocked(fetch).mock.calls
+    expect(fetchCalls).toHaveLength(2)
+    for (const [, init] of fetchCalls) {
+      expect(new Headers(init?.headers).get('Cache-Control')).toBe(
+        'public, max-age=31536000, immutable'
+      )
+    }
+  })
+
+  it('cleans up source and poster objects and allows retry when row insertion fails', async () => {
+    mockCreatePhotosFromUploads
+      .mockRejectedValueOnce(new Error('database unavailable'))
+      .mockResolvedValueOnce(undefined)
+    const { container } = render(<PhotoUploadDropzone />)
+
+    await dropAndUpload(container, makeFile('clip.mp4', 'video/mp4'))
+
+    await waitFor(() => expect(mockRemove).toHaveBeenCalledWith(
       'videos',
-      expect.stringMatching(/^videos\/[^/]+\/clip\.mp4$/),
-      expect.any(File),
-      expect.objectContaining({ cacheControl: '31536000, immutable', upsert: false })
-    )
-    expect(mockUpload).toHaveBeenCalledWith(
-      'videos',
-      expect.stringMatching(/^videos\/[^/]+\/clip\.poster\.jpg$/),
-      expect.any(Blob),
-      expect.objectContaining({ cacheControl: '31536000, immutable', upsert: false })
-    )
+      expect.arrayContaining([
+        expect.stringMatching(/clip\.mp4$/),
+        expect.stringMatching(/clip\.poster\.jpg$/),
+      ])
+    ))
+    expect(await screen.findByText(/database unavailable/)).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /Загрузить/ }))
+    await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1))
   })
 
   it('rejects an mp4 larger than 25 MB with a clear message', async () => {

@@ -58,4 +58,16 @@ describe('deletePhoto', () => {
     ])
     expect(mockDeleteEq).toHaveBeenCalledWith('id', 'video-1')
   })
+
+  it('keeps the row when storage removal fails', async () => {
+    mockSingle.mockResolvedValue({
+      data: { kind: 'video', storage_path: 'videos/batch/clip.mp4', poster_path: 'videos/batch/clip.poster.jpg' },
+      error: null,
+    })
+    mockRemove.mockResolvedValueOnce({ error: { message: 'storage unavailable' } })
+    const { deletePhoto } = await import('./actions')
+
+    await expect(deletePhoto('video-1')).rejects.toThrow('Failed to delete stored media')
+    expect(mockDeleteEq).not.toHaveBeenCalled()
+  })
 })

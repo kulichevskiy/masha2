@@ -13,6 +13,8 @@ describe('video media migration', () => {
     expect(migration).toMatch(/check \(kind in \('photo', 'video'\)\)/i)
     expect(migration).toMatch(/add column poster_path text/i)
     expect(migration).toMatch(/add column duration_seconds/i)
+    expect(migration).toMatch(/kind = 'photo' and poster_path is null and duration_seconds is null/i)
+    expect(migration).toMatch(/kind = 'video'[\s\S]*poster_path is not null[\s\S]*duration_seconds > 0[\s\S]*width is not null[\s\S]*height is not null/i)
   })
 
   it('creates a public 25 MB videos bucket for mp4 and jpg objects', () => {

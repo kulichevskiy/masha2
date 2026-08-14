@@ -53,7 +53,10 @@ type UseSupabaseUploadOptions = {
     bucketName: string
     objectPath: string
     cacheControl?: string
+    upload?: (file: File) => Promise<{ error: { message: string } | null }>
   }
+  /** Prepare/decode files before any source object is uploaded. */
+  prepareFiles?: (files: File[]) => Promise<void>
   validator?: (file: File) => FileError | readonly FileError[] | null
 }
 
@@ -69,6 +72,7 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
     cacheControl = 3600,
     upsert = false,
     resolveUploadTarget,
+    prepareFiles,
     validator,
   } = options
 
@@ -134,15 +138,26 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
           ]
         : files
 
+    try {
+      await prepareFiles?.(filesToUpload)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось подготовить файл'
+      setErrors(filesToUpload.map((file) => ({ name: file.name, message })))
+      setLoading(false)
+      return
+    }
+
     const responses = await Promise.all(
       filesToUpload.map(async (file) => {
         const target = resolveUploadTarget?.(file)
-        const { error } = await supabase.storage
-          .from(target?.bucketName ?? bucketName)
-          .upload(target?.objectPath ?? (!!path ? `${path}/${file.name}` : file.name), file, {
-            cacheControl: target?.cacheControl ?? cacheControl.toString(),
-            upsert,
-          })
+        const { error } = target?.upload
+          ? await target.upload(file)
+          : await supabase.storage
+              .from(target?.bucketName ?? bucketName)
+              .upload(target?.objectPath ?? (!!path ? `${path}/${file.name}` : file.name), file, {
+                cacheControl: target?.cacheControl ?? cacheControl.toString(),
+                upsert,
+              })
         if (error) {
           return { name: file.name, message: error.message }
         } else {
@@ -171,10 +186,16 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
     cacheControl,
     upsert,
     resolveUploadTarget,
+    prepareFiles,
     setLoading,
     setErrors,
     setSuccesses,
   ])
+
+  const failUploads = useCallback((fileNames: string[], message: string) => {
+    setSuccesses((current) => current.filter((name) => !fileNames.includes(name)))
+    setErrors(fileNames.map((name) => ({ name, message })))
+  }, [setErrors, setSuccesses])
 
   useEffect(() => {
     if (files.length === 0) {
@@ -206,6 +227,7 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
     loading,
     errors,
     setErrors,
+    failUploads,
     onUpload,
     maxFileSize: maxFileSize,
     maxFiles: maxFiles,

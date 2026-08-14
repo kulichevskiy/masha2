@@ -1,16 +1,16 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
 import { newId } from '@/lib/id'
 import { createClient } from '@/lib/supabase/client'
 import { prepareMediaUpload } from '@/lib/media-upload'
+import { uploadImmutableObject } from '@/lib/immutable-storage-upload'
 import { createPhotosFromUploads } from '../actions'
 
 const supabase = createClient()
-const VIDEO_CACHE_CONTROL = '31536000, immutable'
 const PHOTO_MAX_BYTES = 10 * 1024 * 1024
 
 export function PhotoUploadDropzone() {
@@ -47,6 +47,24 @@ function UploadSession({
   sessionId: string
   onBatchComplete: () => void
 }) {
+  const preparedRef = useRef(new Map<File, Awaited<ReturnType<typeof prepareMediaUpload>>>())
+  const prepareFiles = useCallback(async (files: File[]) => {
+    const prepared = await Promise.all(files.map((file) => prepareMediaUpload(file)))
+    files.forEach((file, index) => preparedRef.current.set(file, prepared[index]))
+  }, [])
+
+  const resolveUploadTarget = useCallback((file: File) =>
+    file.type === 'video/mp4'
+      ? {
+          bucketName: 'videos',
+          objectPath: `videos/${sessionId}/${file.name}`,
+          upload: (source: File) => uploadImmutableObject(
+            supabase, 'videos', `videos/${sessionId}/${file.name}`, source, 'video/mp4'
+          ),
+        }
+      : { bucketName: 'photos', objectPath: `photos/${sessionId}/${file.name}` },
+  [sessionId])
+
   const uploadHook = useSupabaseUpload({
     bucketName: 'photos',
     path: `photos/${sessionId}`,
@@ -58,20 +76,11 @@ function UploadSession({
       file.type.startsWith('image/') && file.size > PHOTO_MAX_BYTES
         ? { code: 'file-too-large', message: 'Фотография больше чем 10 МБ' }
         : null,
-    resolveUploadTarget: (file) =>
-      file.type === 'video/mp4'
-        ? {
-            bucketName: 'videos',
-            objectPath: `videos/${sessionId}/${file.name}`,
-            cacheControl: VIDEO_CACHE_CONTROL,
-          }
-        : {
-            bucketName: 'photos',
-            objectPath: `photos/${sessionId}/${file.name}`,
-          },
+    prepareFiles,
+    resolveUploadTarget,
   })
 
-  const { files, isSuccess, successes } = uploadHook
+  const { files, isSuccess, successes, failUploads } = uploadHook
   const firedRef = useRef(false)
 
   // After successful upload, create database records. This fires once per
@@ -86,59 +95,65 @@ function UploadSession({
     // Measure each uploaded file's intrinsic dimensions, then create the DB
     // records. The hook reports successes by filename; the full object key
     // is that filename under the batch prefix (`photos/<uuid>/IMG_1234.jpg`).
-    Promise.all(
-      successes.map(async (fileName) => {
-        const file = files.find((f) => f.name === fileName)
-        if (!file) {
-          return {
-            storagePath: `photos/${sessionId}/${fileName}`,
-            width: null,
-            height: null,
-          }
-        }
+    const createdObjects: { bucket: string; path: string }[] = successes.map((fileName) => {
+      const file = files.find((candidate) => candidate.name === fileName)
+      return { bucket: file?.type === 'video/mp4' ? 'videos' : 'photos', path: `${file?.type === 'video/mp4' ? 'videos' : 'photos'}/${sessionId}/${fileName}` }
+    })
 
-        const prepared = await prepareMediaUpload(file)
+    const finishBatch = async () => {
+      const uploads = []
+      for (const fileName of successes) {
+        const file = files.find((f) => f.name === fileName)
+        if (!file) throw new Error(`Не найден исходный файл ${fileName}`)
+
+        const prepared = preparedRef.current.get(file)
+        if (!prepared) throw new Error(`Файл ${fileName} не был подготовлен`)
         if (prepared.kind === 'photo') {
-          return {
+          uploads.push({
             storagePath: `photos/${sessionId}/${fileName}`,
             kind: 'photo' as const,
             width: prepared.width,
             height: prepared.height,
-          }
+          })
+          continue
         }
 
         const posterName = fileName.replace(/\.[^/.]+$/, '') + '.poster.jpg'
         const posterPath = `videos/${sessionId}/${posterName}`
-        const { error } = await supabase.storage.from('videos').upload(
-          posterPath,
-          prepared.poster,
-          {
-            cacheControl: VIDEO_CACHE_CONTROL,
-            contentType: 'image/jpeg',
-            upsert: false,
-          }
+        const { error } = await uploadImmutableObject(
+          supabase, 'videos', posterPath, prepared.poster, 'image/jpeg'
         )
         if (error) throw new Error(`Failed to upload video poster: ${error.message}`)
+        createdObjects.push({ bucket: 'videos', path: posterPath })
 
-        return {
+        uploads.push({
           storagePath: `videos/${sessionId}/${fileName}`,
           kind: 'video' as const,
           posterPath,
           durationSeconds: prepared.durationSeconds,
           width: prepared.width,
           height: prepared.height,
-        }
-      })
-    )
-      .then((uploads) => createPhotosFromUploads(uploads))
+        })
+      }
+      await createPhotosFromUploads(uploads)
+    }
+
+    finishBatch()
       .then(() => {
         onBatchComplete()
       })
-      .catch((error) => {
+      .catch(async (error) => {
         console.error('Failed to create photo records:', error)
+        await Promise.all(
+          ['photos', 'videos'].map(async (bucket) => {
+            const paths = createdObjects.filter((object) => object.bucket === bucket).map((object) => object.path)
+            if (paths.length) await supabase.storage.from(bucket).remove(paths)
+          })
+        )
+        failUploads(successes, error instanceof Error ? error.message : 'Не удалось завершить загрузку')
         firedRef.current = false
       })
-  }, [isSuccess, successes, files, sessionId, onBatchComplete])
+  }, [isSuccess, successes, files, sessionId, onBatchComplete, failUploads])
 
   return (
     <Dropzone {...uploadHook}>

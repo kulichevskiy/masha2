@@ -106,4 +106,22 @@ describe('createPhotosFromUploads', () => {
       pages: [],
     })
   })
+
+  it('rejects incomplete video metadata before inserting', async () => {
+    const { createPhotosFromUploads } = await loadActions()
+    await expect(createPhotosFromUploads([{
+      storagePath: 'videos/batch/clip.mp4', kind: 'video', posterPath: '',
+      durationSeconds: 0, width: 0, height: 0,
+    }])).rejects.toThrow('Invalid media upload metadata')
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('rejects video-only metadata on a photo', async () => {
+    const { createPhotosFromUploads } = await loadActions()
+    await expect(createPhotosFromUploads([{
+      storagePath: 'photos/batch/image.jpg', kind: 'photo', width: 800, height: 600,
+      posterPath: 'videos/poster.jpg',
+    } as never])).rejects.toThrow('Invalid media upload metadata')
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
 })
