@@ -419,6 +419,14 @@ export function PhotoLightboxGrid({
     armPreview(id, HOVER_PREVIEW_DELAY_MS, canPlayHoverPreview)
   }, [armPreview])
 
+  const stopHoverPreview = useCallback(() => {
+    stopPreview()
+    const touchCandidate = touchCandidateRef.current
+    if (touchCandidate && canPlayTouchPreview()) {
+      armPreview(touchCandidate, TOUCH_PREVIEW_DELAY_MS, canPlayTouchPreview)
+    }
+  }, [armPreview, stopPreview])
+
   useEffect(() => {
     const hoverQuery = window.matchMedia('(hover: hover)')
     const touchQuery = window.matchMedia('(any-pointer: coarse)')
@@ -766,7 +774,7 @@ export function PhotoLightboxGrid({
             aria-label={`Open ${item.alt}`}
             onClick={(event) => open(index, event.currentTarget)}
             onMouseEnter={isVideo(item) ? () => armHoverPreview(item.id) : undefined}
-            onMouseLeave={isVideo(item) ? stopPreview : undefined}
+            onMouseLeave={isVideo(item) ? stopHoverPreview : undefined}
             data-mosaic-video-id={isVideo(item) ? item.id : undefined}
             className="group relative mb-4 block w-full cursor-zoom-in break-inside-avoid overflow-hidden border-0 bg-gray-100 p-0 text-left"
           >

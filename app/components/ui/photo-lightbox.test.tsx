@@ -206,10 +206,16 @@ describe('<PhotoLightboxGrid />', () => {
 
   it('does not autoplay the central video on touch with reduced motion', () => {
     vi.useFakeTimers()
-    mockMediaPreferences({ hover: false, reducedMotion: true })
-    mockIntersectionObserver()
+    const setPreference = mockChangingMediaPreferences()
+    const intersection = mockIntersectionObserver()
     const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    act(() => setPreference('(any-pointer: coarse)', true))
+    const videoTile = tile('Portrait clip')
+    vi.spyOn(videoTile, 'getBoundingClientRect').mockReturnValue({ top: 350, height: 100 } as DOMRect)
+
+    act(() => intersection.update([{ target: videoTile, isIntersecting: true }]))
+    act(() => setPreference('(prefers-reduced-motion: reduce)', true))
 
     act(() => vi.advanceTimersByTime(1000))
 
@@ -304,8 +310,10 @@ describe('<PhotoLightboxGrid />', () => {
     expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
 
     fireEvent.mouseLeave(videoTile)
-    fireEvent.mouseEnter(videoTile)
-    act(() => vi.advanceTimersByTime(200))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    act(() => vi.advanceTimersByTime(499))
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    act(() => vi.advanceTimersByTime(1))
     expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
   })
 
