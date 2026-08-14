@@ -11,8 +11,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockGetUser = vi.fn(async () => ({ data: { user: { id: 'u1' } } }))
 const mockIsAdmin = vi.fn(async () => ({ data: true, error: null }))
 const mockMinPosition = vi.fn(async () => ({ data: { position: 0 }, error: null }))
-type InsertRow = { storage_path: string; alt_text: string }
-const mockInsert = vi.fn(async (_rows: InsertRow[]) => ({ error: null }))
+type InsertRow = {
+  storage_path: string
+  alt_text: string
+  kind: 'photo' | 'video'
+  poster_path: string | null
+  duration_seconds: number | null
+  width: number | null
+  height: number | null
+  pages: string[]
+}
+const mockInsert = vi.fn(async (rows: InsertRow[]) => {
+  void rows
+  return { error: null }
+})
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({
@@ -68,5 +80,30 @@ describe('createPhotosFromUploads', () => {
 
     const rows = mockInsert.mock.calls[0][0]
     expect(rows[0].alt_text).toBe('IMG_1234')
+  })
+
+  it('creates a fully-formed hidden video row with its poster and metadata', async () => {
+    const { createPhotosFromUploads } = await loadActions()
+    await createPhotosFromUploads([
+      {
+        storagePath: 'videos/batch/clip.mp4',
+        kind: 'video',
+        posterPath: 'videos/batch/clip.poster.jpg',
+        durationSeconds: 12.75,
+        width: 720,
+        height: 1280,
+      },
+    ])
+
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0]).toMatchObject({
+      storage_path: 'videos/batch/clip.mp4',
+      kind: 'video',
+      poster_path: 'videos/batch/clip.poster.jpg',
+      duration_seconds: 12.75,
+      width: 720,
+      height: 1280,
+      pages: [],
+    })
   })
 })

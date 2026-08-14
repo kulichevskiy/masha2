@@ -15,9 +15,24 @@ const mockUpload = vi.fn(async () => ({ error: null }))
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     storage: {
-      from: () => ({ upload: (...args: unknown[]) => mockUpload(...args) }),
+      from: (bucket: string) => ({
+        upload: (...args: unknown[]) => mockUpload(bucket, ...args),
+      }),
     },
   }),
+}))
+
+vi.mock('@/lib/media-upload', () => ({
+  prepareMediaUpload: async (file: File) =>
+    file.type === 'video/mp4'
+      ? {
+          kind: 'video',
+          width: 720,
+          height: 1280,
+          durationSeconds: 12.75,
+          poster: new Blob(['poster'], { type: 'image/jpeg' }),
+        }
+      : { kind: 'photo', width: 800, height: 600 },
 }))
 
 const mockRefresh = vi.fn()
@@ -37,14 +52,14 @@ beforeAll(async () => {
   ;({ PhotoUploadDropzone } = await import('./photo-upload-dropzone'))
 })
 
-function makeFile(name: string) {
-  return new File(['x'], name, { type: 'image/png' })
+function makeFile(name: string, type = 'image/png') {
+  return new File(['x'], name, { type })
 }
 
 async function dropAndUpload(container: HTMLElement, file: File) {
   const input = container.querySelector('input[type="file"]') as HTMLInputElement
   fireEvent.change(input, { target: { files: [file] } })
-  const button = await screen.findByRole('button', { name: /Загрузить фотографии/ })
+  const button = await screen.findByRole('button', { name: /Загрузить/ })
   fireEvent.click(button)
 }
 
@@ -85,5 +100,60 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
     expect(firstUploads[0].storagePath.split('/')[1]).not.toBe(
       secondUploads[0].storagePath.split('/')[1]
     )
+  })
+
+  it('uploads an mp4 and generated poster to videos with immutable caching, then creates video metadata', async () => {
+    const { container } = render(<PhotoUploadDropzone />)
+
+    await dropAndUpload(container, makeFile('clip.mp4', 'video/mp4'))
+
+    await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(1))
+    const uploads = mockCreatePhotosFromUploads.mock.calls[0][0]
+    expect(uploads).toEqual([
+      expect.objectContaining({
+        kind: 'video',
+        storagePath: expect.stringMatching(/^videos\/[^/]+\/clip\.mp4$/),
+        posterPath: expect.stringMatching(/^videos\/[^/]+\/clip\.poster\.jpg$/),
+        durationSeconds: 12.75,
+        width: 720,
+        height: 1280,
+      }),
+    ])
+
+    expect(mockUpload).toHaveBeenCalledWith(
+      'videos',
+      expect.stringMatching(/^videos\/[^/]+\/clip\.mp4$/),
+      expect.any(File),
+      expect.objectContaining({ cacheControl: '31536000, immutable', upsert: false })
+    )
+    expect(mockUpload).toHaveBeenCalledWith(
+      'videos',
+      expect.stringMatching(/^videos\/[^/]+\/clip\.poster\.jpg$/),
+      expect.any(Blob),
+      expect.objectContaining({ cacheControl: '31536000, immutable', upsert: false })
+    )
+  })
+
+  it('rejects an mp4 larger than 25 MB with a clear message', async () => {
+    const { container } = render(<PhotoUploadDropzone />)
+    const file = makeFile('too-large.mp4', 'video/mp4')
+    Object.defineProperty(file, 'size', { value: 25 * 1024 * 1024 + 1 })
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [file] } })
+
+    expect(await screen.findByText(/Файл больше чем 25 МБ/)).toBeTruthy()
+    expect((screen.getByRole('button', { name: /Загрузить/ }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('keeps the existing 10 MB limit for photos', async () => {
+    const { container } = render(<PhotoUploadDropzone />)
+    const file = makeFile('too-large.jpg', 'image/jpeg')
+    Object.defineProperty(file, 'size', { value: 10 * 1024 * 1024 + 1 })
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [file] } })
+
+    expect(await screen.findByText(/Фотография больше чем 10 МБ/)).toBeTruthy()
   })
 })

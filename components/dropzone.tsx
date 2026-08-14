@@ -11,7 +11,7 @@ export const formatBytes = (
   decimals = 2,
   size?: 'bytes' | 'KB' | 'MB' | 'GB' | 'TB' | 'PB' | 'EB' | 'ZB' | 'YB'
 ) => {
-  const k = 1000
+  const k = 1024
   const dm = decimals < 0 ? 0 : decimals
   const sizes = ['байт', 'КБ', 'МБ', 'ГБ', 'ТБ', 'ПБ', 'ЭБ', 'ЗБ', 'ЙБ']
   const sizeMap: Record<string, string> = {
@@ -77,7 +77,13 @@ const Dropzone = ({
     </DropzoneContext.Provider>
   )
 }
-const DropzoneContent = ({ className }: { className?: string }) => {
+const DropzoneContent = ({
+  className,
+  media = false,
+}: {
+  className?: string
+  media?: boolean
+}) => {
   const {
     files,
     setFiles,
@@ -104,7 +110,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
       <div className={cn('flex flex-row items-center gap-x-2 justify-center', className)}>
         <CheckCircle size={16} className="text-primary" />
         <p className="text-primary text-sm">
-          Успешно загружено {files.length} {files.length === 1 ? 'фотография' : files.length < 5 ? 'фотографии' : 'фотографий'}
+          Успешно загружено {files.length} {media ? 'медиафайлов' : files.length === 1 ? 'фотография' : files.length < 5 ? 'фотографии' : 'фотографий'}
         </p>
       </div>
     )
@@ -140,17 +146,17 @@ const DropzoneContent = ({ className }: { className?: string }) => {
                   {file.errors
                     .map((e) =>
                       e.message.startsWith('File is larger than')
-                        ? `Фотография больше чем ${formatBytes(maxFileSize, 2)} (Размер: ${formatBytes(file.size, 2)})`
+                        ? `Файл больше чем ${formatBytes(maxFileSize, 2)} (Размер: ${formatBytes(file.size, 2)})`
                         : e.message
                     )
                     .join(', ')}
                 </p>
               ) : loading && !isSuccessfullyUploaded ? (
-                <p className="text-xs text-muted-foreground">Загрузка фотографии...</p>
+                <p className="text-xs text-muted-foreground">Загрузка файла...</p>
               ) : !!fileError ? (
                 <p className="text-xs text-destructive">Ошибка загрузки: {fileError.message}</p>
               ) : isSuccessfullyUploaded ? (
-                <p className="text-xs text-primary">Фотография успешно загружена</p>
+                <p className="text-xs text-primary">Файл успешно загружен</p>
               ) : (
                 <p className="text-xs text-muted-foreground">{formatBytes(file.size, 2)}</p>
               )}
@@ -187,7 +193,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
                 Загрузка...
               </>
             ) : (
-              <>Загрузить фотографии</>
+              <>{media ? 'Загрузить фото и видео' : 'Загрузить фотографии'}</>
             )}
           </Button>
         </div>
@@ -196,7 +202,13 @@ const DropzoneContent = ({ className }: { className?: string }) => {
   )
 }
 
-const DropzoneEmptyState = ({ className }: { className?: string }) => {
+const DropzoneEmptyState = ({
+  className,
+  media = false,
+}: {
+  className?: string
+  media?: boolean
+}) => {
   const { maxFiles, maxFileSize, inputRef, isSuccess } = useDropzoneContext()
 
   if (isSuccess) {
@@ -207,7 +219,9 @@ const DropzoneEmptyState = ({ className }: { className?: string }) => {
     <div className={cn('flex flex-col items-center gap-y-2', className)}>
       <Upload size={20} className="text-muted-foreground" />
       <p className="text-sm">
-        Загрузить{!!maxFiles && maxFiles > 1 ? ` ${maxFiles}` : ''} {!maxFiles || maxFiles > 1 ? 'фотографий' : 'фотографию'}
+        {media
+          ? 'Загрузить фотографии или видео'
+          : `Загрузить${!!maxFiles && maxFiles > 1 ? ` ${maxFiles}` : ''} ${!maxFiles || maxFiles > 1 ? 'фотографий' : 'фотографию'}`}
       </p>
       <div className="flex flex-col items-center gap-y-1">
         <p className="text-xs text-muted-foreground">
@@ -216,7 +230,7 @@ const DropzoneEmptyState = ({ className }: { className?: string }) => {
             onClick={() => inputRef.current?.click()}
             className="underline cursor-pointer transition hover:text-foreground"
           >
-            выберите {maxFiles === 1 ? `фотографию` : 'фотографии'}
+            выберите {media ? 'файлы' : maxFiles === 1 ? `фотографию` : 'фотографии'}
           </a>{' '}
           для загрузки
         </p>

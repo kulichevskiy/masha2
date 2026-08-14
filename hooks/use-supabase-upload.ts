@@ -48,6 +48,13 @@ type UseSupabaseUploadOptions = {
    * When set to false, an error is thrown if the object already exists. Defaults to `false`
    */
   upsert?: boolean
+  /** Resolve a different bucket/object path for individual files in a mixed batch. */
+  resolveUploadTarget?: (file: File) => {
+    bucketName: string
+    objectPath: string
+    cacheControl?: string
+  }
+  validator?: (file: File) => FileError | readonly FileError[] | null
 }
 
 type UseSupabaseUploadReturn = ReturnType<typeof useSupabaseUpload>
@@ -61,6 +68,8 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
     maxFiles = 1,
     cacheControl = 3600,
     upsert = false,
+    resolveUploadTarget,
+    validator,
   } = options
 
   const [files, setFiles] = useState<FileWithPreview[]>([])
@@ -108,6 +117,7 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
     maxSize: maxFileSize,
     maxFiles: maxFiles,
     multiple: maxFiles !== 1,
+    validator,
   })
 
   const onUpload = useCallback(async () => {
@@ -126,10 +136,11 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
 
     const responses = await Promise.all(
       filesToUpload.map(async (file) => {
+        const target = resolveUploadTarget?.(file)
         const { error } = await supabase.storage
-          .from(bucketName)
-          .upload(!!path ? `${path}/${file.name}` : file.name, file, {
-            cacheControl: cacheControl.toString(),
+          .from(target?.bucketName ?? bucketName)
+          .upload(target?.objectPath ?? (!!path ? `${path}/${file.name}` : file.name), file, {
+            cacheControl: target?.cacheControl ?? cacheControl.toString(),
             upsert,
           })
         if (error) {
@@ -151,10 +162,23 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
     setSuccesses(newSuccesses)
 
     setLoading(false)
-  }, [files, path, bucketName, errors, successes])
+  }, [
+    files,
+    path,
+    bucketName,
+    errors,
+    successes,
+    cacheControl,
+    upsert,
+    resolveUploadTarget,
+    setLoading,
+    setErrors,
+    setSuccesses,
+  ])
 
   useEffect(() => {
     if (files.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset errors when the controlled file list is emptied
       setErrors([])
     }
 
@@ -172,7 +196,7 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
         setFiles(newFiles)
       }
     }
-  }, [files.length, setFiles, maxFiles])
+  }, [files, setFiles, maxFiles])
 
   return {
     files,

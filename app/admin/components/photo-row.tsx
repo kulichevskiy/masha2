@@ -49,7 +49,13 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
     opacity: isDragging ? 0.5 : 1,
   }
 
-  const imageUrl = `${supabaseUrl}/storage/v1/object/public/photos/${photo.storage_path}`
+  const thumbnailPath = photo.kind === 'video' ? photo.poster_path : photo.storage_path
+  const thumbnailBucket = photo.kind === 'video' ? 'videos' : 'photos'
+  const imageUrl = `${supabaseUrl}/storage/v1/object/public/${thumbnailBucket}/${thumbnailPath}`
+  const duration =
+    photo.kind === 'video' && photo.duration_seconds != null
+      ? formatDuration(photo.duration_seconds)
+      : null
 
   const handleSave = (field: 'title' | 'description' | 'alt_text') => {
     startTransition(async () => {
@@ -119,11 +125,14 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
 
       {/* Thumbnail */}
       <td className="p-2">
-        <img
-          src={imageUrl}
-          alt={photo.alt_text || photo.storage_path}
-          className="h-12 w-12 object-cover rounded"
-        />
+        <div className="flex items-center gap-2">
+          <img
+            src={imageUrl}
+            alt={photo.alt_text || photo.storage_path}
+            className="h-12 w-12 object-cover rounded"
+          />
+          {duration && <span className="text-xs tabular-nums text-muted-foreground">{duration}</span>}
+        </div>
       </td>
 
       {/* Title */}
@@ -257,4 +266,10 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
       </td>
     </tr>
   )
+}
+
+function formatDuration(durationSeconds: number) {
+  const seconds = Math.max(0, Math.round(durationSeconds))
+  const minutes = Math.floor(seconds / 60)
+  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`
 }

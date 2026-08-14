@@ -35,6 +35,7 @@ export async function MasonryGrid({ page = 'portraits' }: { page?: PhotoPage }) 
   const { data: photos, error } = await supabase
     .from('photos')
     .select('id, storage_path, title, alt_text, position, width, height')
+    .eq('kind', 'photo')
     .contains('pages', [page])
     .order('position', { ascending: true })
 

@@ -5,27 +5,13 @@ import { useRouter } from 'next/navigation'
 import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
 import { newId } from '@/lib/id'
+import { createClient } from '@/lib/supabase/client'
+import { prepareMediaUpload } from '@/lib/media-upload'
 import { createPhotosFromUploads } from '../actions'
 
-// Read a file's intrinsic pixel dimensions in the browser before upload, so the
-// public feed can render it at its natural aspect ratio without cropping.
-// `imageOrientation: 'from-image'` applies EXIF orientation, so a rotated photo
-// reports its *displayed* dimensions — matching how the browser renders <img>
-// (image-orientation: from-image) and how the backfill script stores them.
-// Returns nulls if the browser cannot decode the image — the feed falls back to
-// a neutral aspect ratio for those.
-async function measureImage(
-  file: File
-): Promise<{ width: number | null; height: number | null }> {
-  try {
-    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
-    const dimensions = { width: bitmap.width, height: bitmap.height }
-    bitmap.close()
-    return dimensions
-  } catch {
-    return { width: null, height: null }
-  }
-}
+const supabase = createClient()
+const VIDEO_CACHE_CONTROL = '31536000, immutable'
+const PHOTO_MAX_BYTES = 10 * 1024 * 1024
 
 export function PhotoUploadDropzone() {
   const router = useRouter()
@@ -38,15 +24,15 @@ export function PhotoUploadDropzone() {
   // fresh `useSupabaseUpload` instance (empty `successes`/`files`) instead of
   // mutating `path` on a hook whose `successes` accumulates across batches —
   // mirrors the workshop/gift uploaders' sessionId-keyed pattern.
-  const [prefix, setPrefix] = useState<string>(() => `photos/${newId()}`)
+  const [sessionId, setSessionId] = useState<string>(() => newId())
 
   return (
     <div className="mb-6">
       <UploadSession
-        key={prefix}
-        prefix={prefix}
+        key={sessionId}
+        sessionId={sessionId}
         onBatchComplete={() => {
-          setPrefix(`photos/${newId()}`)
+          setSessionId(newId())
           router.refresh()
         }}
       />
@@ -55,19 +41,34 @@ export function PhotoUploadDropzone() {
 }
 
 function UploadSession({
-  prefix,
+  sessionId,
   onBatchComplete,
 }: {
-  prefix: string
+  sessionId: string
   onBatchComplete: () => void
 }) {
   const uploadHook = useSupabaseUpload({
     bucketName: 'photos',
-    path: prefix,
-    allowedMimeTypes: ['image/*'],
-    maxFileSize: 10 * 1024 * 1024, // 10MB
+    path: `photos/${sessionId}`,
+    allowedMimeTypes: ['image/*', 'video/mp4'],
+    maxFileSize: 25 * 1024 * 1024,
     maxFiles: 50,
     upsert: false,
+    validator: (file) =>
+      file.type.startsWith('image/') && file.size > PHOTO_MAX_BYTES
+        ? { code: 'file-too-large', message: 'Фотография больше чем 10 МБ' }
+        : null,
+    resolveUploadTarget: (file) =>
+      file.type === 'video/mp4'
+        ? {
+            bucketName: 'videos',
+            objectPath: `videos/${sessionId}/${file.name}`,
+            cacheControl: VIDEO_CACHE_CONTROL,
+          }
+        : {
+            bucketName: 'photos',
+            objectPath: `photos/${sessionId}/${file.name}`,
+          },
   })
 
   const { files, isSuccess, successes } = uploadHook
@@ -88,10 +89,45 @@ function UploadSession({
     Promise.all(
       successes.map(async (fileName) => {
         const file = files.find((f) => f.name === fileName)
-        const { width, height } = file
-          ? await measureImage(file)
-          : { width: null, height: null }
-        return { storagePath: `${prefix}/${fileName}`, width, height }
+        if (!file) {
+          return {
+            storagePath: `photos/${sessionId}/${fileName}`,
+            width: null,
+            height: null,
+          }
+        }
+
+        const prepared = await prepareMediaUpload(file)
+        if (prepared.kind === 'photo') {
+          return {
+            storagePath: `photos/${sessionId}/${fileName}`,
+            kind: 'photo' as const,
+            width: prepared.width,
+            height: prepared.height,
+          }
+        }
+
+        const posterName = fileName.replace(/\.[^/.]+$/, '') + '.poster.jpg'
+        const posterPath = `videos/${sessionId}/${posterName}`
+        const { error } = await supabase.storage.from('videos').upload(
+          posterPath,
+          prepared.poster,
+          {
+            cacheControl: VIDEO_CACHE_CONTROL,
+            contentType: 'image/jpeg',
+            upsert: false,
+          }
+        )
+        if (error) throw new Error(`Failed to upload video poster: ${error.message}`)
+
+        return {
+          storagePath: `videos/${sessionId}/${fileName}`,
+          kind: 'video' as const,
+          posterPath,
+          durationSeconds: prepared.durationSeconds,
+          width: prepared.width,
+          height: prepared.height,
+        }
       })
     )
       .then((uploads) => createPhotosFromUploads(uploads))
@@ -102,12 +138,12 @@ function UploadSession({
         console.error('Failed to create photo records:', error)
         firedRef.current = false
       })
-  }, [isSuccess, successes, files, prefix, onBatchComplete])
+  }, [isSuccess, successes, files, sessionId, onBatchComplete])
 
   return (
     <Dropzone {...uploadHook}>
-      <DropzoneEmptyState />
-      <DropzoneContent />
+      <DropzoneEmptyState media />
+      <DropzoneContent media />
     </Dropzone>
   )
 }
