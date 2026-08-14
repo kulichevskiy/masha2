@@ -28,13 +28,12 @@ const COLUMNS = "columns-1 md:columns-2 lg:columns-3 gap-4"
 export async function MasonryGrid({ page = 'portraits' }: { page?: PhotoPage }) {
   const supabase = await createClient()
 
-  // Fetch photos tagged onto this section, ordered by position. `contains`
-  // maps to `pages @> {page}` — the photo appears here when the section is one
+  // Fetch media tagged onto this section, ordered by position. `contains`
+  // maps to `pages @> {page}` — the item appears here when the section is one
   // of its pages. RLS already hides rows with an empty pages array.
   const { data: photos, error } = await supabase
     .from('photos')
-    .select('id, storage_path, title, alt_text, position, width, height')
-    .eq('kind', 'photo')
+    .select('id, kind, storage_path, poster_path, duration_seconds, title, alt_text, position, width, height')
     .contains('pages', [page])
     .order('position', { ascending: true })
     .order('id', { ascending: true })
@@ -56,16 +55,35 @@ export async function MasonryGrid({ page = 'portraits' }: { page?: PhotoPage }) 
     )
   }
 
-  // Build photo objects with public URLs and the intrinsic dimensions used to
-  // render each image at its natural aspect ratio (no cropping).
+  // Build media objects with public URLs and the intrinsic dimensions used to
+  // render each poster/image at its natural aspect ratio (no cropping).
   const photosWithUrls = photos.map((photo) => {
-    const { data: urlData } = supabase.storage
-      .from('photos')
-      .getPublicUrl(photo.storage_path)
+    const isVideo = photo.kind === 'video'
+    const bucket = isVideo ? 'videos' : 'photos'
+    const imagePath = isVideo ? photo.poster_path! : photo.storage_path
+    const { data: imageUrlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(imagePath)
+
+    if (isVideo) {
+      const { data: videoUrlData } = supabase.storage
+        .from('videos')
+        .getPublicUrl(photo.storage_path)
+
+      return {
+        id: photo.id,
+        kind: 'video' as const,
+        src: imageUrlData.publicUrl,
+        videoSrc: videoUrlData.publicUrl,
+        alt: photo.alt_text || photo.title || photo.storage_path,
+        durationSeconds: photo.duration_seconds!,
+        ...resolveImageDimensions(photo.width, photo.height),
+      }
+    }
 
     return {
       id: photo.id,
-      src: urlData.publicUrl,
+      src: imageUrlData.publicUrl,
       alt: photo.alt_text || photo.title || photo.storage_path,
       ...resolveImageDimensions(photo.width, photo.height),
     }

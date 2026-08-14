@@ -18,6 +18,21 @@ const PHOTOS: LightboxPhoto[] = [
   { id: 'three', src: '/three.jpg', alt: 'Third portrait', width: 900, height: 900 },
 ]
 
+const MIXED_MEDIA: LightboxPhoto[] = [
+  PHOTOS[0],
+  {
+    id: 'clip',
+    kind: 'video',
+    src: '/clip-poster.jpg',
+    videoSrc: '/clip.mp4',
+    alt: 'Portrait clip',
+    width: 1080,
+    height: 1920,
+    durationSeconds: 12.75,
+  },
+  PHOTOS[2],
+]
+
 function renderGallery() {
   return render(<PhotoLightboxGrid photos={PHOTOS} />)
 }
@@ -28,6 +43,8 @@ function tile(name: string) {
 
 beforeEach(() => {
   window.history.replaceState(null, '', '/')
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
 })
 
 afterEach(() => {
@@ -36,6 +53,137 @@ afterEach(() => {
 })
 
 describe('<PhotoLightboxGrid />', () => {
+  it('renders a natural-ratio optimized poster and duration without loading video bytes', () => {
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+
+    const poster = screen.getByAltText('Portrait clip')
+    expect(poster).toHaveAttribute('src', '/clip-poster.jpg')
+    expect(poster).toHaveAttribute('width', '1080')
+    expect(poster).toHaveAttribute('height', '1920')
+    expect(poster).toHaveAttribute('quality', '90')
+    expect(poster).toHaveClass('h-auto', 'w-full')
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+
+    const duration = screen.getByText('0:13')
+    expect(duration).toHaveClass('font-roboto-mono', 'text-xs', 'text-white/70')
+    expect(duration).toHaveStyle({ textShadow: '0 1px 3px rgb(0 0 0 / 0.65)' })
+  })
+
+  it('opens a video from 0:00 with sound and native controls', () => {
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+
+    fireEvent.click(tile('Portrait clip'))
+
+    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
+    const video = dialog.querySelector('video') as HTMLVideoElement
+    expect(video).toHaveAttribute('src', '/clip.mp4')
+    expect(video).toHaveAttribute('poster', '/clip-poster.jpg')
+    expect(video).toHaveAttribute('controls')
+    expect(video).toHaveAttribute('autoplay')
+    expect(video).toHaveAttribute('preload', 'none')
+    expect(video).toHaveAttribute('width', '1080')
+    expect(video).toHaveAttribute('height', '1920')
+    expect(video).toHaveStyle({ aspectRatio: '1080 / 1920' })
+    expect(video.play).toHaveBeenCalled()
+    expect(video.currentTime).toBe(0)
+    expect(video.muted).toBe(false)
+    expect(window.location.search).toBe('?photo=clip')
+  })
+
+  it('uses arrow keys for gallery navigation when the video is focused', () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
+    const video = dialog.querySelector('video') as HTMLVideoElement
+    video.currentTime = 8
+    video.focus()
+
+    const handled = fireEvent.keyDown(video, { key: 'ArrowRight' })
+
+    expect(handled).toBe(false)
+    expect(screen.getByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
+    expect(pause).toHaveBeenCalled()
+    expect(video.currentTime).toBe(0)
+    expect(window.location.search).toBe('?photo=three')
+  })
+
+  it('navigates with a horizontal swipe across the video surface', () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
+    const video = dialog.querySelector('video') as HTMLVideoElement
+    video.currentTime = 8
+    vi.spyOn(video, 'getBoundingClientRect').mockReturnValue({
+      top: 0, right: 300, bottom: 500, left: 0, width: 300, height: 500, x: 0, y: 0,
+      toJSON: () => ({}),
+    })
+
+    fireEvent.touchStart(video, { touches: [{ clientX: 250, clientY: 100 }] })
+    fireEvent.touchEnd(video, { changedTouches: [{ clientX: 100, clientY: 105 }] })
+
+    expect(screen.getByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
+    expect(pause).toHaveBeenCalled()
+    expect(window.location.search).toBe('?photo=three')
+  })
+
+  it('leaves gestures on the native video control strip untouched', () => {
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
+    const video = dialog.querySelector('video') as HTMLVideoElement
+    vi.spyOn(video, 'getBoundingClientRect').mockReturnValue({
+      top: 0, right: 300, bottom: 500, left: 0, width: 300, height: 500, x: 0, y: 0,
+      toJSON: () => ({}),
+    })
+
+    fireEvent.touchStart(video, { touches: [{ clientX: 250, clientY: 475 }] })
+    fireEvent.touchEnd(video, { changedTouches: [{ clientX: 100, clientY: 475 }] })
+
+    expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
+    expect(window.location.search).toBe('?photo=clip')
+  })
+
+  it('includes native video controls in the dialog focus cycle', () => {
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
+    const video = dialog.querySelector('video') as HTMLVideoElement
+    const next = screen.getByRole('button', { name: 'Next photo' })
+    const focus = vi.spyOn(video, 'focus')
+
+    next.focus()
+    fireEvent.keyDown(next, { key: 'Tab' })
+
+    expect(focus).toHaveBeenCalled()
+  })
+
+  it('stops and resets a video when arrow navigation moves to a photo', () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const video = screen.getByRole('dialog').querySelector('video') as HTMLVideoElement
+    video.currentTime = 8
+
+    fireEvent.keyDown(document, { key: 'ArrowRight' })
+
+    expect(screen.getByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
+    expect(pause).toHaveBeenCalled()
+    expect(video.currentTime).toBe(0)
+    expect(document.querySelector('video')).not.toBeInTheDocument()
+    expect(window.location.search).toBe('?photo=three')
+  })
+
+  it('opens a video deep link through the existing photo query parameter', async () => {
+    window.history.replaceState(null, '', '/?photo=clip')
+
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+
+    const dialog = await screen.findByRole('dialog', { name: 'Portrait clip' })
+    expect(dialog.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
+  })
+
   it('opens a labelled modal from a focusable tile and pushes its URL state', () => {
     const pushState = vi.spyOn(window.history, 'pushState')
     renderGallery()
