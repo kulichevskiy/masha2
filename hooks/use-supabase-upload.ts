@@ -140,43 +140,46 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
 
     try {
       await prepareFiles?.(filesToUpload)
+
+      const responses = await Promise.all(
+        filesToUpload.map(async (file) => {
+          try {
+            const target = resolveUploadTarget?.(file)
+            const { error } = target?.upload
+              ? await target.upload(file)
+              : await supabase.storage
+                  .from(target?.bucketName ?? bucketName)
+                  .upload(target?.objectPath ?? (!!path ? `${path}/${file.name}` : file.name), file, {
+                    cacheControl: target?.cacheControl ?? cacheControl.toString(),
+                    upsert,
+                  })
+            return { name: file.name, message: error?.message }
+          } catch (error) {
+            return {
+              name: file.name,
+              message: error instanceof Error ? error.message : 'Не удалось загрузить файл',
+            }
+          }
+        })
+      )
+
+      const responseErrors = responses.filter(
+        (response): response is { name: string; message: string } => response.message !== undefined
+      )
+      // if there were errors previously, this function tried to upload the files again so we should clear/overwrite the existing errors.
+      setErrors(responseErrors)
+
+      const responseSuccesses = responses.filter((x) => x.message === undefined)
+      const newSuccesses = Array.from(
+        new Set([...successes, ...responseSuccesses.map((x) => x.name)])
+      )
+      setSuccesses(newSuccesses)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Не удалось подготовить файл'
+      const message = error instanceof Error ? error.message : 'Не удалось загрузить файл'
       setErrors(filesToUpload.map((file) => ({ name: file.name, message })))
+    } finally {
       setLoading(false)
-      return
     }
-
-    const responses = await Promise.all(
-      filesToUpload.map(async (file) => {
-        const target = resolveUploadTarget?.(file)
-        const { error } = target?.upload
-          ? await target.upload(file)
-          : await supabase.storage
-              .from(target?.bucketName ?? bucketName)
-              .upload(target?.objectPath ?? (!!path ? `${path}/${file.name}` : file.name), file, {
-                cacheControl: target?.cacheControl ?? cacheControl.toString(),
-                upsert,
-              })
-        if (error) {
-          return { name: file.name, message: error.message }
-        } else {
-          return { name: file.name, message: undefined }
-        }
-      })
-    )
-
-    const responseErrors = responses.filter((x) => x.message !== undefined)
-    // if there were errors previously, this function tried to upload the files again so we should clear/overwrite the existing errors.
-    setErrors(responseErrors)
-
-    const responseSuccesses = responses.filter((x) => x.message === undefined)
-    const newSuccesses = Array.from(
-      new Set([...successes, ...responseSuccesses.map((x) => x.name)])
-    )
-    setSuccesses(newSuccesses)
-
-    setLoading(false)
   }, [
     files,
     path,

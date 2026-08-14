@@ -8,17 +8,28 @@
  * first batch's stale `successes` before the second file ever uploaded. A
  * fresh `UploadSession` instance per batch (`key={prefix}`) fixes that.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
-import { render, fireEvent, waitFor, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest'
+import { render, fireEvent, waitFor, screen, cleanup } from '@testing-library/react'
 
-const mockUpload = vi.fn(async () => ({ error: null }))
-const mockRemove = vi.fn(async () => ({ error: null }))
+type StorageError = { message: string }
+type StorageResult = { error: StorageError | null }
+type UploadMock = (
+  bucket: string,
+  path: string,
+  file: File,
+  options: { cacheControl: string; upsert: boolean }
+) => Promise<StorageResult>
+type RemoveMock = (bucket: string, paths: string[]) => Promise<StorageResult>
+
+const mockUpload = vi.fn<UploadMock>().mockResolvedValue({ error: null })
+const mockRemove = vi.fn<RemoveMock>().mockResolvedValue({ error: null })
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: { getSession: async () => ({ data: { session: { access_token: 'token' } } }) },
     storage: {
       from: (bucket: string) => ({
-        upload: (...args: unknown[]) => mockUpload(bucket, ...args),
+        upload: (path: string, file: File, options: { cacheControl: string; upsert: boolean }) =>
+          mockUpload(bucket, path, file, options),
         remove: (paths: string[]) => mockRemove(bucket, paths),
       }),
     },
@@ -41,9 +52,10 @@ vi.mock('@/lib/media-upload', () => ({
 const mockRefresh = vi.fn()
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: mockRefresh }) }))
 
-const mockCreatePhotosFromUploads = vi.fn(async () => undefined)
+type UploadRow = { storagePath: string; [key: string]: unknown }
+const mockCreatePhotosFromUploads = vi.fn<(uploads: UploadRow[]) => Promise<void>>().mockResolvedValue(undefined)
 vi.mock('../actions', () => ({
-  createPhotosFromUploads: (...args: unknown[]) => mockCreatePhotosFromUploads(...args),
+  createPhotosFromUploads: (uploads: UploadRow[]) => mockCreatePhotosFromUploads(uploads),
 }))
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,6 +66,8 @@ beforeAll(async () => {
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY ||= 'test-anon-key'
   ;({ PhotoUploadDropzone } = await import('./photo-upload-dropzone'))
 })
+
+afterEach(cleanup)
 
 function makeFile(name: string, type = 'image/png') {
   return new File(['x'], name, { type })
@@ -70,8 +84,10 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
   beforeEach(() => {
     mockUpload.mockClear()
     mockRemove.mockClear()
+    mockRemove.mockResolvedValue({ error: null })
     mockRefresh.mockClear()
     mockCreatePhotosFromUploads.mockClear()
+    mockCreatePhotosFromUploads.mockResolvedValue(undefined)
     vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 200 })))
   })
 
@@ -81,7 +97,9 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
     await dropAndUpload(container, makeFile('A.jpg'))
 
     await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(1))
-    const firstUploads = mockCreatePhotosFromUploads.mock.calls[0][0] as { storagePath: string }[]
+    const firstUploads = mockCreatePhotosFromUploads.mock.calls[0]?.[0]
+    expect(firstUploads).toBeDefined()
+    if (!firstUploads) throw new Error('Expected first upload call')
     expect(firstUploads).toHaveLength(1)
     expect(firstUploads[0].storagePath).toMatch(/^photos\/[^/]+\/A\.jpg$/)
 
@@ -93,7 +111,9 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
     await dropAndUpload(container, makeFile('B.jpg'))
 
     await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(2))
-    const secondUploads = mockCreatePhotosFromUploads.mock.calls[1][0] as { storagePath: string }[]
+    const secondUploads = mockCreatePhotosFromUploads.mock.calls[1]?.[0]
+    expect(secondUploads).toBeDefined()
+    if (!secondUploads) throw new Error('Expected second upload call')
 
     // Only the real, freshly-uploaded B.jpg should be recorded — not a
     // phantom row carried over from the first batch's A.jpg.
@@ -113,7 +133,7 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
     await dropAndUpload(container, makeFile('clip.mp4', 'video/mp4'))
 
     await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(1))
-    const uploads = mockCreatePhotosFromUploads.mock.calls[0][0]
+    const uploads = mockCreatePhotosFromUploads.mock.calls[0]?.[0]
     expect(uploads).toEqual([
       expect.objectContaining({
         kind: 'video',
@@ -132,6 +152,17 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
         'public, max-age=31536000, immutable'
       )
     }
+  })
+
+  it('shows a rejected custom upload and clears the loading state', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('network unavailable'))
+    const { container } = render(<PhotoUploadDropzone />)
+
+    await dropAndUpload(container, makeFile('clip.mp4', 'video/mp4'))
+
+    expect(await screen.findByText(/network unavailable/)).toBeTruthy()
+    expect((screen.getByRole('button', { name: /Загрузить/ }) as HTMLButtonElement).disabled).toBe(false)
+    expect(mockCreatePhotosFromUploads).not.toHaveBeenCalled()
   })
 
   it('cleans up source and poster objects and allows retry when row insertion fails', async () => {
@@ -154,6 +185,20 @@ describe('<PhotoUploadDropzone /> multi-batch uploads', () => {
     fireEvent.click(screen.getByRole('button', { name: /Загрузить/ }))
     await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1))
+  })
+
+  it('surfaces a cleanup failure and does not retry against immutable objects', async () => {
+    mockCreatePhotosFromUploads.mockRejectedValue(new Error('database unavailable'))
+    mockRemove.mockResolvedValue({ error: { message: 'storage unavailable' } })
+    const { container } = render(<PhotoUploadDropzone />)
+
+    await dropAndUpload(container, makeFile('clip.mp4', 'video/mp4'))
+
+    expect(await screen.findByText(/Не удалось очистить загруженные файлы.*storage unavailable/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Загрузить/ }))
+
+    await waitFor(() => expect(mockCreatePhotosFromUploads).toHaveBeenCalledTimes(1))
+    expect(mockRefresh).not.toHaveBeenCalled()
   })
 
   it('rejects an mp4 larger than 25 MB with a clear message', async () => {

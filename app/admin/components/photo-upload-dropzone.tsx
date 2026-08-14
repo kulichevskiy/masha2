@@ -144,12 +144,24 @@ function UploadSession({
       })
       .catch(async (error) => {
         console.error('Failed to create photo records:', error)
-        await Promise.all(
+        const cleanupResults = await Promise.all(
           ['photos', 'videos'].map(async (bucket) => {
             const paths = createdObjects.filter((object) => object.bucket === bucket).map((object) => object.path)
-            if (paths.length) await supabase.storage.from(bucket).remove(paths)
+            if (!paths.length) return null
+            try {
+              const { error: cleanupError } = await supabase.storage.from(bucket).remove(paths)
+              return cleanupError ? `${bucket}: ${cleanupError.message}` : null
+            } catch (cleanupError) {
+              const message = cleanupError instanceof Error ? cleanupError.message : 'неизвестная ошибка'
+              return `${bucket}: ${message}`
+            }
           })
         )
+        const cleanupErrors = cleanupResults.filter((result): result is string => result !== null)
+        if (cleanupErrors.length > 0) {
+          failUploads(successes, `Не удалось очистить загруженные файлы: ${cleanupErrors.join('; ')}`)
+          return
+        }
         failUploads(successes, error instanceof Error ? error.message : 'Не удалось завершить загрузку')
         firedRef.current = false
       })

@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mockGetUser = vi.fn(async () => ({ data: { user: { id: 'u1' } } }))
 const mockIsAdmin = vi.fn(async () => ({ data: true, error: null }))
 const mockSingle = vi.fn()
-const mockRemove = vi.fn(async () => ({ error: null }))
+type StorageResult = { error: { message: string } | null }
+const mockRemove = vi.fn<(bucket: string, paths: string[]) => Promise<StorageResult>>()
+  .mockResolvedValue({ error: null })
 const mockDeleteEq = vi.fn(async () => ({ error: null }))
 
 vi.mock('@/lib/supabase/server', () => ({
