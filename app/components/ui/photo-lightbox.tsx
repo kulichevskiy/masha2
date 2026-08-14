@@ -42,6 +42,7 @@ type PhotoLightboxGridProps = {
 
 const DEFAULT_COLUMNS = 'columns-1 md:columns-2 lg:columns-3 gap-4'
 const SWIPE_DISTANCE = 50
+const VIDEO_CONTROLS_HEIGHT = 56
 
 function isVideo(item: LightboxPhoto): item is LightboxVideo {
   return item.kind === 'video'
@@ -261,7 +262,6 @@ export function PhotoLightboxGrid({
       }
 
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-        if (event.target instanceof Element && event.target.closest('video[controls]')) return
         event.preventDefault()
         navigate(event.key === 'ArrowLeft' ? -1 : 1)
         return
@@ -317,10 +317,10 @@ export function PhotoLightboxGrid({
   const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
     consumedSwipeRef.current = false
     const touch = event.touches[0]
-    if (
-      event.target instanceof Element &&
-      event.target.closest('button, a, input, select, textarea, video[controls]')
-    ) {
+    const target = event.target instanceof Element ? event.target : null
+    const video = target?.closest('video[controls]')
+    const isVideoControl = video && touch.clientY >= video.getBoundingClientRect().bottom - VIDEO_CONTROLS_HEIGHT
+    if (target?.closest('button, a, input, select, textarea') || isVideoControl) {
       touchStartRef.current = null
       return
     }

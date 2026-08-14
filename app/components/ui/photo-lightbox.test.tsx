@@ -85,7 +85,7 @@ describe('<PhotoLightboxGrid />', () => {
     expect(window.location.search).toBe('?photo=clip')
   })
 
-  it('leaves arrow keys to the focused native video controls', () => {
+  it('navigates to adjacent media with an arrow key while the video is focused', () => {
     const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
     fireEvent.click(tile('Portrait clip'))
@@ -96,27 +96,44 @@ describe('<PhotoLightboxGrid />', () => {
 
     const handled = fireEvent.keyDown(video, { key: 'ArrowRight' })
 
-    expect(handled).toBe(true)
-    expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
-    expect(pause).not.toHaveBeenCalled()
-    expect(video.currentTime).toBe(8)
-    expect(window.location.search).toBe('?photo=clip')
+    expect(handled).toBe(false)
+    expect(screen.getByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
+    expect(pause).toHaveBeenCalled()
+    expect(video.currentTime).toBe(0)
+    expect(window.location.search).toBe('?photo=three')
   })
 
-  it('leaves touch gestures on the video to its native controls', () => {
+  it('navigates to adjacent media with a swipe on the video surface', () => {
     const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
     render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
     fireEvent.click(tile('Portrait clip'))
     const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
     const video = dialog.querySelector('video') as HTMLVideoElement
     video.currentTime = 8
+    vi.spyOn(video, 'getBoundingClientRect').mockReturnValue({ bottom: 600 } as DOMRect)
 
     fireEvent.touchStart(video, { touches: [{ clientX: 250, clientY: 100 }] })
     fireEvent.touchEnd(video, { changedTouches: [{ clientX: 100, clientY: 105 }] })
 
+    expect(screen.getByRole('dialog', { name: 'Third portrait' })).toBeInTheDocument()
+    expect(pause).toHaveBeenCalled()
+    expect(video.currentTime).toBe(0)
+    expect(window.location.search).toBe('?photo=three')
+  })
+
+  it('leaves touches in the native video control strip to the video', () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+    render(<PhotoLightboxGrid photos={MIXED_MEDIA} />)
+    fireEvent.click(tile('Portrait clip'))
+    const dialog = screen.getByRole('dialog', { name: 'Portrait clip' })
+    const video = dialog.querySelector('video') as HTMLVideoElement
+    vi.spyOn(video, 'getBoundingClientRect').mockReturnValue({ bottom: 600 } as DOMRect)
+
+    fireEvent.touchStart(video, { touches: [{ clientX: 250, clientY: 580 }] })
+    fireEvent.touchEnd(video, { changedTouches: [{ clientX: 100, clientY: 585 }] })
+
     expect(screen.getByRole('dialog', { name: 'Portrait clip' })).toBeInTheDocument()
     expect(pause).not.toHaveBeenCalled()
-    expect(video.currentTime).toBe(8)
     expect(window.location.search).toBe('?photo=clip')
   })
 
