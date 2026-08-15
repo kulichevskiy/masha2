@@ -178,14 +178,14 @@ describe('<PhotoLightboxGrid />', () => {
       { target: first, isIntersecting: true },
       { target: second, isIntersecting: true },
     ]))
-    act(() => vi.advanceTimersByTime(249))
+    act(() => vi.advanceTimersByTime(999))
     expect(document.querySelector('video')).not.toBeInTheDocument()
 
     act(() => intersection.update([
       { target: first, isIntersecting: false },
       { target: second, isIntersecting: true },
     ]))
-    act(() => vi.advanceTimersByTime(249))
+    act(() => vi.advanceTimersByTime(999))
     expect(document.querySelector('video')).not.toBeInTheDocument()
 
     act(() => vi.advanceTimersByTime(1))
@@ -198,7 +198,7 @@ describe('<PhotoLightboxGrid />', () => {
     expect(screen.getByAltText('Second clip')).toBeVisible()
 
     act(() => intersection.update([{ target: second, isIntersecting: true }]))
-    act(() => vi.advanceTimersByTime(500))
+    act(() => vi.advanceTimersByTime(1200))
     fireEvent.click(second)
     expect(screen.getByRole('dialog', { name: 'Second clip' })).toBeInTheDocument()
     expect(document.querySelectorAll('video')).toHaveLength(1)
@@ -261,7 +261,7 @@ describe('<PhotoLightboxGrid />', () => {
     firstTop = 150
     secondTop = 350
     fireEvent.scroll(window)
-    act(() => vi.advanceTimersByTime(249))
+    act(() => vi.advanceTimersByTime(999))
     expect(document.querySelector('video')).not.toBeInTheDocument()
     act(() => vi.advanceTimersByTime(1))
     expect(document.querySelector('video')).toHaveAttribute('src', '/clip-two.mp4')
@@ -280,7 +280,7 @@ describe('<PhotoLightboxGrid />', () => {
     fireEvent.scroll(window)
     act(() => vi.advanceTimersByTime(200))
     fireEvent.scroll(window)
-    act(() => vi.advanceTimersByTime(249))
+    act(() => vi.advanceTimersByTime(999))
     expect(document.querySelector('video')).not.toBeInTheDocument()
 
     act(() => vi.advanceTimersByTime(1))
@@ -306,12 +306,12 @@ describe('<PhotoLightboxGrid />', () => {
     vi.spyOn(videoTile, 'getBoundingClientRect').mockReturnValue({ top: 350, height: 100 } as DOMRect)
 
     act(() => intersection.update([{ target: videoTile, isIntersecting: true }]))
-    act(() => vi.advanceTimersByTime(500))
+    act(() => vi.advanceTimersByTime(1200))
     expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
 
     fireEvent.mouseLeave(videoTile)
     expect(document.querySelector('video')).not.toBeInTheDocument()
-    act(() => vi.advanceTimersByTime(249))
+    act(() => vi.advanceTimersByTime(999))
     expect(document.querySelector('video')).not.toBeInTheDocument()
     act(() => vi.advanceTimersByTime(1))
     expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
@@ -342,7 +342,7 @@ describe('<PhotoLightboxGrid />', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
     act(() => intersection.update([{ target: videoTile, isIntersecting: true }]))
-    act(() => vi.advanceTimersByTime(500))
+    act(() => vi.advanceTimersByTime(1200))
     expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
   })
 
