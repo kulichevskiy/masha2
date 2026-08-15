@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "upload-photos": "npx tsx scripts/upload-photos.ts",
-    "backfill-photo-dimensions": "tsx scripts/backfill-photo-dimensions.ts"
+    "backfill-photo-dimensions": "tsx scripts/backfill-photo-dimensions.ts",
+    "prepare-video": "./scripts/prepare-video.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
