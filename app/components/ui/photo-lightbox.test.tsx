@@ -178,14 +178,14 @@ describe('<PhotoLightboxGrid />', () => {
       { target: first, isIntersecting: true },
       { target: second, isIntersecting: true },
     ]))
-    act(() => vi.advanceTimersByTime(499))
+    act(() => vi.advanceTimersByTime(249))
     expect(document.querySelector('video')).not.toBeInTheDocument()
 
     act(() => intersection.update([
       { target: first, isIntersecting: false },
       { target: second, isIntersecting: true },
     ]))
-    act(() => vi.advanceTimersByTime(499))
+    act(() => vi.advanceTimersByTime(249))
     expect(document.querySelector('video')).not.toBeInTheDocument()
 
     act(() => vi.advanceTimersByTime(1))
@@ -257,11 +257,11 @@ describe('<PhotoLightboxGrid />', () => {
       { target: first, isIntersecting: true },
       { target: second, isIntersecting: true },
     ]))
-    act(() => vi.advanceTimersByTime(250))
+    act(() => vi.advanceTimersByTime(100))
     firstTop = 150
     secondTop = 350
     fireEvent.scroll(window)
-    act(() => vi.advanceTimersByTime(499))
+    act(() => vi.advanceTimersByTime(249))
     expect(document.querySelector('video')).not.toBeInTheDocument()
     act(() => vi.advanceTimersByTime(1))
     expect(document.querySelector('video')).toHaveAttribute('src', '/clip-two.mp4')
@@ -276,11 +276,11 @@ describe('<PhotoLightboxGrid />', () => {
     vi.spyOn(videoTile, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 800 } as DOMRect)
 
     act(() => intersection.update([{ target: videoTile, isIntersecting: true }]))
-    act(() => vi.advanceTimersByTime(400))
+    act(() => vi.advanceTimersByTime(200))
     fireEvent.scroll(window)
-    act(() => vi.advanceTimersByTime(400))
+    act(() => vi.advanceTimersByTime(200))
     fireEvent.scroll(window)
-    act(() => vi.advanceTimersByTime(499))
+    act(() => vi.advanceTimersByTime(249))
     expect(document.querySelector('video')).not.toBeInTheDocument()
 
     act(() => vi.advanceTimersByTime(1))
@@ -311,7 +311,7 @@ describe('<PhotoLightboxGrid />', () => {
 
     fireEvent.mouseLeave(videoTile)
     expect(document.querySelector('video')).not.toBeInTheDocument()
-    act(() => vi.advanceTimersByTime(499))
+    act(() => vi.advanceTimersByTime(249))
     expect(document.querySelector('video')).not.toBeInTheDocument()
     act(() => vi.advanceTimersByTime(1))
     expect(document.querySelector('video')).toHaveAttribute('src', '/clip.mp4')
