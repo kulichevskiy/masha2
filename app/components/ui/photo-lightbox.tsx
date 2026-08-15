@@ -54,7 +54,7 @@ const DEFAULT_COLUMNS = 'columns-1 md:columns-2 lg:columns-3 gap-4'
 const SWIPE_DISTANCE = 50
 const HOVER_PREVIEW_DELAY_MS = 200
 const VIDEO_CONTROLS_IDLE_MS = 2000
-const TOUCH_PREVIEW_DELAY_MS = 1000
+const TOUCH_PREVIEW_DELAY_MS = 100
 
 function isVideo(item: LightboxPhoto): item is LightboxVideo {
   return item.kind === 'video'
