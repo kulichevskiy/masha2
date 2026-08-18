@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { togglePhotoPage, PHOTO_PAGES } from './photo-pages'
+import { togglePhotoPage, PHOTO_PAGE_LABELS, PHOTO_PAGES } from './photo-pages'
+
+describe('photo pages', () => {
+  it('exposes all public sections in canonical order', () => {
+    expect(PHOTO_PAGES).toEqual(['portraits', 'kids', 'video'])
+    expect(PHOTO_PAGE_LABELS.video).toBe('Video')
+  })
+})
 
 describe('togglePhotoPage', () => {
   it('adds a section to an empty (hidden) photo', () => {
@@ -21,6 +28,11 @@ describe('togglePhotoPage', () => {
   })
 
   it('normalises order even if the incoming array is out of order', () => {
-    expect(togglePhotoPage(['kids'], 'portraits')).toEqual([...PHOTO_PAGES])
+    expect(togglePhotoPage(['kids'], 'portraits')).toEqual(['portraits', 'kids'])
+  })
+
+  it('adds and removes the video section', () => {
+    expect(togglePhotoPage(['portraits'], 'video')).toEqual(['portraits', 'video'])
+    expect(togglePhotoPage(['portraits', 'video'], 'video')).toEqual(['portraits'])
   })
 })

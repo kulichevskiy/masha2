@@ -20,15 +20,24 @@ describe('matchesFilter', () => {
     expect(matchesFilter([], 'portraits')).toBe(false)
   })
 
-  it('exposes the four filters in display order', () => {
+  it('exposes each filter exactly once in display order', () => {
     expect(PHOTO_FILTERS).toEqual(['all', 'portraits', 'kids', 'video', 'hidden'])
   })
 
-  it('the video filter matches exactly video rows', () => {
-    expect(matchesFilter([], 'video', 'video')).toBe(true)
-    expect(matchesFilter(['portraits'], 'video', 'video')).toBe(true)
-    expect(matchesFilter([], 'video', 'photo')).toBe(false)
-    expect(matchesFilter(['kids'], 'video', 'photo')).toBe(false)
+  it('the video section matches a video assigned to it', () => {
+    expect(matchesFilter(['video'], 'video')).toBe(true)
+  })
+
+  it('the video section excludes a video not assigned to it', () => {
+    expect(matchesFilter([], 'video')).toBe(false)
+  })
+
+  it('the video section matches a photo assigned to it', () => {
+    expect(matchesFilter(['portraits', 'video'], 'video')).toBe(true)
+  })
+
+  it('the video section excludes a photo not assigned to it', () => {
+    expect(matchesFilter(['kids'], 'video')).toBe(false)
   })
 })
 
