@@ -53,7 +53,7 @@ export function PhotosTable({ photos: initialPhotos, supabaseUrl }: PhotosTableP
 
   // Only the rows in the active filter are shown and dragged. Photos outside
   // the filter keep their positions untouched by the reorder.
-  const visiblePhotos = photos.filter((photo) => matchesFilter(photo.pages, filter, photo.kind))
+  const visiblePhotos = photos.filter((photo) => matchesFilter(photo.pages, filter))
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
