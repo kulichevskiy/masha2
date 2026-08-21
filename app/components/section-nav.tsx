@@ -3,13 +3,13 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-// Site sections, in header order. Workshops is always shown (the closed-sales
-// state only changes the page's own CTA, not whether the section exists).
+// Site sections, in header order. Workshop is intentionally absent — the page
+// still lives at /workshop and is reachable by direct link, just not advertised
+// in the header.
 const SECTIONS = [
   { href: "/", label: "Portraits" },
   { href: "/kids", label: "Kids" },
   { href: "/video", label: "Video" },
-  { href: "/workshop", label: "Workshop" },
 ] as const
 
 export function SectionNav() {

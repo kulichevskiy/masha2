@@ -1,10 +1,11 @@
 /**
- * Site-wide section nav — a centered row of links (PORTRAITS · KIDS · VIDEO · WORKSHOP)
+ * Site-wide section nav — a centered row of links (PORTRAITS · KIDS · VIDEO)
  * that sits under the wordmark/tagline on every public page. Styled to match the
  * design source: Bebas Neue uppercase, wide tracking, no glyph separators. The
  * current section reads full-strength black with a 1px underline (border-bottom)
  * + aria-current; the others are the same near-black dimmed to 0.45 opacity.
- * Routing: Portraits → /, Kids → /kids, Video → /video, Workshop → /workshop.
+ * Routing: Portraits → /, Kids → /kids, Video → /video. Workshop is deliberately
+ * not linked from the header — /workshop stays reachable by direct link only.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '@testing-library/react'
@@ -20,7 +21,7 @@ beforeEach(() => {
 })
 
 describe('<SectionNav />', () => {
-  it('renders the four sections in order with their routes and uppercase labels', () => {
+  it('renders the three sections in order with their routes and uppercase labels', () => {
     const { container } = render(<SectionNav />)
 
     const links = Array.from(container.querySelectorAll('a'))
@@ -29,7 +30,6 @@ describe('<SectionNav />', () => {
       ['/', 'Portraits'],
       ['/kids', 'Kids'],
       ['/video', 'Video'],
-      ['/workshop', 'Workshop'],
     ])
 
     // Bebas Neue + uppercase come from CSS on the row, not literal casing.
@@ -73,14 +73,15 @@ describe('<SectionNav />', () => {
     expect(container.querySelector('a[href="/video"]')?.getAttribute('aria-current')).toBe('page')
     expect(container.querySelector('a[href="/"]')?.getAttribute('aria-current')).toBeNull()
     expect(container.querySelector('a[href="/kids"]')?.getAttribute('aria-current')).toBeNull()
-    expect(container.querySelector('a[href="/workshop"]')?.getAttribute('aria-current')).toBeNull()
   })
 
-  it('marks Workshop active on /workshop', () => {
+  it('does not link to Workshop, even while on /workshop', () => {
     pathname = '/workshop'
     const { container } = render(<SectionNav />)
 
-    expect(container.querySelector('a[href="/workshop"]')?.getAttribute('aria-current')).toBe('page')
-    expect(container.querySelector('a[href="/"]')?.getAttribute('aria-current')).toBeNull()
+    expect(container.querySelector('a[href="/workshop"]')).toBeNull()
+    expect(container.textContent).not.toContain('Workshop')
+    // No section lights up on a route the nav does not cover.
+    expect(container.querySelector('a[aria-current="page"]')).toBeNull()
   })
 })
