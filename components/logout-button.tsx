@@ -10,10 +10,17 @@ export function LogoutButton() {
 
   const logout = async () => {
     const supabase = createClient()
-    // Complete the local logout regardless of the server response: the
-    // session cookies are cleared locally even when the remote call fails.
-    await supabase.auth.signOut()
+    // Capture while still identified: PostHogAuthSync resets on SIGNED_OUT,
+    // which fires inside signOut() before it resolves.
     posthog.capture('user_logged_out')
+
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      // Remote revocation failed (network / 5xx): still clear the local
+      // session so /admin cannot re-authenticate from the leftover cookies.
+      await supabase.auth.signOut({ scope: 'local' })
+    }
+
     posthog.reset()
     router.push('/auth/login')
   }
