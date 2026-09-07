@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { SESSION_CLEARED_CHANNEL } from '@/lib/supabase/clear-session-cookies'
 
 function resetIfIdentified() {
   if (posthog._isIdentified()) posthog.reset()
@@ -41,7 +42,17 @@ export function PostHogAuthSync() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') resetIfIdentified()
     })
-    return () => subscription.unsubscribe()
+
+    // Fallback logout (cookies cleared directly) bypasses Supabase's own
+    // cross-tab SIGNED_OUT broadcast, so listen for its explicit signal too.
+    const channel =
+      typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(SESSION_CLEARED_CHANNEL) : null
+    channel?.addEventListener('message', resetIfIdentified)
+
+    return () => {
+      subscription.unsubscribe()
+      channel?.close()
+    }
   }, [])
 
   return null

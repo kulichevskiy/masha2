@@ -5,25 +5,33 @@ const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
 const host = process.env.NEXT_PUBLIC_POSTHOG_HOST
 
 if (projectToken && host) {
-  // Whether PostHog persisted an identified user from a previous visit. Only
-  // then must the initial $pageview wait for the session to be validated, so
-  // it is never attributed to a since-revoked or expired admin.
-  const identified = posthog._isIdentified()
-
+  // Pageviews start disabled: persistence only exists after init(), and the
+  // initial $pageview must not be attributed to a since-revoked or expired
+  // admin. startPageviews() turns them on once the identity is known-good.
   posthog.init(projectToken, {
     api_host: host,
     defaults: '2026-01-30',
     capture_exceptions: true,
-    capture_pageview: identified ? false : 'history_change',
+    capture_pageview: false,
     debug: process.env.NODE_ENV === 'development',
   })
 
-  if (identified) void validateIdentityThenStartPageviews()
+  if (posthog._isIdentified()) {
+    void validateIdentityThenStartPageviews()
+  } else {
+    startPageviews()
+  }
 } else if (process.env.NODE_ENV === 'development') {
   // Analytics are optional locally: warn instead of breaking every page load.
   console.warn(
     '[posthog] NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN / NEXT_PUBLIC_POSTHOG_HOST not set; analytics disabled.'
   )
+}
+
+function startPageviews() {
+  posthog.capture('$pageview')
+  // Installs the history listeners that a false capture_pageview skipped.
+  posthog.set_config({ capture_pageview: 'history_change' })
 }
 
 async function validateIdentityThenStartPageviews() {
@@ -35,8 +43,6 @@ async function validateIdentityThenStartPageviews() {
   } catch {
     // Network failure: keep the identity, PostHogAuthSync re-checks on navigation.
   } finally {
-    posthog.capture('$pageview')
-    // Re-arms the history listeners that the deferred initial pageview disabled.
-    posthog.set_config({ capture_pageview: 'history_change' })
+    startPageviews()
   }
 }
