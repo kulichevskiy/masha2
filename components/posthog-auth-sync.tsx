@@ -39,8 +39,18 @@ export function PostHogAuthSync() {
 
   useEffect(() => {
     const supabase = createClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') resetIfIdentified()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        resetIfIdentified()
+        return
+      }
+      // A different account signed in (this tab or another one) without a
+      // SIGNED_OUT in between: drop the stale identity so nothing is
+      // attributed to the previous user before PostHogIdentify re-runs.
+      const userId = session?.user.id
+      if (userId && posthog._isIdentified() && posthog.get_distinct_id() !== userId) {
+        posthog.reset()
+      }
     })
 
     // Fallback logout (cookies cleared directly) bypasses Supabase's own
