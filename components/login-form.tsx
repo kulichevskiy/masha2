@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import posthog from 'posthog-js'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -43,11 +44,14 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
       if (error) throw error
+      // Identification is deferred to the admin page (PostHogIdentify after is_admin)
+      // so accounts rejected by the /admin gate never get tied to this browser.
+      if (user) posthog.capture('user_logged_in', { method: 'password' })
       router.push('/admin')
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
@@ -70,7 +74,10 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     if (error) {
       setError(error.message)
       setIsLoading(false)
+      return
     }
+
+    posthog.capture('oauth_login_started', { provider: 'google' })
   }
 
   return (

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import posthog from 'posthog-js'
+import { isHoneypotFilled } from '@/lib/analytics'
 import { submitWorkshopApplication } from '../actions'
 import { useIntake } from './intake-context'
 import type { Tariff } from '../data'
@@ -32,6 +34,7 @@ export function WorkshopApplyForm({ tariffs }: { tariffs: Tariff[] }) {
     startTransition(async () => {
       const result = await submitWorkshopApplication(fd)
       if (result.ok) {
+        if (!isHoneypotFilled(fd)) posthog.capture('workshop_application_submitted', { intake })
         setStatus({ kind: 'success' })
         setName('')
         setEmail('')
