@@ -1,5 +1,7 @@
 import type { Instrumentation } from 'next'
 
+const FLUSH_TIMEOUT_MS = 2000
+
 /**
  * Server-side error capture. Errors thrown while rendering server components
  * reach app/global-error.tsx already redacted by Next.js, so report the
@@ -17,27 +19,52 @@ export const onRequestError: Instrumentation.onRequestError = async (
   if (!projectToken || !host) return
 
   const { PostHog } = await import('posthog-node')
-  const posthog = new PostHog(projectToken, { host, flushAt: 1, flushInterval: 0 })
+  const posthog = new PostHog(projectToken, {
+    host,
+    flushAt: 1,
+    flushInterval: 0,
+    requestTimeout: FLUSH_TIMEOUT_MS,
+  })
 
-  let distinctId = 'server'
-  const cookie = request.headers.cookie
-  const cookieHeader = Array.isArray(cookie) ? cookie.join(';') : cookie
-  const match = cookieHeader?.match(/ph_[^_]+_posthog=([^;]+)/)
-  if (match) {
-    try {
-      distinctId = JSON.parse(decodeURIComponent(match[1])).distinct_id ?? distinctId
-    } catch {
-      // Ignore malformed cookie; fall back to the anonymous server id.
-    }
-  }
+  // Only the pathname: /auth/confirm and /auth/callback carry token_hash and
+  // OAuth code in the query string and must never reach a third party.
+  const pathname = request.path.split(/[?#]/, 1)[0]
 
-  posthog.captureException(error, distinctId, {
-    path: request.path,
+  posthog.captureException(error, readDistinctId(request.headers.cookie, projectToken), {
+    path: pathname,
     method: request.method,
     router_kind: context.routerKind,
     route_path: context.routePath,
     route_type: context.routeType,
     render_source: context.renderSource,
   })
-  await posthog.shutdown()
+
+  // Best-effort flush; never let an analytics outage delay the error response.
+  await Promise.race([
+    posthog.shutdown().catch(() => undefined),
+    new Promise<void>((resolve) => setTimeout(resolve, FLUSH_TIMEOUT_MS)),
+  ])
+}
+
+function readDistinctId(
+  cookie: string | string[] | undefined,
+  projectToken: string
+): string {
+  const header = Array.isArray(cookie) ? cookie.join(';') : cookie
+  if (!header) return 'server'
+
+  const name = `ph_${projectToken}_posthog=`
+  const raw = header
+    .split(';')
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(name))
+    ?.slice(name.length)
+  if (!raw) return 'server'
+
+  try {
+    const id = JSON.parse(decodeURIComponent(raw)).distinct_id
+    return typeof id === 'string' && id ? id : 'server'
+  } catch {
+    return 'server'
+  }
 }

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { PhotosTable } from './components/photos-table'
 import { PhotoUploadDropzone } from './components/photo-upload-dropzone'
 import { LogoutButton } from '@/components/logout-button'
+import { PostHogIdentify } from '@/components/posthog-identify'
 import { AdminTabs, type AdminTab } from './components/admin-tabs'
 import { TiersTable } from './components/tiers-table'
 import { FaqTable } from './components/faq-table'
@@ -44,6 +45,10 @@ export default async function AdminPage({ searchParams }: Props) {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      <PostHogIdentify
+        userId={String(data.claims.sub)}
+        email={typeof data.claims.email === 'string' ? data.claims.email : undefined}
+      />
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Личный кабинет фотографа</h1>

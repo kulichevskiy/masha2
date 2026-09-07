@@ -11,7 +11,10 @@ export default function GlobalError({
   reset: () => void;
 }>) {
   useEffect(() => {
-    posthog.captureException(error);
+    // Server-rendering errors carry a digest and were already captured with
+    // full details by instrumentation.ts#onRequestError; the copy here is
+    // sanitised, so only report genuinely client-side errors.
+    if (!error.digest) posthog.captureException(error);
   }, [error]);
 
   return (

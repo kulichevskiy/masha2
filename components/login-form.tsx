@@ -49,7 +49,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         password,
       })
       if (error) throw error
-      // Identification is deferred to the admin area (LogoutButton mounts there)
+      // Identification is deferred to the admin page (PostHogIdentify after is_admin)
       // so accounts rejected by the /admin gate never get tied to this browser.
       if (user) posthog.capture('user_logged_in', { method: 'password' })
       router.push('/admin')
