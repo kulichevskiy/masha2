@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import posthog from 'posthog-js'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -22,6 +23,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
         redirectTo: `${window.location.origin}/auth/update-password`,
       })
       if (error) throw error
+      posthog.capture('password_reset_requested')
       setSuccess(true)
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')

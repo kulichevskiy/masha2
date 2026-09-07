@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import posthog from 'posthog-js'
 import { updateSetting } from '../actions'
 
 export function SettingsForm({ recipientEmail }: { recipientEmail: string }) {
@@ -22,6 +23,7 @@ export function SettingsForm({ recipientEmail }: { recipientEmail: string }) {
     startTransition(async () => {
       try {
         await updateSetting('booking_recipient_email', trimmed)
+        posthog.capture('booking_recipient_updated')
         setStatus({ kind: 'saved' })
       } catch (err) {
         setStatus({

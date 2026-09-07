@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import posthog from 'posthog-js'
 import { submitBookingRequest } from './actions'
 
 type Tier = {
@@ -47,6 +48,9 @@ export function BookingForm({ tiers }: { tiers: Tier[] }) {
     startTransition(async () => {
       const result = await submitBookingRequest(fd)
       if (result.ok) {
+        posthog.capture('booking_request_submitted', {
+          tier_selected: Boolean(tierId),
+        })
         setStatus({ kind: 'success' })
         setTierId('')
         setEmail('')
