@@ -10,13 +10,12 @@ export function LogoutButton() {
 
   const logout = async () => {
     const supabase = createClient()
-    const { error } = await supabase.auth.signOut()
-
-    if (!error) {
-      posthog.capture('user_logged_out')
-      posthog.reset()
-      router.push('/auth/login')
-    }
+    // Complete the local logout regardless of the server response: the
+    // session cookies are cleared locally even when the remote call fails.
+    await supabase.auth.signOut()
+    posthog.capture('user_logged_out')
+    posthog.reset()
+    router.push('/auth/login')
   }
 
   return <Button onClick={logout}>Выйти</Button>
