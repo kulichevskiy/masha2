@@ -49,10 +49,9 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         password,
       })
       if (error) throw error
-      if (user) {
-        posthog.identify(user.id, user.email ? { email: user.email } : {})
-        posthog.capture('user_logged_in', { method: 'password' })
-      }
+      // Identification is deferred to the admin area (LogoutButton mounts there)
+      // so accounts rejected by the /admin gate never get tied to this browser.
+      if (user) posthog.capture('user_logged_in', { method: 'password' })
       router.push('/admin')
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')

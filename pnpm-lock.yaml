@@ -62,6 +62,9 @@ importers:
       posthog-js:
         specifier: ^1.427.2
         version: 1.427.2(@types/react@19.2.7)(react@19.2.0)
+      posthog-node:
+        specifier: ^5.51.6
+        version: 5.51.6
       react:
         specifier: 19.2.0
         version: 19.2.0
@@ -2916,6 +2919,15 @@ packages:
       '@types/react':
         optional: true
       react:
+        optional: true
+
+  posthog-node@5.51.6:
+    resolution: {integrity: sha512-r+Ge3p0OnOcOWeTnvKZmAtDwECeIoyNTyxBxuZc8wM6RHCQ9j2Xrhogrf39HSq1Y2gIOpWLqIDRmWDcu7xmqcA==}
+    engines: {node: ^20.20.0 || >=22.22.0}
+    peerDependencies:
+      rxjs: ^7.0.0
+    peerDependenciesMeta:
+      rxjs:
         optional: true
 
   preact@10.29.8:
@@ -6346,6 +6358,10 @@ snapshots:
       react: 19.2.0
     transitivePeerDependencies:
       - preact-render-to-string
+
+  posthog-node@5.51.6:
+    dependencies:
+      '@posthog/core': 1.50.5
 
   preact@10.29.8: {}
 

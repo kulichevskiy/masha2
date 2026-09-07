@@ -1,25 +1,18 @@
-import posthog from "posthog-js";
+import posthog from 'posthog-js'
 
-const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
-const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+const host = process.env.NEXT_PUBLIC_POSTHOG_HOST
 
-if (!projectToken) {
-  if (process.env.NODE_ENV === "development") {
-    throw new Error(
-      "NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured"
-    );
-  }
-} else if (!host) {
-  if (process.env.NODE_ENV === "development") {
-    throw new Error(
-      "NEXT_PUBLIC_POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NEXT_PUBLIC_POSTHOG_HOST is configured"
-    );
-  }
-} else {
+if (projectToken && host) {
   posthog.init(projectToken, {
     api_host: host,
-    defaults: "2026-01-30",
+    defaults: '2026-01-30',
     capture_exceptions: true,
-    debug: process.env.NODE_ENV === "development",
-  });
+    debug: process.env.NODE_ENV === 'development',
+  })
+} else if (process.env.NODE_ENV === 'development') {
+  // Analytics are optional locally: warn instead of breaking every page load.
+  console.warn(
+    '[posthog] NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN / NEXT_PUBLIC_POSTHOG_HOST not set; analytics disabled.'
+  )
 }

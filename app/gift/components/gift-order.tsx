@@ -8,6 +8,7 @@
 
 import { useState, useTransition } from 'react'
 import posthog from 'posthog-js'
+import { isHoneypotFilled } from '@/lib/analytics'
 import { submitGiftOrder } from '../actions'
 import type { Amount } from '../data'
 
@@ -29,7 +30,7 @@ export function GiftOrder({ amounts }: { amounts: Amount[] }) {
     startTransition(async () => {
       const result = await submitGiftOrder(fd)
       if (result.ok) {
-        posthog.capture('gift_order_submitted', {
+        if (!isHoneypotFilled(fd)) posthog.capture('gift_order_submitted', {
           amount_selected: selectedId !== null,
         })
         setStatus({ kind: 'success' })

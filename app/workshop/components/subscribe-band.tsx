@@ -9,6 +9,7 @@
 
 import { useState, useTransition } from 'react'
 import posthog from 'posthog-js'
+import { isHoneypotFilled } from '@/lib/analytics'
 import { RichText } from '@/components/rich-text'
 import { submitWorkshopSubscription } from '../actions'
 import type { Workshop } from '../data'
@@ -28,7 +29,7 @@ export function SubscribeBand({ n, workshop }: { n: number; workshop: Workshop }
     startTransition(async () => {
       const result = await submitWorkshopSubscription(fd)
       if (result.ok) {
-        posthog.capture('workshop_subscription_submitted')
+        if (!isHoneypotFilled(fd)) posthog.capture('workshop_subscription_submitted')
         setStatus({ kind: 'success' })
         setEmail('')
       } else {
