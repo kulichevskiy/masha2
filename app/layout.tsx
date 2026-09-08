@@ -74,6 +74,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="p:domain_verify" content="fbc6aa88e1470e306426347dfa9155ad" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${robotoMono.variable} ${bebasNeue.variable} ${inter.variable} ${oswald.variable} antialiased`}
       >
