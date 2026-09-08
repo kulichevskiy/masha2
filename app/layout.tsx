@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Roboto_Mono, Bebas_Neue, Inter, Oswald } from "next/font/google";
 import "./globals.css";
+import { PostHogAuthSync } from "@/components/posthog-auth-sync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -80,6 +81,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${robotoMono.variable} ${bebasNeue.variable} ${inter.variable} ${oswald.variable} antialiased`}
       >
+        <PostHogAuthSync />
         {children}
       </body>
     </html>
