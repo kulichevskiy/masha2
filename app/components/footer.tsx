@@ -92,13 +92,19 @@ export function Footer({ floatingCtaSpacer = false }: { floatingCtaSpacer?: bool
           <p className="text-sm text-gray-500 opacity-50">© {currentYear} Maria Chevskaya. All rights reserved.</p>
 
           <p className="text-sm font-inter text-gray-500 opacity-50">
-            <Link href="/legal" className="transition-opacity hover:opacity-100">
-              Legal Notice
-            </Link>
+            <a
+              href="https://maria-chevskaya-impressum.maria-kulichevskaya.chatgpt.site/"
+              className="transition-opacity hover:opacity-100"
+            >
+              Impressum
+            </a>
             <span aria-hidden="true" className="mx-2">·</span>
-            <Link href="/privacy" className="transition-opacity hover:opacity-100">
-              Privacy Policy
-            </Link>
+            <a
+              href="https://maria-chevskaya-privacy.maria-kulichevskaya.chatgpt.site/"
+              className="transition-opacity hover:opacity-100"
+            >
+              Datenschutz
+            </a>
           </p>
         </div>
       </div>
