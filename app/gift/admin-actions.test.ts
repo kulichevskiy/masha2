@@ -5,12 +5,13 @@
  * (admin gate -> supabase write -> revalidate).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { TablesUpdate } from '@/lib/supabase/database.types'
 
 const mockGetUser = vi.fn(async () => ({ data: { user: { id: 'u1' } } }))
 const mockIsAdmin = vi.fn(async () => ({ data: true, error: null }))
 const mockSingleId = vi.fn(async () => ({ data: { id: 'gift-1' }, error: null }))
 const mockUpdateEq = vi.fn(async () => ({ error: null }))
-const mockUpdate = vi.fn(() => ({ eq: mockUpdateEq }))
+const mockUpdate = vi.fn<(patch: TablesUpdate<'gift_certificate'>) => { eq: typeof mockUpdateEq }>(() => ({ eq: mockUpdateEq }))
 const mockDeleteEq = vi.fn(async () => ({ error: null }))
 const mockDelete = vi.fn(() => ({ eq: mockDeleteEq }))
 

@@ -4,6 +4,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { __resetRateLimitForTests } from '@/lib/rate-limit'
+import type { TablesInsert } from '@/lib/supabase/database.types'
+import type { CreateEmailOptions } from 'resend'
 
 const mockRecipientMaybeSingle = vi.fn(async () => ({
   data: { value: 'maria@example.com' },
@@ -19,8 +21,8 @@ const mockGiftMaybeSingle = vi.fn(async () => ({
   data: { amounts: AMOUNTS },
   error: null,
 }))
-const mockInsert = vi.fn(async () => ({ error: null }))
-const mockSend = vi.fn(async () => ({ error: null }))
+const mockInsert = vi.fn<(row: TablesInsert<'gift_certificate_requests'>) => Promise<{ error: null }>>(async () => ({ error: null }))
+const mockSend = vi.fn<(message: CreateEmailOptions) => Promise<{ error: null }>>(async () => ({ error: null }))
 
 // supabase admin client — chained query builder. gift_certificate reads use
 // `.select().limit().maybeSingle()`; app_settings uses `.select().eq().maybeSingle()`.

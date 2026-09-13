@@ -92,12 +92,12 @@ function mockChangingMediaPreferences() {
     onchange: null,
     addListener: vi.fn(),
     removeListener: vi.fn(),
-    addEventListener: (_type, listener) => {
+    addEventListener: (_type: string, listener: EventListenerOrEventListenerObject | null) => {
       const queryListeners = listeners.get(query) ?? new Set<EventListener>()
       queryListeners.add(listener as EventListener)
       listeners.set(query, queryListeners)
     },
-    removeEventListener: (_type, listener) => listeners.get(query)?.delete(listener as EventListener),
+    removeEventListener: (_type: string, listener: EventListenerOrEventListenerObject | null) => listeners.get(query)?.delete(listener as EventListener),
     dispatchEvent: vi.fn(),
   }))
 
