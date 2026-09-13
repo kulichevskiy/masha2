@@ -3,8 +3,8 @@
  * contract — title, all program day titles, all FAQ questions, and the apply
  * heading must reach the DOM. Protects against accidental section drops.
  */
-import { describe, it, expect, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { render, cleanup } from '@testing-library/react'
 import type { Workshop } from '../data'
 
 // The apply form is a client component that pulls in a server action and
@@ -23,16 +23,17 @@ vi.mock('../actions', () => ({
 }))
 
 import { WorkshopContent } from './workshop-content'
-import { TariffsBand } from './tariffs-band'
-import { IntakeProvider } from './intake-context'
+
+afterEach(cleanup)
 
 const SAMPLE: Workshop = {
   id: 'w1',
+  banner_visible: true,
   sales_open: true,
   workshop_number: 'Workshop №01',
   title: 'Portrait Workshop · Berlin',
   tagline: 'Three days inside a working portrait practice.',
-  dates: '21 — 23 March 2026',
+  dates: '21 - 23 March 2026',
   location: 'Mitte, Berlin',
   price: '850 €',
   seats: '6 seats',
@@ -105,298 +106,64 @@ const SAMPLE: Workshop = {
 }
 
 describe('<WorkshopContent />', () => {
-  it('renders the title, every program day title, every FAQ question, and the apply heading', () => {
-    const { container } = render(
-      <WorkshopContent workshop={SAMPLE} publicUrlFor={() => null} />
-    )
-    const text = container.textContent ?? ''
-
-    expect(text).toContain('Portrait Workshop')
-    expect(text).toContain('Three days inside a working portrait practice')
-    expect(text).toContain('Mitte, Berlin')
-    expect(text).toContain('21 — 23 March 2026')
-
-    for (const day of SAMPLE.program) {
-      expect(text.toLowerCase()).toContain(day.title.toLowerCase())
-    }
-
-    for (const item of SAMPLE.faq) {
-      expect(text).toContain(item.question)
-    }
-
-    // Both tariff tiers reach the DOM: name, price and days for each.
-    for (const tier of SAMPLE.tariffs) {
-      expect(text).toContain(tier.name)
-      expect(text).toContain(tier.price)
-      expect(text).toContain(tier.days)
-    }
-
+  it('keeps the main headings, program, FAQ and open-sales application', () => {
+    const view = render(<WorkshopContent workshop={SAMPLE} publicUrlFor={() => null} />)
+    const text = view.container.textContent ?? ''
+    expect(view.getByRole('heading', { level: 1 }).textContent).toContain('Portrait Workshop')
+    for (const day of SAMPLE.program) expect(text.toLowerCase()).toContain(day.title.toLowerCase())
+    for (const faq of SAMPLE.faq) expect(text).toContain(faq.question)
     expect(text).toContain('Six seats. One of them is yours?')
-    // apply form stub is mounted.
-    expect(container.querySelector('[data-testid="apply-form-stub"]')).not.toBeNull()
+    expect(view.container.querySelector('#apply')).not.toBeNull()
+    expect(view.container.querySelector('#subscribe')).toBeNull()
   })
 
-  it('swaps the Apply band for the Subscribe band when sales are closed', () => {
-    const workshop: Workshop = { ...SAMPLE, sales_open: false }
-    const { container } = render(
-      <WorkshopContent workshop={workshop} publicUrlFor={() => null} />
-    )
-    const text = container.textContent ?? ''
-
-    // Subscribe band is up: its heading/intro and the notify-me controls show;
-    // the application form does not.
-    expect(container.querySelector('#subscribe')).not.toBeNull()
-    expect(container.querySelector('[data-testid="apply-form-stub"]')).toBeNull()
-    expect(text).toContain("The next workshop isn't open yet")
-    expect(text).toContain('Notify me')
-
-    // Hero CTA points at the subscribe band, not apply.
-    const heroCta = container.querySelector('a[href="#subscribe"]')
-    expect(heroCta).not.toBeNull()
-    expect(heroCta!.textContent).toContain('Notify me')
-    expect(container.querySelector('a[href="#apply"]')).toBeNull()
-
-    // Closing chapter is relabelled in the desktop strip.
-    expect(text).toContain('Subscribe')
-    expect(text).not.toMatch(/—\s*Apply/)
-  })
-
-  it('shows both intake prices in the hero, derived from the tariffs', () => {
-    const { container } = render(
-      <WorkshopContent workshop={SAMPLE} publicUrlFor={() => null} />
-    )
-    const text = container.textContent ?? ''
-    // Desktop pill: "<short> / <full> · <seats>".
-    expect(text).toContain('450 € / 600 € · 6 seats')
-    // Mobile meta row carries the dual price without the seats join.
-    expect(text).toContain('450 € / 600 €')
-    // The single hero price is no longer surfaced verbatim next to seats.
-    expect(text).not.toContain('850 € · 6 seats')
-  })
-
-  it('falls back to the single workshop.price when fewer than two tariffs exist', () => {
-    const workshop: Workshop = { ...SAMPLE, tariffs: [SAMPLE.tariffs[0]] }
-    const { container } = render(
-      <WorkshopContent workshop={workshop} publicUrlFor={() => null} />
-    )
-    const text = container.textContent ?? ''
-    expect(text).toContain('850 € · 6 seats')
-    expect(text).not.toContain('450 € / 600 €')
-  })
-
-  it('renders the restyled dark intake picker: header row, radio tiles, and the Full badge', () => {
-    const { container } = render(
-      <WorkshopContent workshop={SAMPLE} publicUrlFor={() => null} />
-    )
-    const text = container.textContent ?? ''
-
-    // Header row: Bebas lowercase title on the left + muted "Step one" right.
-    expect(text).toContain('choose your workshop')
-    expect(text).toContain('Step one')
-
-    // Floating "THE FULL COURSE" badge lives on the featured (Full) tile.
-    expect(text).toContain('The full course')
-
-    // The picker keeps its radiogroup wiring with exactly two radio options,
-    // and the default intake ('full') leaves precisely one tile checked.
-    const group = container.querySelector('[role="radiogroup"]')
-    expect(group).not.toBeNull()
-    const radios = group!.querySelectorAll('[role="radio"]')
-    expect(radios.length).toBe(2)
-    const checked = group!.querySelectorAll('[role="radio"][aria-checked="true"]')
-    expect(checked.length).toBe(1)
-
-    // Each tile now carries its summary line (absent from the old picker).
-    for (const tier of SAMPLE.tariffs) {
-      expect(text).toContain(tier.summary)
+  it.each([true, false])('omits the tariff section and all eyebrows with sales_open=%s', (salesOpen) => {
+    const view = render(<WorkshopContent workshop={{ ...SAMPLE, sales_open: salesOpen, gallery: [{ photo_path: 'workshop/photo.jpg' }] }} publicUrlFor={() => null} />)
+    const text = view.container.textContent ?? ''
+    for (const label of ['Workshop №01', 'Day 01', 'Day 02', 'Day 03', 'Day 1', 'Day 2', 'Day 3', 'Pricing', 'From the practice', 'Step one', 'The full course', 'Short intake', 'Full intake']) {
+      expect(text).not.toContain(label)
     }
-  })
-
-  it('hides the gallery section when no items', () => {
-    const { container } = render(
-      <WorkshopContent workshop={SAMPLE} publicUrlFor={() => null} />
-    )
-    const text = container.textContent ?? ''
-    expect(text).not.toContain('the kind of')
-  })
-
-  it('hides the gallery section when every entry has an empty photo_path', () => {
-    const workshop: Workshop = {
-      ...SAMPLE,
-      gallery: [{ photo_path: '' }, { photo_path: '   ' }],
-    }
-    const { container } = render(
-      <WorkshopContent workshop={workshop} publicUrlFor={() => null} />
-    )
-    const text = container.textContent ?? ''
-    expect(text).not.toContain('the kind of')
-    // Chapters: idea 01, program 02, days 03, tariffs 04, questions 05, apply 06
-    // (no gallery here). No gap, no duplicate numbers. ChapterLabel renders the
-    // number and label as separate spans, so they come out adjacent in textContent.
-    expect(text).toContain('05Questions')
-    expect(text).toContain('06 — Apply')
-  })
-
-  it('omits the Questions chapter when the FAQ list is empty', () => {
-    const workshop: Workshop = { ...SAMPLE, faq: [] }
-    const { container } = render(
-      <WorkshopContent workshop={workshop} publicUrlFor={() => null} />
-    )
-    const text = container.textContent ?? ''
-    // No questions chapter visible — neither inline label nor strip entry.
-    expect(text).not.toMatch(/Questions/i)
-    // Chapters: idea 01, program 02, days 03, tariffs 04, apply 05 (no gallery,
-    // no faq here).
-    expect(text).toContain('05 — Apply')
-  })
-
-  it('renders the desktop chapter strip as a uniform single-row table of contents', () => {
-    // Gallery path + FAQ + tariffs yields the full set of 7 chapters
-    // (idea, program, days, tariffs, gallery, questions, apply).
-    const workshop: Workshop = {
-      ...SAMPLE,
-      gallery: [{ photo_path: 'workshop/p1.jpg' }],
-    }
-    const { container } = render(
-      <WorkshopContent
-        workshop={workshop}
-        publicUrlFor={(p) => (p ? `https://cdn.example.com/photos/${p}` : null)}
-      />
-    )
-
-    // The strip is the desktop-only section bordered with gray-200.
-    const strip = Array.from(container.querySelectorAll('section')).find((s) =>
-      s.className.includes('border-gray-200')
-    )
-    expect(strip).toBeTruthy()
-    expect(strip!.className).toContain('hidden')
-    expect(strip!.className).toContain('md:block')
-
-    // The flex row distributes items across the full content width.
-    const row = strip!.querySelector('div')!
-    expect(row.className).toContain('justify-between')
-
-    const items = Array.from(row.children) as HTMLElement[]
-    expect(items.length).toBe(7)
-    for (const item of items) {
-      // Each label stays on one line, no mid-word wrapping.
-      expect(item.className).toContain('whitespace-nowrap')
-      // Uniform grey — no active-indicator special case.
-      expect(item.className).toContain('text-gray-500')
-      expect(item.className).not.toContain('border-foreground')
-      // Vertical padding kept, per-item horizontal padding dropped.
-      expect(item.className).toContain('py-5')
-      expect(item.className).not.toContain('px-6')
-      // Font size and tracking unchanged.
-      expect(item.className).toContain('text-xs')
-      expect(item.className).toContain('tracking-[0.2em]')
-    }
-  })
-
-  it('shows the gallery section when at least one entry has a path', () => {
-    const workshop: Workshop = {
-      ...SAMPLE,
-      gallery: [{ photo_path: '' }, { photo_path: 'workshop/p1.jpg' }],
-    }
-    const { container } = render(
-      <WorkshopContent
-        workshop={workshop}
-        publicUrlFor={(p) => (p ? `https://cdn.example.com/photos/${p}` : null)}
-      />
-    )
-    const text = container.textContent ?? ''
+    expect(text).not.toContain('—')
+    expect(view.queryByRole('heading', { name: 'tariffs' })).toBeNull()
+    expect(text).not.toContain('What you get')
     expect(text).toContain('the kind of')
-    // Chapters: idea 01, program 02, days 03, tariffs 04, gallery 05,
-    // questions 06, apply 07.
-    expect(text).toContain('06Questions')
-    expect(text).toContain('07 — Apply')
-  })
-})
-
-describe('<TariffsBand /> gray reference restyle', () => {
-  const renderBand = () =>
-    render(
-      <IntakeProvider>
-        <TariffsBand n={6} tariffs={SAMPLE.tariffs} intro={SAMPLE.tariffs_intro} />
-      </IntakeProvider>
-    )
-
-  it('uses a full-bleed warm-gray section background and no black plate', () => {
-    const { container } = renderBand()
-    const section = container.querySelector('section')!
-    expect(section.className).toContain('bg-[#f2f0ec]')
-    // The old black featured card surface is gone (the black is now only the
-    // Full card's button, an <a>, not a card plate <div>).
-    expect(container.querySelector('div.bg-black')).toBeNull()
   })
 
-  it('renders the lowercase tariffs header, roman intro, and Pricing label', () => {
-    const { container } = renderBand()
-    const text = container.textContent ?? ''
-    expect(text).toContain('tariffs')
-    expect(text).toContain('Same group, same room, same studio')
-    expect(text).toContain('Pricing')
+  it('shows the waitlist, hides dates and keeps the hero CTA pointing to the form', () => {
+    const view = render(<WorkshopContent workshop={{ ...SAMPLE, sales_open: false }} publicUrlFor={() => null} />)
+    const text = view.container.textContent ?? ''
+    expect(view.container.querySelector('#subscribe')).not.toBeNull()
+    expect(view.container.querySelector('#apply')).toBeNull()
+    expect(text).not.toContain(SAMPLE.dates)
+    expect(text).not.toContain('Notify me')
+    expect(text).not.toContain('Mitte, Berlin')
+    const ctas = view.getAllByRole('link', { name: /Join the waitlist/ })
+    expect(ctas).toHaveLength(1)
+    expect(ctas[0].getAttribute('href')).toBe('#subscribe')
+    expect(view.getByLabelText('Spring')).toBeTruthy()
+    expect(view.getByLabelText('Summer')).toBeTruthy()
+    expect(view.queryByLabelText('Winter')).toBeNull()
   })
 
-  it('omits the intro paragraph when tariffs_intro is empty', () => {
-    const { container } = render(
-      <IntakeProvider>
-        <TariffsBand n={6} tariffs={SAMPLE.tariffs} intro={null} />
-      </IntakeProvider>
-    )
-    const text = container.textContent ?? ''
-    // Heading + label still render; only the paragraph is gone.
-    expect(text).toContain('tariffs')
-    expect(text).toContain('Pricing')
-    expect(text).not.toContain('Same group, same room, same studio')
+  it.each([true, false])('keeps the page available with a hidden banner and sales_open=%s', (salesOpen) => {
+    const { container } = render(<WorkshopContent workshop={{ ...SAMPLE, banner_visible: false, sales_open: salesOpen }} publicUrlFor={() => null} />)
+    expect(container.textContent).toContain('Portrait Workshop')
+    expect(container.querySelector(salesOpen ? '#apply' : '#subscribe')).not.toBeNull()
   })
 
-  it('shows days as the big heading, name as the small label, and the price', () => {
-    const { container } = renderBand()
-    const text = container.textContent ?? ''
-    for (const tier of SAMPLE.tariffs) {
-      expect(text).toContain(tier.days)
-      expect(text).toContain(tier.name)
-      expect(text).toContain(tier.price)
-    }
+  it('retains intake selection in the application form after removing tariff cards', () => {
+    const view = render(<WorkshopContent workshop={SAMPLE} publicUrlFor={() => null} />)
+    const radios = view.getAllByRole('radio')
+    expect(radios).toHaveLength(2)
+    expect(radios[0].textContent).toContain('Two days')
+    expect(radios[1].textContent).toContain('Three days')
+    expect(radios[1].getAttribute('aria-checked')).toBe('true')
   })
 
-  it('shows the THE FULL COURSE label on the full card', () => {
-    const { container } = renderBand()
-    expect((container.textContent ?? '')).toContain('THE FULL COURSE')
-  })
-
-  it('merges days_list and extras into a single What you get list', () => {
-    const { container } = renderBand()
-    const text = container.textContent ?? ''
-    expect(text).toContain('What you get')
-    const full = SAMPLE.tariffs.find((t) => t.key === 'full')!
-    for (const item of [...full.days_list, ...full.extras]) {
-      expect(text).toContain(item)
-    }
-  })
-
-  it('renders no per-card selection bar; both buttons read "Join the … workshop"', () => {
-    const { container } = renderBand()
-    const text = container.textContent ?? ''
-    // No slim selection bar in any state — cards top-align across the divider.
-    expect(container.querySelector('.w-7.h-0\\.5')).toBeNull()
-    expect(text).not.toContain('Selected — complete below ↓')
-    for (const tier of SAMPLE.tariffs) {
-      expect(text).toContain(`Join the ${tier.days} workshop`)
-    }
-  })
-
-  it('gives both apply buttons a foreground border; full fills solid black', () => {
-    const { container } = renderBand()
-    const buttons = Array.from(
-      container.querySelectorAll('a[href="#apply"]')
-    ) as HTMLElement[]
-    expect(buttons.length).toBe(2)
-    for (const b of buttons) {
-      expect(b.className).toContain('border')
-    }
-    const full = buttons.find((b) => b.textContent?.includes('Three days'))!
-    expect(full.className).toContain('bg-black')
+  it('omits empty galleries and FAQ without leaving section labels', () => {
+    const view = render(<WorkshopContent workshop={{ ...SAMPLE, gallery: [{ photo_path: '' }, { photo_path: '   ' }], faq: [] }} publicUrlFor={() => null} />)
+    expect(view.container.textContent).not.toContain('the kind of')
+    expect(view.container.textContent).not.toContain('you ask')
+    expect(view.container.querySelector('details')).toBeNull()
   })
 })

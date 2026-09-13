@@ -12,18 +12,22 @@
 export function RichText({
   html,
   className,
+  listMarker = 'dash',
 }: {
   html: string
   className?: string
+  listMarker?: 'dash' | 'disc'
 }) {
   return (
     <div
       className={
         'leading-relaxed ' +
         '[&_p]:m-0 [&_p+p]:mt-3 ' +
-        '[&_ul]:list-none [&_ul]:pl-0 [&_ul]:mt-2 [&_ul]:space-y-1 ' +
-        '[&_ul>li]:relative [&_ul>li]:pl-6 ' +
-        "[&_ul>li]:before:content-['—'] [&_ul>li]:before:absolute [&_ul>li]:before:left-0 [&_ul>li]:before:text-gray-500 " +
+        '[&_ul]:mt-2 [&_ul]:space-y-1 ' +
+        (listMarker === 'disc'
+          ? '[&_ul]:list-disc [&_ul]:pl-5 '
+          : '[&_ul]:list-none [&_ul]:pl-0 [&_ul>li]:relative [&_ul>li]:pl-6 ' +
+            "[&_ul>li]:before:content-['—'] [&_ul>li]:before:absolute [&_ul>li]:before:left-0 [&_ul>li]:before:text-gray-500 ") +
         '[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mt-2 [&_ol]:space-y-1 ' +
         '[&_p+ul]:mt-3 [&_p+ol]:mt-3 [&_ul+p]:mt-4 [&_ol+p]:mt-4 ' +
         '[&_strong]:font-normal [&_em]:not-italic ' +

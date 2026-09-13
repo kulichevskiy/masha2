@@ -10,8 +10,8 @@ const mockRecipientMaybeSingle = vi.fn(async () => ({
   data: { value: 'maria@example.com' },
   error: null,
 }))
-const mockInsert = vi.fn(async () => ({ error: null }))
-const mockSend = vi.fn(async () => ({ error: null }))
+const mockInsert = vi.fn<(subscriber: Record<string, unknown>) => Promise<{ error: null }>>(async () => ({ error: null }))
+const mockSend = vi.fn<(message: { to: string; replyTo: string; subject: string; text: string }) => Promise<{ error: null }>>(async () => ({ error: null }))
 
 // supabase admin client — chained query builder. The action inserts into
 // workshop_subscribers, then reads app_settings via `.select().eq().maybeSingle()`.
@@ -48,9 +48,12 @@ async function loadAction() {
   return mod.submitWorkshopSubscription
 }
 
-function fd(fields: Record<string, string>): FormData {
+function fd(fields: Record<string, string | string[]>): FormData {
   const f = new FormData()
-  for (const [k, v] of Object.entries(fields)) f.append(k, v)
+  const defaults = { seasons: ['spring'], cities: ['berlin'] }
+  for (const [k, v] of Object.entries({ ...defaults, ...fields })) {
+    for (const value of Array.isArray(v) ? v : [v]) f.append(k, value)
+  }
   return f
 }
 
@@ -103,6 +106,8 @@ describe('submitWorkshopSubscription', () => {
     expect(mockInsert).toHaveBeenCalledTimes(1)
     expect(mockInsert.mock.calls[0][0]).toMatchObject({
       email: 'fan@example.com',
+      seasons: ['spring'],
+      cities: ['berlin'],
       user_agent: 'test-agent',
     })
     expect(mockInsert.mock.calls[0][0]).toHaveProperty('ip_hash')
@@ -111,7 +116,7 @@ describe('submitWorkshopSubscription', () => {
   it('sends a Resend notification titled "New workshop subscriber"', async () => {
     process.env.RESEND_API_KEY = 'test-key'
     const submit = await loadAction()
-    const result = await submit(fd({ email: 'fan@example.com' }))
+    const result = await submit(fd({ email: 'fan@example.com', seasons: ['spring', 'summer'], cities: ['berlin', 'hamburg', 'paris'] }))
     expect(result).toEqual({ ok: true })
     expect(mockSend).toHaveBeenCalledTimes(1)
     const sent = mockSend.mock.calls[0][0]
@@ -121,6 +126,36 @@ describe('submitWorkshopSubscription', () => {
       subject: 'New workshop subscriber',
     })
     expect(sent.text).toContain('fan@example.com')
+    expect(sent.text).toContain('Seasons: Spring, Summer')
+    expect(sent.text).toContain('Cities: Berlin, Hamburg, Paris')
+  })
+
+  it.each([
+    { seasons: [], cities: ['berlin'], error: /season/i },
+    { seasons: ['spring'], cities: [], error: /city/i },
+    { seasons: ['spring', 'winter'], cities: ['berlin'], error: /season/i },
+    { seasons: ['spring'], cities: ['paris', 'london'], error: /city/i },
+    { seasons: ['__proto__'], cities: ['berlin'], error: /season/i },
+  ])('rejects missing or unsupported preferences: $seasons / $cities', async ({ seasons, cities, error }) => {
+    const submit = await loadAction()
+    const result = await submit(fd({ email: 'fan@example.com', seasons, cities }))
+    expect(result).toEqual({ ok: false, error: expect.stringMatching(error) })
+    expect(mockInsert).not.toHaveBeenCalled()
+    expect(mockSend).not.toHaveBeenCalled()
+  })
+
+  it('saves multiple choices once each in a stable order', async () => {
+    const submit = await loadAction()
+    const result = await submit(fd({
+      email: 'fan@example.com',
+      seasons: ['summer', 'spring', 'summer'],
+      cities: ['paris', 'hamburg', 'berlin', 'paris'],
+    }))
+    expect(result).toEqual({ ok: true })
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
+      seasons: ['spring', 'summer'],
+      cities: ['berlin', 'hamburg', 'paris'],
+    }))
   })
 
   it('still persists the subscriber when RESEND_API_KEY is unset', async () => {

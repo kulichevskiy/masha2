@@ -13,8 +13,11 @@ import { isHoneypotFilled } from '@/lib/analytics'
 import { RichText } from '@/components/rich-text'
 import { submitWorkshopSubscription } from '../actions'
 import type { Workshop } from '../data'
+import { parseWaitlistPreferences, WAITLIST_SEASONS, WAITLIST_CITIES } from '../waitlist'
 
-export function SubscribeBand({ n, workshop }: { n: number; workshop: Workshop }) {
+export function SubscribeBand({ workshop }: {
+  workshop: Pick<Workshop, 'closed_heading' | 'closed_intro'>
+}) {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<
     | { kind: 'idle' }
@@ -26,6 +29,12 @@ export function SubscribeBand({ n, workshop }: { n: number; workshop: Workshop }
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
+    const preferences = parseWaitlistPreferences(fd)
+    if (!preferences.ok) {
+      setStatus({ kind: 'error', message: preferences.error })
+      return
+    }
+    setStatus({ kind: 'idle' })
     startTransition(async () => {
       const result = await submitWorkshopSubscription(fd)
       if (result.ok) {
@@ -47,9 +56,6 @@ export function SubscribeBand({ n, workshop }: { n: number; workshop: Workshop }
     <section id="subscribe" className="px-0 md:px-10 pt-16 md:pt-28 scroll-mt-12">
       <div className="mx-auto max-w-7xl">
         <div className="bg-black text-white px-6 md:px-16 py-12 md:py-20 relative overflow-hidden">
-          <div className="font-inter text-[10.5px] md:text-[11px] tracking-[0.3em] uppercase text-white/60 mb-3">
-            {String(n).padStart(2, '0')} — Subscribe
-          </div>
           {workshop.closed_heading && (
             <h3 className="font-bebas-neue text-[52px] md:text-[80px] leading-[0.95] uppercase text-white m-0 mb-5 md:mb-6 font-normal tracking-[-0.015em] md:tracking-[-0.01em]">
               {workshop.closed_heading}
@@ -57,6 +63,7 @@ export function SubscribeBand({ n, workshop }: { n: number; workshop: Workshop }
           )}
           {workshop.closed_intro && (
             <RichText
+              listMarker="disc"
               html={workshop.closed_intro}
               className="text-[14.5px] md:text-[17px] leading-[1.7] max-w-[560px] text-white/85 mb-8 md:mb-12 [&_p]:text-white/85"
             />
@@ -64,9 +71,6 @@ export function SubscribeBand({ n, workshop }: { n: number; workshop: Workshop }
 
           {status.kind === 'success' ? (
             <div role="status" aria-live="polite" className="font-inter text-white max-w-[560px]">
-              <p className="text-[11px] tracking-[0.25em] uppercase text-white/55 mb-3">
-                You&rsquo;re on the list
-              </p>
               <h4 className="font-bebas-neue text-3xl uppercase tracking-wide leading-none mb-4">
                 Thank you
               </h4>
@@ -102,13 +106,20 @@ export function SubscribeBand({ n, workshop }: { n: number; workshop: Workshop }
                 className={fieldCls}
               />
 
+              <p className="mt-7 text-[14.5px] leading-relaxed text-white/85">
+                Choose your preferred seasons and cities. We&rsquo;ll email you
+                when a new workshop is announced.
+              </p>
+              <PreferenceGroup name="seasons" label="Preferred seasons" options={WAITLIST_SEASONS} />
+              <PreferenceGroup name="cities" label="Preferred cities" options={WAITLIST_CITIES} />
+
               <div className="mt-8">
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="inline-block bg-white text-black px-14 py-4 font-bebas-neue text-xl tracking-[0.12em] uppercase hover:bg-white/90 transition-colors disabled:opacity-60"
+                  className="inline-block bg-white text-black px-8 sm:px-14 py-4 font-bebas-neue text-xl tracking-[0.12em] uppercase hover:bg-white/90 transition-colors disabled:opacity-60"
                 >
-                  {isPending ? 'Sending…' : 'Notify me'}
+                  {isPending ? 'Sending…' : 'Join the waitlist'}
                 </button>
               </div>
 
@@ -122,5 +133,30 @@ export function SubscribeBand({ n, workshop }: { n: number; workshop: Workshop }
         </div>
       </div>
     </section>
+  )
+}
+
+function PreferenceGroup({ name, label, options }: {
+  name: string
+  label: string
+  options: Record<string, string>
+}) {
+  return (
+    <fieldset className="mt-7" aria-describedby={`workshop-${name}-hint`}>
+      <legend className="font-inter text-[11px] tracking-[0.25em] uppercase text-white/70">
+        {label}
+      </legend>
+      <p id={`workshop-${name}-hint`} className="mt-2 text-sm text-white/60">
+        Choose at least one. You can select more than one.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+        {Object.entries(options).map(([value, text]) => (
+          <label key={value} className="flex items-center gap-3 min-h-11 cursor-pointer text-[15px] text-white">
+            <input type="checkbox" name={name} value={value} className="size-5 accent-white" />
+            {text}
+          </label>
+        ))}
+      </div>
+    </fieldset>
   )
 }

@@ -53,6 +53,7 @@ export type Tariff = {
 
 export type Workshop = {
   id: string
+  banner_visible: boolean
   sales_open: boolean
   workshop_number: string | null
   title: string | null
@@ -83,6 +84,7 @@ export type Workshop = {
 function normalise(row: WorkshopRow): Workshop {
   return {
     id: row.id,
+    banner_visible: row.banner_visible,
     sales_open: row.sales_open,
     workshop_number: row.workshop_number,
     title: row.title,
