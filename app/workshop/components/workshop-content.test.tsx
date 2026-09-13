@@ -129,12 +129,15 @@ describe('<WorkshopContent />', () => {
     expect(text).toContain('the kind of')
   })
 
-  it('shows the waitlist, hides dates and keeps the hero CTA pointing to the form', () => {
+  it('shows the waitlist, hides dates, seats and prices on all screen sizes, and links to the form', () => {
     const view = render(<WorkshopContent workshop={{ ...SAMPLE, sales_open: false }} publicUrlFor={() => null} />)
     const text = view.container.textContent ?? ''
     expect(view.container.querySelector('#subscribe')).not.toBeNull()
     expect(view.container.querySelector('#apply')).toBeNull()
     expect(text).not.toContain(SAMPLE.dates)
+    expect(text).not.toContain(SAMPLE.seats)
+    expect(text).not.toContain(SAMPLE.price)
+    for (const tariff of SAMPLE.tariffs) expect(text).not.toContain(tariff.price)
     expect(text).not.toContain('Notify me')
     expect(text).not.toContain('Mitte, Berlin')
     const ctas = view.getAllByRole('link', { name: /Join the waitlist/ })

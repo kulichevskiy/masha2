@@ -102,7 +102,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
           )}
 
           {/* Mobile-only meta row above the buttons (matches MWorkshopC). */}
-          {(dates || workshop.seats || heroPrice) && (
+          {salesOpen && (dates || workshop.seats || heroPrice) && (
             <div className="md:hidden mt-7 pt-5 border-t border-white/20 flex flex-wrap gap-3 font-inter text-[11px] tracking-[0.18em] uppercase text-white/70">
               {dates && <span>{dates}</span>}
               {workshop.seats && (
