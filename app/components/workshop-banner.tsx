@@ -1,6 +1,6 @@
 // Home-page banner — Entry E from the design exploration.
-// Only advertises the workshop while sales are open — when sales_open is false
-// the page still lives at /workshop (in Subscribe mode), but the banner hides.
+// Visibility controls promotion; sales status controls the CTA and dates.
+// The page at /workshop is available even while the banner is hidden.
 
 import Link from 'next/link'
 import { getPublicWorkshop, workshopPhotoUrl } from '../workshop/data'
@@ -9,7 +9,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 
 export async function WorkshopBanner() {
   const workshop = await getPublicWorkshop()
-  if (!workshop || !workshop.sales_open || !workshop.title) return null
+  if (!workshop || !workshop.banner_visible || !workshop.title) return null
 
   const heroUrl = workshopPhotoUrl(SUPABASE_URL, workshop.hero_photo_path)
 
@@ -17,11 +17,12 @@ export async function WorkshopBanner() {
   // string at the middle-dot so the headline reads as one big mark.
   const titleMain = workshop.title.split(/\s*·\s*/)[0] ?? workshop.title
 
-  const meta = [workshop.dates, workshop.seats].filter(Boolean).join(' · ')
+  const meta = [workshop.sales_open ? workshop.dates : null, workshop.seats]
+    .filter(Boolean).join(' · ')
 
   return (
     <Link
-      href="/workshop"
+      href={workshop.sales_open ? '/workshop' : '/workshop#subscribe'}
       className="block relative w-full overflow-hidden bg-black text-white h-[280px] md:h-[320px] mt-6 md:mt-10 group"
       aria-label={`Workshop — ${workshop.title}`}
     >
@@ -49,7 +50,7 @@ export async function WorkshopBanner() {
           )}
         </div>
         <span className="self-start md:self-auto bg-white text-black px-6 md:px-12 py-2.5 md:py-3.5 font-bebas-neue text-base md:text-xl tracking-[0.12em] uppercase group-hover:bg-white/90 transition-colors">
-          Apply →
+          {workshop.sales_open ? 'Apply →' : 'Join the waitlist →'}
         </span>
       </div>
     </Link>

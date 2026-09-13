@@ -3,8 +3,8 @@
  * contract — title, all program day titles, all FAQ questions, and the apply
  * heading must reach the DOM. Protects against accidental section drops.
  */
-import { describe, it, expect, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { render, cleanup } from '@testing-library/react'
 import type { Workshop } from '../data'
 
 // The apply form is a client component that pulls in a server action and
@@ -26,8 +26,11 @@ import { WorkshopContent } from './workshop-content'
 import { TariffsBand } from './tariffs-band'
 import { IntakeProvider } from './intake-context'
 
+afterEach(cleanup)
+
 const SAMPLE: Workshop = {
   id: 'w1',
+  banner_visible: true,
   sales_open: true,
   workshop_number: 'Workshop №01',
   title: 'Portrait Workshop · Berlin',
@@ -143,22 +146,38 @@ describe('<WorkshopContent />', () => {
     )
     const text = container.textContent ?? ''
 
-    // Subscribe band is up: its heading/intro and the notify-me controls show;
+    // Waitlist is up: its heading/intro and the waitlist controls show;
     // the application form does not.
     expect(container.querySelector('#subscribe')).not.toBeNull()
     expect(container.querySelector('[data-testid="apply-form-stub"]')).toBeNull()
     expect(text).toContain("The next workshop isn't open yet")
-    expect(text).toContain('Notify me')
+    expect(text).toContain('Join the waitlist')
+    expect(text).not.toContain('Notify me')
+    expect(text).not.toContain('21 — 23 March 2026')
+    expect(text).toContain('Mitte, Berlin')
+    expect(text).toContain('450 €')
+    expect(text).toContain('600 €')
 
     // Hero CTA points at the subscribe band, not apply.
     const heroCta = container.querySelector('a[href="#subscribe"]')
     expect(heroCta).not.toBeNull()
-    expect(heroCta!.textContent).toContain('Notify me')
+    expect(heroCta!.textContent).toContain('Join the waitlist')
+    const ctas = container.querySelectorAll('a[href="#subscribe"]')
+    expect(ctas).toHaveLength(3)
+    for (const cta of ctas) expect(cta.textContent).toContain('Join the waitlist')
     expect(container.querySelector('a[href="#apply"]')).toBeNull()
 
     // Closing chapter is relabelled in the desktop strip.
-    expect(text).toContain('Subscribe')
+    expect(text).toContain('Waitlist')
     expect(text).not.toMatch(/—\s*Apply/)
+  })
+
+  it.each([true, false])('keeps the public page available with a hidden banner and sales_open=%s', (salesOpen) => {
+    const { container } = render(
+      <WorkshopContent workshop={{ ...SAMPLE, banner_visible: false, sales_open: salesOpen }} publicUrlFor={() => null} />
+    )
+    expect(container.textContent).toContain('Portrait Workshop')
+    expect(container.querySelector(salesOpen ? '#apply' : '#subscribe')).not.toBeNull()
   })
 
   it('shows both intake prices in the hero, derived from the tariffs', () => {

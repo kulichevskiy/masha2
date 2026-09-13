@@ -45,7 +45,7 @@ function buildChapters(
   if (hasFaq) base.push({ key: 'questions', label: 'Questions' })
   // The closing chapter is the same slot either way — it just swaps the Apply
   // form for the Subscribe band (and its label) when sales are closed.
-  base.push({ key: 'apply', label: salesOpen ? 'Apply' : 'Subscribe' })
+  base.push({ key: 'apply', label: salesOpen ? 'Apply' : 'Waitlist' })
   return base
 }
 
@@ -96,6 +96,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
   const hasFaq = workshop.faq.length > 0
   const hasTariffs = workshop.tariffs.length > 0
   const salesOpen = workshop.sales_open
+  const dates = salesOpen ? workshop.dates : null
   const chapters = buildChapters(hasTariffs, hasGallery, hasFaq, salesOpen)
 
   // Hero price: surface both intake prices ("450 € / 600 €") pulled from the
@@ -151,11 +152,11 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
                 <span>{workshop.location}</span>
               </>
             )}
-            {workshop.dates && (
+            {dates && (
               <>
                 <span className="hidden md:inline-block w-7 h-px bg-white/40" aria-hidden="true" />
                 <span className="md:hidden opacity-50">·</span>
-                <span>{workshop.dates}</span>
+                <span>{dates}</span>
               </>
             )}
           </div>
@@ -175,18 +176,18 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
           )}
 
           {/* Mobile-only meta row above the buttons (matches MWorkshopC). */}
-          {(workshop.dates || workshop.seats || heroPrice) && (
+          {(dates || workshop.seats || heroPrice) && (
             <div className="md:hidden mt-7 pt-5 border-t border-white/20 flex flex-wrap gap-3 font-inter text-[11px] tracking-[0.18em] uppercase text-white/70">
-              {workshop.dates && <span>{workshop.dates}</span>}
+              {dates && <span>{dates}</span>}
               {workshop.seats && (
                 <>
-                  <span className="opacity-50">·</span>
+                  {dates && <span className="opacity-50">·</span>}
                   <span>{workshop.seats}</span>
                 </>
               )}
               {heroPrice && (
                 <>
-                  <span className="opacity-50">·</span>
+                  {(dates || workshop.seats) && <span className="opacity-50">·</span>}
                   <span>{heroPrice}</span>
                 </>
               )}
@@ -198,7 +199,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
               href={salesOpen ? '#apply' : '#subscribe'}
               className="bg-white text-black px-0 md:px-14 py-3.5 md:py-4 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase text-center flex-[1.4] md:flex-none md:inline-block hover:bg-white/90 transition-colors"
             >
-              {salesOpen ? 'Join the workshop →' : 'Notify me →'}
+              {salesOpen ? 'Join the workshop →' : 'Join the waitlist →'}
             </a>
             {/* Secondary price/seats pill only when sales are open — with the
                 Apply band gone there's nothing to "save" toward. */}

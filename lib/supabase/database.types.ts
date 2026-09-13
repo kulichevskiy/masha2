@@ -264,6 +264,7 @@ export type Database = {
       }
       workshop: {
         Row: {
+          banner_visible: boolean
           apply_heading: string | null
           apply_intro: string | null
           closed_heading: string | null
@@ -291,6 +292,7 @@ export type Database = {
           workshop_number: string | null
         }
         Insert: {
+          banner_visible?: boolean
           apply_heading?: string | null
           apply_intro?: string | null
           closed_heading?: string | null
@@ -318,6 +320,7 @@ export type Database = {
           workshop_number?: string | null
         }
         Update: {
+          banner_visible?: boolean
           apply_heading?: string | null
           apply_intro?: string | null
           closed_heading?: string | null
@@ -384,6 +387,8 @@ export type Database = {
       }
       workshop_subscribers: {
         Row: {
+          cities: string[]
+          seasons: string[]
           created_at: string
           email: string
           id: string
@@ -391,6 +396,8 @@ export type Database = {
           user_agent: string | null
         }
         Insert: {
+          cities?: string[]
+          seasons?: string[]
           created_at?: string
           email: string
           id?: string
@@ -398,6 +405,8 @@ export type Database = {
           user_agent?: string | null
         }
         Update: {
+          cities?: string[]
+          seasons?: string[]
           created_at?: string
           email?: string
           id?: string

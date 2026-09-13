@@ -9,6 +9,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRate } from '@/lib/rate-limit'
 import type { TablesUpdate } from '@/lib/supabase/database.types'
 import type { Tariff } from './data'
+import { parseWaitlistPreferences, WAITLIST_SEASONS, WAITLIST_CITIES } from './waitlist'
 
 export type WorkshopSubmitResult =
   | { ok: true }
@@ -208,6 +209,9 @@ export async function submitWorkshopSubscription(
     return { ok: false, error: 'Too many requests — try again in a few minutes.' }
   }
 
+  const preferences = parseWaitlistPreferences(formData)
+  if (!preferences.ok) return preferences
+
   const h = await headers()
   const userAgent = h.get('user-agent')?.slice(0, 500) ?? null
   const ipHash = createHash('sha256')
@@ -218,6 +222,8 @@ export async function submitWorkshopSubscription(
 
   const { error: insertErr } = await supabase.from('workshop_subscribers').insert({
     email,
+    seasons: preferences.seasons,
+    cities: preferences.cities,
     ip_hash: ipHash,
     user_agent: userAgent,
   })
@@ -263,6 +269,8 @@ export async function submitWorkshopSubscription(
     'New workshop subscriber',
     '',
     `Email: ${email}`,
+    `Seasons: ${preferences.seasons.map((value) => WAITLIST_SEASONS[value]).join(', ')}`,
+    `Cities: ${preferences.cities.map((value) => WAITLIST_CITIES[value]).join(', ')}`,
     '',
     `Received: ${new Date().toISOString()}`,
   ].join('\n')
@@ -316,6 +324,8 @@ export async function updateWorkshop(
   }
 
   revalidatePath('/')
+  revalidatePath('/kids')
+  revalidatePath('/video')
   revalidatePath('/workshop')
   revalidatePath('/admin')
 }

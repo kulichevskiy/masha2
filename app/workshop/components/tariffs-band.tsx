@@ -25,7 +25,7 @@ export function TariffsBand({
   tariffs: Tariff[]
   intro: string | null
   // When false the closing band is Subscribe, not Apply, so the card CTAs point
-  // there and read "Notify me" instead of "Join the … workshop".
+  // there and read "Join the waitlist" instead of "Join the … workshop".
   salesOpen?: boolean
 }) {
   return (
@@ -146,7 +146,7 @@ function TariffCard({
 
       <a
         href={salesOpen ? '#apply' : '#subscribe'}
-        onClick={() => setIntake(tariff.key)}
+        onClick={() => { if (salesOpen) setIntake(tariff.key) }}
         className={
           'mt-auto inline-block text-center px-8 py-3.5 font-bebas-neue text-lg md:text-[22px] tracking-[0.12em] uppercase transition-colors border border-foreground ' +
           (featured
@@ -154,7 +154,7 @@ function TariffCard({
             : 'bg-transparent text-foreground hover:bg-black/5')
         }
       >
-        {salesOpen ? `Join the ${tariff.days} workshop` : 'Notify me'}
+        {salesOpen ? `Join the ${tariff.days} workshop` : 'Join the waitlist'}
       </a>
     </div>
   )

@@ -11,6 +11,7 @@ import { RichText } from '@/components/rich-text'
 import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
 import { newId } from '@/lib/id'
+import { WAITLIST_SEASONS_RU, WAITLIST_CITIES_RU } from '@/app/workshop/waitlist'
 import {
   updateWorkshop,
   deleteWorkshopApplication,
@@ -42,6 +43,8 @@ type Application = {
 type Subscriber = {
   id: string
   email: string
+  seasons: string[]
+  cities: string[]
   created_at: string
 }
 
@@ -104,6 +107,7 @@ export function WorkshopTab({ workshop, applications, subscribers, supabaseUrl }
     startTransition(async () => {
       try {
         await updateWorkshop({
+          banner_visible: state.banner_visible,
           sales_open: state.sales_open,
           workshop_number: state.workshop_number,
           title: state.title,
@@ -134,14 +138,16 @@ export function WorkshopTab({ workshop, applications, subscribers, supabaseUrl }
     })
   }
 
-  const toggleSalesOpen = (checked: boolean) => {
-    const next = { ...state, sales_open: checked }
-    setState(next)
+  const toggle = (field: 'sales_open' | 'banner_visible', checked: boolean) => {
+    const previous = state[field]
+    setState((current) => ({ ...current, [field]: checked }))
+    setError(null)
     startTransition(async () => {
       try {
-        await updateWorkshop({ sales_open: checked })
+        await updateWorkshop({ [field]: checked })
         setSavedAt(new Date())
       } catch (err) {
+        setState((current) => ({ ...current, [field]: previous }))
         setError(err instanceof Error ? err.message : 'Failed to save')
       }
     })
@@ -151,16 +157,29 @@ export function WorkshopTab({ workshop, applications, subscribers, supabaseUrl }
     <div className="flex flex-col gap-10">
       {/* Visibility + save bar */}
       <div className="sticky top-0 z-10 bg-background border-b border-border py-3 -mx-4 px-4 sm:-mx-0 sm:px-0 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Switch
-            id="workshop-sales-open"
-            checked={state.sales_open}
-            onCheckedChange={toggleSalesOpen}
-            disabled={pending}
-          />
-          <Label htmlFor="workshop-sales-open" className="cursor-pointer">
-            {state.sales_open ? 'Продажи открыты' : 'Продажи закрыты'}
-          </Label>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="flex items-center gap-3">
+            <Switch
+              id="workshop-banner-visible"
+              checked={state.banner_visible}
+              onCheckedChange={(checked) => toggle('banner_visible', checked)}
+              disabled={pending}
+            />
+            <Label htmlFor="workshop-banner-visible" className="cursor-pointer">
+              {state.banner_visible ? 'Баннер виден' : 'Баннер спрятан'}
+            </Label>
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch
+              id="workshop-sales-open"
+              checked={state.sales_open}
+              onCheckedChange={(checked) => toggle('sales_open', checked)}
+              disabled={pending}
+            />
+            <Label htmlFor="workshop-sales-open" className="cursor-pointer">
+              {state.sales_open ? 'Продажи открыты' : 'Продажи закрыты'}
+            </Label>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {error && <span className="text-sm text-destructive">{error}</span>}
@@ -905,6 +924,8 @@ function SubscribersTable({ subscribers }: { subscribers: Subscriber[] }) {
           <tr className="border-b text-left text-muted-foreground">
             <th className="py-2 pr-3 font-medium">Дата</th>
             <th className="py-2 pr-3 font-medium">Email</th>
+            <th className="py-2 pr-3 font-medium">Сезоны</th>
+            <th className="py-2 pr-3 font-medium">Города</th>
             <th className="py-2 pr-3 font-medium" />
           </tr>
         </thead>
@@ -921,6 +942,12 @@ function SubscribersTable({ subscribers }: { subscribers: Subscriber[] }) {
                 >
                   {s.email}
                 </a>
+              </td>
+              <td className="py-2 pr-3">
+                {s.seasons.map((value) => WAITLIST_SEASONS_RU[value]).join(', ') || 'Не указано'}
+              </td>
+              <td className="py-2 pr-3">
+                {s.cities.map((value) => WAITLIST_CITIES_RU[value]).join(', ') || 'Не указано'}
               </td>
               <td className="py-2 pr-3">
                 <Button

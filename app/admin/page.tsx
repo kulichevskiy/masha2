@@ -141,7 +141,7 @@ async function WorkshopTabSection() {
 
   const { data: subscribers, error: subscribersError } = await supabase
     .from('workshop_subscribers')
-    .select('id, email, created_at')
+    .select('id, email, seasons, cities, created_at')
     .order('created_at', { ascending: false })
     .limit(200)
 

@@ -8,9 +8,19 @@
  * module load and needs env — so the component is imported dynamically after
  * stubbing env, the same trick gift-tab.test.tsx uses.
  */
-import { describe, it, expect, beforeAll } from 'vitest'
-import { render } from '@testing-library/react'
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest'
+import { render, fireEvent, cleanup, waitFor } from '@testing-library/react'
 import type { Workshop } from '@/app/workshop/data'
+import { updateWorkshop } from '@/app/workshop/actions'
+
+vi.mock('@/app/workshop/actions', () => ({
+  updateWorkshop: vi.fn(async () => {}),
+  deleteWorkshopApplication: vi.fn(),
+  deleteWorkshopSubscriber: vi.fn(),
+}))
+
+afterEach(cleanup)
+beforeEach(() => vi.clearAllMocks())
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let WorkshopTab: (props: any) => React.ReactNode
@@ -23,6 +33,7 @@ beforeAll(async () => {
 
 const WORKSHOP: Workshop = {
   id: 'w1',
+  banner_visible: true,
   sales_open: false,
   workshop_number: null,
   title: null,
@@ -55,8 +66,8 @@ describe('<WorkshopTab /> subscribers section', () => {
       <WorkshopTab
         {...COMMON}
         subscribers={[
-          { id: 's1', email: 'first@example.com', created_at: '2026-07-01T10:00:00Z' },
-          { id: 's2', email: 'second@example.com', created_at: '2026-07-02T10:00:00Z' },
+          { id: 's1', email: 'first@example.com', seasons: ['winter', 'summer'], cities: ['berlin', 'paris'], created_at: '2026-07-01T10:00:00Z' },
+          { id: 's2', email: 'second@example.com', seasons: [], cities: [], created_at: '2026-07-02T10:00:00Z' },
         ]}
       />
     )
@@ -67,6 +78,9 @@ describe('<WorkshopTab /> subscribers section', () => {
     const text = container.textContent ?? ''
     expect(text).toContain('first@example.com')
     expect(text).toContain('second@example.com')
+    expect(rows[0].textContent).toContain('Зима, Лето')
+    expect(rows[0].textContent).toContain('Берлин, Париж')
+    expect(rows[1].textContent?.match(/Не указано/g)).toHaveLength(2)
 
     // No empty state while there are subscribers.
     expect(container.querySelector('[data-testid="subscribers-empty"]')).toBeNull()
@@ -78,5 +92,41 @@ describe('<WorkshopTab /> subscribers section', () => {
     expect(container.querySelector('[data-testid="subscriber-row"]')).toBeNull()
     const empty = container.querySelector('[data-testid="subscribers-empty"]')
     expect(empty).not.toBeNull()
+  })
+
+  it('saves banner visibility and sales independently', async () => {
+    const view = render(<WorkshopTab {...COMMON} subscribers={[]} />)
+    const banner = view.getByRole('switch', { name: 'Баннер виден' })
+    const sales = view.getByRole('switch', { name: 'Продажи закрыты' })
+
+    fireEvent.click(banner)
+    await waitFor(() => expect(updateWorkshop).toHaveBeenLastCalledWith({ banner_visible: false }))
+    await waitFor(() => expect(sales.hasAttribute('disabled')).toBe(false))
+    expect(sales.getAttribute('aria-checked')).toBe('false')
+
+    fireEvent.click(sales)
+    await waitFor(() => expect(updateWorkshop).toHaveBeenLastCalledWith({ sales_open: true }))
+    await waitFor(() => expect(banner.hasAttribute('disabled')).toBe(false))
+    expect(banner.getAttribute('aria-checked')).toBe('false')
+
+    fireEvent.click(view.getByRole('button', { name: 'Сохранить' }))
+    await waitFor(() => expect(updateWorkshop).toHaveBeenLastCalledWith(expect.objectContaining({
+      banner_visible: false, sales_open: true,
+    })))
+  })
+
+  it('restores the previous switch value after a failed save', async () => {
+    vi.mocked(updateWorkshop).mockRejectedValueOnce(new Error('Не удалось сохранить'))
+    const view = render(<WorkshopTab {...COMMON} subscribers={[]} />)
+    const banner = view.getByRole('switch', { name: 'Баннер виден' })
+    fireEvent.click(banner)
+    await waitFor(() => expect(view.getByText('Не удалось сохранить')).toBeTruthy())
+    await waitFor(() => expect(banner.hasAttribute('disabled')).toBe(false))
+    expect(banner.getAttribute('aria-checked')).toBe('true')
+
+    fireEvent.click(banner)
+    await waitFor(() => expect(banner.hasAttribute('disabled')).toBe(false))
+    expect(banner.getAttribute('aria-checked')).toBe('false')
+    expect(view.queryByText('Не удалось сохранить')).toBeNull()
   })
 })
