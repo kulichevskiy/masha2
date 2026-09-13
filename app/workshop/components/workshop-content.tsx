@@ -4,7 +4,6 @@
 // pass a synthetic workshop in without standing up a client.
 
 import { RichText } from '@/components/rich-text'
-import { TariffsBand } from './tariffs-band'
 import { ApplyBand } from './apply-band'
 import { SubscribeBand } from './subscribe-band'
 import { IntakeProvider } from './intake-context'
@@ -13,40 +12,6 @@ import type { Workshop } from '../data'
 type Props = {
   workshop: Workshop
   publicUrlFor: (storagePath: string | null | undefined) => string | null
-}
-
-// Chapter sequence used both for the desktop strip and the inline "n — label"
-// markers. Gallery is conditional, so we derive numbers from this list rather
-// than hardcoding them — otherwise hiding the gallery would leave a gap
-// (Questions stuck at 07 with nothing at 06) and the desktop strip would
-// diverge from the page body.
-type ChapterKey =
-  | 'idea'
-  | 'program'
-  | 'day'
-  | 'tariffs'
-  | 'gallery'
-  | 'questions'
-  | 'apply'
-
-function buildChapters(
-  hasTariffs: boolean,
-  hasGallery: boolean,
-  hasFaq: boolean,
-  salesOpen: boolean
-): { key: ChapterKey; label: string }[] {
-  const base: { key: ChapterKey; label: string }[] = [
-    { key: 'idea', label: 'The idea' },
-    { key: 'program', label: 'Program' },
-    { key: 'day', label: 'The three days' },
-  ]
-  if (hasTariffs) base.push({ key: 'tariffs', label: 'Pricing' })
-  if (hasGallery) base.push({ key: 'gallery', label: 'From the practice' })
-  if (hasFaq) base.push({ key: 'questions', label: 'Questions' })
-  // The closing chapter is the same slot either way — it just swaps the Apply
-  // form for the Subscribe band (and its label) when sales are closed.
-  base.push({ key: 'apply', label: salesOpen ? 'Apply' : 'Waitlist' })
-  return base
 }
 
 function htmlToText(html: string): string {
@@ -65,16 +30,6 @@ function htmlToText(html: string): string {
     .trim()
 }
 
-function ChapterLabel({ n, label }: { n: number; label: string }) {
-  return (
-    <div className="flex items-center gap-2.5 font-inter text-[10.5px] md:text-[11px] tracking-[0.28em] md:tracking-[0.3em] uppercase text-gray-500 mb-3 md:mb-3">
-      <span className="opacity-60">{String(n).padStart(2, '0')}</span>
-      <span className="block w-4 md:w-7 h-px bg-current opacity-40" aria-hidden="true" />
-      <span>{label}</span>
-    </div>
-  )
-}
-
 export function WorkshopContent({ workshop, publicUrlFor }: Props) {
   const heroUrl = publicUrlFor(workshop.hero_photo_path)
   const title = workshop.title ?? ''
@@ -85,19 +40,13 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
     ? title.split(' / ')
     : title.split(/\s*·\s*/)
 
-  // Filter empty gallery entries before rendering — admin can persist a row
-  // with no photo_path yet (default for new rows / cleared rows). Without this
-  // filter the public page would show blank gray placeholder tiles, and the
-  // Apply chapter number would jump even when no gallery shows.
+  // Empty gallery entries must not create blank tiles.
   const galleryItems = workshop.gallery.filter(
     (g) => g.photo_path && g.photo_path.trim() !== ''
   )
   const hasGallery = galleryItems.length > 0
-  const hasFaq = workshop.faq.length > 0
-  const hasTariffs = workshop.tariffs.length > 0
   const salesOpen = workshop.sales_open
   const dates = salesOpen ? workshop.dates : null
-  const chapters = buildChapters(hasTariffs, hasGallery, hasFaq, salesOpen)
 
   // Hero price: surface both intake prices ("450 € / 600 €") pulled from the
   // short and full/featured tariff rows. Falls back to the single legacy
@@ -110,11 +59,6 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
     shortTariff && fullTariff
       ? `${shortTariff.price} / ${fullTariff.price}`
       : workshop.price
-  const chapterN = (key: ChapterKey): number => {
-    const i = chapters.findIndex((c) => c.key === key)
-    return i + 1 // 1-based; missing keys fall through to 0 → never used
-  }
-
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -143,24 +87,6 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
           />
         )}
         <div className="relative mx-auto max-w-7xl px-5 md:px-10 pt-8 md:pt-28 pb-10 md:pb-24">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-7 md:mb-10 font-inter text-[10px] md:text-xs tracking-[0.3em] uppercase text-white/70">
-            {workshop.workshop_number && <span>{workshop.workshop_number}</span>}
-            {workshop.location && (
-              <>
-                <span className="hidden md:inline-block w-7 h-px bg-white/40" aria-hidden="true" />
-                <span className="md:hidden opacity-50">·</span>
-                <span>{workshop.location}</span>
-              </>
-            )}
-            {dates && (
-              <>
-                <span className="hidden md:inline-block w-7 h-px bg-white/40" aria-hidden="true" />
-                <span className="md:hidden opacity-50">·</span>
-                <span>{dates}</span>
-              </>
-            )}
-          </div>
-
           <h1 className="font-bebas-neue uppercase font-normal text-white m-0 text-[88px] md:text-[140px] lg:text-[200px] leading-[0.88] tracking-[-0.015em] md:tracking-[-0.02em]">
             {titleLines.map((line, i) => (
               <span key={i} className="block">
@@ -215,26 +141,10 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         </div>
       </section>
 
-      {/* ───────── Chapter strip (desktop only) ───────── */}
-      <section className="hidden md:block border-b border-gray-200">
-        <div className="mx-auto max-w-7xl px-10 flex justify-between">
-          {chapters.map((c, i) => (
-            <div
-              key={c.key}
-              className="py-5 font-inter text-xs tracking-[0.2em] uppercase text-gray-500 whitespace-nowrap"
-            >
-              <span className="mr-2 opacity-50">{String(i + 1).padStart(2, '0')}</span>
-              {c.label}
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ───────── 01 — The idea ───────── */}
       <section className="px-5 md:px-10 pt-14 md:pt-28">
         <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8 md:gap-16">
           <div>
-            <ChapterLabel n={chapterN('idea')} label="The idea" />
             <h2 className="font-bebas-neue text-3xl md:text-[56px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.015em] whitespace-pre-line">
               {workshop.the_idea_heading ?? ''}
             </h2>
@@ -247,6 +157,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
             )}
             {workshop.intro && (
               <RichText
+                listMarker="disc"
                 html={workshop.intro}
                 className="text-[15.5px] md:text-[17px] leading-[1.7] md:leading-[1.75]"
               />
@@ -260,7 +171,6 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8 md:gap-16 mb-8 md:mb-12">
             <div>
-              <ChapterLabel n={chapterN('program')} label="Program" />
               <h2 className="font-bebas-neue text-3xl md:text-[56px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.015em]">
                 three days
                 <br />
@@ -277,18 +187,10 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
                 <div
                   key={`${d.day}-${i}`}
                   className={
-                    'grid grid-cols-1 md:grid-cols-[240px_320px_1fr] gap-6 md:gap-16 py-7 md:py-10 items-start ' +
+                    'grid grid-cols-1 md:grid-cols-[320px_1fr] gap-6 md:gap-16 py-7 md:py-10 items-start ' +
                     (isLast ? 'border-b border-gray-200' : '')
                   }
                 >
-                  <div className="flex md:block items-baseline gap-4 md:gap-0">
-                    <div className="font-bebas-neue text-[64px] md:text-[96px] leading-[0.85] text-foreground tracking-[-0.02em]">
-                      {String(i + 1).padStart(2, '0')}
-                    </div>
-                    <div className="font-inter text-[10.5px] md:text-xs tracking-[0.25em] uppercase text-gray-500 md:mt-3">
-                      {d.day}
-                    </div>
-                  </div>
                   <div className="md:max-w-none">
                     {photo ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -311,6 +213,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
                     </h3>
                     {d.body && (
                       <RichText
+                        listMarker="disc"
                         html={d.body}
                         className="text-[15px] md:text-[17px] leading-[1.7]"
                       />
@@ -323,27 +226,11 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         </div>
       </section>
 
-      {/* ───────── 03 — The three days (fixed 3-column breakdown) ───────── */}
-      {/* Replaces the old schedule · included · bring row. Each column is one
-          day: a "DAY N" eyebrow, the session name as the big Bebas heading, an
-          optional note line, and a bullet list. The single chapter number lives
-          in the desktop strip; columns carry only their day marker.
-          Bottom padding only when the beige Tariffs band follows, so the white
-          content gets a gutter before the colour change rather than butting
-          flush against the beige edge. */}
-      <section
-        className={
-          'px-5 md:px-10 pt-14 md:pt-28' +
-          (hasTariffs ? ' pb-14 md:pb-24' : '')
-        }
-      >
+      {/* Session breakdown */}
+      <section className="px-5 md:px-10 pt-14 md:pt-28">
         <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
           {workshop.days.map((d, i) => (
             <div key={`${d.day}-${i}`}>
-              <div className="flex items-center gap-2.5 font-inter text-[10.5px] md:text-[11px] tracking-[0.28em] md:tracking-[0.3em] uppercase text-gray-500 mb-3">
-                <span>{d.day}</span>
-                <span className="block flex-1 h-px bg-current opacity-40" aria-hidden="true" />
-              </div>
               <h3 className="font-bebas-neue text-3xl md:text-[32px] leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em] whitespace-pre-line">
                 {d.title}
               </h3>
@@ -362,21 +249,10 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         </div>
       </section>
 
-      {/* ───────── Tariffs / Intakes band ───────── */}
-      {hasTariffs && (
-        <TariffsBand
-          n={chapterN('tariffs')}
-          tariffs={workshop.tariffs}
-          intro={workshop.tariffs_intro}
-          salesOpen={salesOpen}
-        />
-      )}
-
       {/* ───────── Gallery ───────── */}
       {hasGallery && (
         <section className="pt-14 md:pt-28">
           <div className="mx-auto max-w-7xl px-5 md:px-10 mb-5 md:mb-8">
-            <ChapterLabel n={chapterN('gallery')} label="From the practice" />
             <h3 className="font-bebas-neue text-3xl md:text-5xl leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
               the kind of
               <br />
@@ -412,7 +288,6 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
         <section className="px-5 md:px-10 pt-14 md:pt-28">
           <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8 md:gap-16">
             <div>
-              <ChapterLabel n={chapterN('questions')} label="Questions" />
               <h3 className="font-bebas-neue text-3xl md:text-5xl leading-none lowercase text-foreground m-0 font-normal tracking-[-0.005em]">
                 before
                 <br />
@@ -439,7 +314,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
                       </span>
                     </summary>
                     <div className="pb-5 pr-2 md:pr-8 text-[14px] md:text-[15px] text-gray-700">
-                      <RichText html={f.answer} />
+                      <RichText html={f.answer} listMarker="disc" />
                     </div>
                   </details>
                 ))}
@@ -461,9 +336,9 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
       {/* ───────── Closing band — Apply when sales are open, Subscribe when
           closed. Both are the black plate that closes the page. ───────── */}
       {salesOpen ? (
-        <ApplyBand n={chapterN('apply')} workshop={workshop} />
+        <ApplyBand workshop={workshop} />
       ) : (
-        <SubscribeBand n={chapterN('apply')} workshop={workshop} />
+        <SubscribeBand workshop={workshop} />
       )}
 
     </div>

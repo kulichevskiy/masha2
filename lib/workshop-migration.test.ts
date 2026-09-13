@@ -42,6 +42,17 @@ describe('workshop banner and waitlist migration', () => {
         .rejects.toThrow(/workshop_subscribers_seasons_valid/)
       await expect(db.exec("update public.workshop_subscribers set cities = array['london']"))
         .rejects.toThrow(/workshop_subscribers_cities_valid/)
+
+      await db.exec(readFileSync(join(process.cwd(),
+        'supabase/migrations/20260913171825_workshop_spring_waitlist.sql'), 'utf8'))
+      await db.exec(`insert into public.workshop_subscribers (email, seasons, cities)
+        values ('spring@example.com', array['spring', 'summer'], array['paris'])`)
+      expect((await db.query("select seasons from public.workshop_subscribers where email = 'spring@example.com'")).rows)
+        .toEqual([{ seasons: ['spring', 'summer'] }])
+      expect((await db.query("select seasons from public.workshop_subscribers where email = 'new@example.com'")).rows)
+        .toEqual([{ seasons: ['winter', 'summer'] }])
+      await expect(db.exec("update public.workshop_subscribers set seasons = array['autumn']"))
+        .rejects.toThrow(/workshop_subscribers_seasons_valid/)
     } finally {
       await db.close()
     }

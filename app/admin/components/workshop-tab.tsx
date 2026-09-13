@@ -246,7 +246,7 @@ export function WorkshopTab({ workshop, applications, subscribers, supabaseUrl }
       </Section>
 
       {/* Idea */}
-      <Section title="01 — The idea">
+      <Section title="The idea">
         <Field
           label="Подзаголовок раздела"
           value={state.the_idea_heading ?? ''}
@@ -268,7 +268,7 @@ export function WorkshopTab({ workshop, applications, subscribers, supabaseUrl }
       </Section>
 
       {/* Program */}
-      <Section title="02 — Программа">
+      <Section title="Программа">
         <ListEditor
           items={state.program}
           onChange={(program) => save({ program })}
@@ -318,7 +318,7 @@ export function WorkshopTab({ workshop, applications, subscribers, supabaseUrl }
 
       {/* Days — fixed three-column day breakdown (03 on the page). Mirrors the
           fixed Tariffs editor: map over the three day slots, no add/remove. */}
-      <Section title="03 — Дни">
+      <Section title="Дни">
         {state.days.map((d, i) => (
           <DayEditor
             key={i}
@@ -360,7 +360,7 @@ export function WorkshopTab({ workshop, applications, subscribers, supabaseUrl }
       </Section>
 
       {/* Gallery */}
-      <Section title="06 — Галерея">
+      <Section title="Галерея">
         <ListEditor
           items={state.gallery}
           onChange={(gallery) => save({ gallery })}
@@ -378,7 +378,7 @@ export function WorkshopTab({ workshop, applications, subscribers, supabaseUrl }
       </Section>
 
       {/* FAQ */}
-      <Section title="07 — Вопросы">
+      <Section title="Вопросы">
         <ListEditor
           items={state.faq}
           onChange={(faq) => save({ faq })}
@@ -542,7 +542,7 @@ function TariffEditor({
         <StringListEditor
           items={tariff.days_list}
           onChange={(days_list) => onPatch({ days_list })}
-          placeholder="Day 01 — Seeing"
+          placeholder="Seeing"
           addLabel="Добавить день"
         />
       </div>
@@ -883,10 +883,10 @@ function ApplicationsTable({ applications }: { applications: Application[] }) {
                   {a.email}
                 </a>
               </td>
-              <td className="py-2 pr-3 hidden md:table-cell whitespace-nowrap">{a.intake ?? '—'}</td>
-              <td className="py-2 pr-3 hidden md:table-cell">{a.instagram ?? '—'}</td>
+              <td className="py-2 pr-3 hidden md:table-cell whitespace-nowrap">{a.intake ?? 'Не указано'}</td>
+              <td className="py-2 pr-3 hidden md:table-cell">{a.instagram ?? 'Не указано'}</td>
               <td className="py-2 pr-3 hidden lg:table-cell max-w-md whitespace-pre-wrap">
-                {a.message ?? '—'}
+                {a.message ?? 'Не указано'}
               </td>
               <td className="py-2 pr-3">
                 <Button

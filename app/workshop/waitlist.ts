@@ -1,5 +1,5 @@
 export const WAITLIST_SEASONS: Record<string, string> = {
-  winter: 'Winter',
+  spring: 'Spring',
   summer: 'Summer',
 }
 
@@ -10,6 +10,7 @@ export const WAITLIST_CITIES: Record<string, string> = {
 }
 
 export const WAITLIST_SEASONS_RU: Record<string, string> = {
+  spring: 'Весна',
   winter: 'Зима',
   summer: 'Лето',
 }

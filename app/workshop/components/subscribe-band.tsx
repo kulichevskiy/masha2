@@ -15,8 +15,7 @@ import { submitWorkshopSubscription } from '../actions'
 import type { Workshop } from '../data'
 import { parseWaitlistPreferences, WAITLIST_SEASONS, WAITLIST_CITIES } from '../waitlist'
 
-export function SubscribeBand({ n, workshop }: {
-  n: number
+export function SubscribeBand({ workshop }: {
   workshop: Pick<Workshop, 'closed_heading' | 'closed_intro'>
 }) {
   const [email, setEmail] = useState('')
@@ -57,9 +56,6 @@ export function SubscribeBand({ n, workshop }: {
     <section id="subscribe" className="px-0 md:px-10 pt-16 md:pt-28 scroll-mt-12">
       <div className="mx-auto max-w-7xl">
         <div className="bg-black text-white px-6 md:px-16 py-12 md:py-20 relative overflow-hidden">
-          <div className="font-inter text-[10.5px] md:text-[11px] tracking-[0.3em] uppercase text-white/60 mb-3">
-            {String(n).padStart(2, '0')} — Waitlist
-          </div>
           {workshop.closed_heading && (
             <h3 className="font-bebas-neue text-[52px] md:text-[80px] leading-[0.95] uppercase text-white m-0 mb-5 md:mb-6 font-normal tracking-[-0.015em] md:tracking-[-0.01em]">
               {workshop.closed_heading}
@@ -67,6 +63,7 @@ export function SubscribeBand({ n, workshop }: {
           )}
           {workshop.closed_intro && (
             <RichText
+              listMarker="disc"
               html={workshop.closed_intro}
               className="text-[14.5px] md:text-[17px] leading-[1.7] max-w-[560px] text-white/85 mb-8 md:mb-12 [&_p]:text-white/85"
             />
@@ -74,9 +71,6 @@ export function SubscribeBand({ n, workshop }: {
 
           {status.kind === 'success' ? (
             <div role="status" aria-live="polite" className="font-inter text-white max-w-[560px]">
-              <p className="text-[11px] tracking-[0.25em] uppercase text-white/55 mb-3">
-                You&rsquo;re on the list
-              </p>
               <h4 className="font-bebas-neue text-3xl uppercase tracking-wide leading-none mb-4">
                 Thank you
               </h4>

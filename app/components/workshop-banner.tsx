@@ -22,9 +22,9 @@ export async function WorkshopBanner() {
 
   return (
     <Link
-      href={workshop.sales_open ? '/workshop' : '/workshop#subscribe'}
+      href="/workshop"
       className="block relative w-full overflow-hidden bg-black text-white h-[280px] md:h-[320px] mt-6 md:mt-10 group"
-      aria-label={`Workshop — ${workshop.title}`}
+      aria-label={`Workshop: ${workshop.title}`}
     >
       {heroUrl && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -37,9 +37,6 @@ export async function WorkshopBanner() {
       )}
       <div className="relative h-full mx-auto max-w-7xl px-5 md:px-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6 py-6 md:py-0">
         <div>
-          <div className="font-inter text-[10.5px] md:text-xs tracking-[0.25em] uppercase opacity-75 mb-3 md:mb-3.5">
-            New · Workshop in Berlin
-          </div>
           <div className="font-bebas-neue text-[44px] md:text-[84px] leading-[0.95] tracking-[-0.01em] uppercase">
             {titleMain}
           </div>

@@ -19,12 +19,12 @@ describe('workshop banner', () => {
   it.each([true, false])('shows the correct CTA and dates with sales_open=%s when visible', async (salesOpen) => {
     readWorkshop.mockResolvedValue({
       title: 'Portrait Workshop', sales_open: salesOpen, banner_visible: true,
-      dates: '21 — 23 March 2026', seats: '6 seats',
+      dates: '21 - 23 March 2026', seats: '6 seats',
     })
     const view = render(await WorkshopBanner())
     const link = view.getByRole('link')
-    expect(link.getAttribute('href')).toBe(salesOpen ? '/workshop' : '/workshop#subscribe')
+    expect(link.getAttribute('href')).toBe('/workshop')
     expect(link.textContent).toContain(salesOpen ? 'Apply →' : 'Join the waitlist →')
-    expect(link.textContent?.includes('21 — 23 March 2026')).toBe(salesOpen)
+    expect(link.textContent?.includes('21 - 23 March 2026')).toBe(salesOpen)
   })
 })

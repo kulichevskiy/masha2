@@ -67,7 +67,7 @@ export async function submitWorkshopApplication(
 
   const ip = await getClientIp()
   if (!checkRate(`workshop:${ip}`)) {
-    return { ok: false, error: 'Too many requests — try again in a few minutes.' }
+    return { ok: false, error: 'Too many requests. Try again in a few minutes.' }
   }
 
   const h = await headers()
@@ -106,7 +106,7 @@ export async function submitWorkshopApplication(
   if (intakeKey === 'short' || intakeKey === 'full') {
     const tariffs = (workshopRow.tariffs as Tariff[] | null) ?? []
     const tariff = tariffs.find((t) => t.key === intakeKey)
-    if (tariff) intake = `${tariff.name} — ${tariff.price}`
+    if (tariff) intake = `${tariff.name}: ${tariff.price}`
   }
 
   const { data: recipientRow, error: recipientErr } = await supabase
@@ -206,7 +206,7 @@ export async function submitWorkshopSubscription(
 
   const ip = await getClientIp()
   if (!checkRate(`workshop-subscribe:${ip}`)) {
-    return { ok: false, error: 'Too many requests — try again in a few minutes.' }
+    return { ok: false, error: 'Too many requests. Try again in a few minutes.' }
   }
 
   const preferences = parseWaitlistPreferences(formData)

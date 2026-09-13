@@ -1,24 +1,17 @@
 'use client'
 
-// The Apply band — the black plate that closes the workshop page and turns it
-// into a buy moment. Client component because it carries the dark "choose your
-// intake" picker, which is kept in sync with the tariff cards through the
-// shared IntakeProvider. Layout (chapter label + heading/intro + picker + form
-// + meta grid) mirrors the former inline section in workshop-content.tsx.
+// Application section with an intake picker and the matching application form.
 
 import { RichText } from '@/components/rich-text'
 import { WorkshopApplyForm } from './workshop-apply-form'
 import { useIntake } from './intake-context'
 import type { Workshop } from '../data'
 
-export function ApplyBand({ n, workshop }: { n: number; workshop: Workshop }) {
+export function ApplyBand({ workshop }: { workshop: Workshop }) {
   return (
     <section id="apply" className="px-0 md:px-10 pt-16 md:pt-28 scroll-mt-12">
       <div className="mx-auto max-w-7xl">
         <div className="bg-black text-white px-6 md:px-16 py-12 md:py-20 relative overflow-hidden">
-          <div className="font-inter text-[10.5px] md:text-[11px] tracking-[0.3em] uppercase text-white/60 mb-3">
-            {String(n).padStart(2, '0')} — Apply
-          </div>
           {workshop.apply_heading && (
             <h3 className="font-bebas-neue text-[52px] md:text-[80px] leading-[0.95] uppercase text-white m-0 mb-5 md:mb-6 font-normal tracking-[-0.015em] md:tracking-[-0.01em]">
               {workshop.apply_heading}
@@ -26,6 +19,7 @@ export function ApplyBand({ n, workshop }: { n: number; workshop: Workshop }) {
           )}
           {workshop.apply_intro && (
             <RichText
+              listMarker="disc"
               html={workshop.apply_intro}
               className="text-[14.5px] md:text-[17px] leading-[1.7] max-w-[560px] text-white/85 mb-8 md:mb-12 [&_p]:text-white/85"
             />
@@ -52,9 +46,7 @@ export function ApplyBand({ n, workshop }: { n: number; workshop: Workshop }) {
 // borders share an edge; the active tile inverts to a solid-white plate and
 // rises above the join via z-index. Each tile carries a left radio bullet
 // (filled when active), big uppercase days, an italic price, and the italic
-// Playfair summary. The featured (Full) intake floats a white badge that
-// fades out once it becomes the active tile. Selecting a tile updates the
-// shared intake state, so the tariff-card Apply buttons reflect it too.
+// Playfair summary. Selecting a tile updates the application form's intake.
 function IntakePicker({ tariffs }: { tariffs: Workshop['tariffs'] }) {
   const { intake, setIntake } = useIntake()
 
@@ -63,9 +55,6 @@ function IntakePicker({ tariffs }: { tariffs: Workshop['tariffs'] }) {
       <div className="flex items-baseline justify-between gap-4 mb-4 md:mb-5">
         <span className="font-bebas-neue text-[26px] md:text-[32px] leading-none lowercase text-white tracking-[-0.01em]">
           choose your workshop
-        </span>
-        <span className="font-inter text-[10px] md:text-[11px] tracking-[0.3em] uppercase text-white/45">
-          Step one
         </span>
       </div>
       <div
@@ -135,17 +124,6 @@ function IntakePicker({ tariffs }: { tariffs: Workshop['tariffs'] }) {
                 )}
               </span>
 
-              {t.featured && (
-                <span
-                  aria-hidden="true"
-                  className={
-                    'absolute -top-2.5 right-4 bg-white text-black px-2.5 py-1 font-inter text-[9px] tracking-[0.2em] uppercase shadow-sm transition-opacity ' +
-                    (selected ? 'opacity-0' : 'opacity-100')
-                  }
-                >
-                  The full course
-                </span>
-              )}
             </button>
           )
         })}

@@ -12,7 +12,7 @@ afterEach(cleanup)
 beforeEach(() => vi.clearAllMocks())
 
 function renderForm() {
-  const view = render(<SubscribeBand n={6} workshop={{ closed_heading: 'Join the waitlist', closed_intro: null }} />)
+  const view = render(<SubscribeBand workshop={{ closed_heading: 'Join the waitlist', closed_intro: null }} />)
   fireEvent.change(view.getByLabelText('Email'), { target: { value: 'fan@example.com' } })
   return { ...view, submit: () => fireEvent.submit(view.container.querySelector('form')!) }
 }
@@ -32,6 +32,7 @@ describe('workshop waitlist form', () => {
     fireEvent.click(view.getByLabelText('Hamburg'))
     view.submit()
     await waitFor(() => expect(view.getByRole('status').textContent).toContain('Thank you'))
+    expect(view.queryByText('You’re on the list')).toBeNull()
     const sent = vi.mocked(submitWorkshopSubscription).mock.calls[0][0]
     expect(sent.get('email')).toBe('fan@example.com')
     expect(sent.getAll('seasons')).toEqual(['summer'])
@@ -41,7 +42,7 @@ describe('workshop waitlist form', () => {
   it('submits multiple preferences and retains them when the server asks to retry', async () => {
     vi.mocked(submitWorkshopSubscription).mockResolvedValueOnce({ ok: false, error: 'Please try again.' })
     const view = renderForm()
-    for (const label of ['Winter', 'Summer', 'Berlin', 'Hamburg', 'Paris']) {
+    for (const label of ['Spring', 'Summer', 'Berlin', 'Hamburg', 'Paris']) {
       fireEvent.click(view.getByLabelText(label))
     }
     view.submit()
@@ -53,7 +54,7 @@ describe('workshop waitlist form', () => {
     view.submit()
     await waitFor(() => expect(view.getByRole('status').textContent).toContain('Thank you'))
     const sent = vi.mocked(submitWorkshopSubscription).mock.calls[1][0]
-    expect(sent.getAll('seasons')).toEqual(['winter', 'summer'])
+    expect(sent.getAll('seasons')).toEqual(['spring', 'summer'])
     expect(sent.getAll('cities')).toEqual(['berlin', 'hamburg', 'paris'])
   })
 })

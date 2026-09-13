@@ -163,7 +163,7 @@ describe('submitWorkshopApplication validation', () => {
     expect(result).toEqual({ ok: true })
     expect(mockInsert).toHaveBeenCalledTimes(1)
     expect(mockInsert.mock.calls[0][0]).toMatchObject({
-      intake: 'Full intake — 600 €',
+      intake: 'Full intake: 600 €',
     })
   })
 
@@ -174,7 +174,7 @@ describe('submitWorkshopApplication validation', () => {
     )
     expect(result).toEqual({ ok: true })
     expect(mockInsert.mock.calls[0][0]).toMatchObject({
-      intake: 'Short intake — 450 €',
+      intake: 'Short intake: 450 €',
     })
   })
 

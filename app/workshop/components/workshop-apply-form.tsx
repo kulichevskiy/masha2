@@ -53,9 +53,6 @@ export function WorkshopApplyForm({ tariffs }: { tariffs: Tariff[] }) {
         aria-live="polite"
         className="font-inter text-white"
       >
-        <p className="text-[11px] tracking-[0.25em] uppercase text-white/55 mb-3">
-          Application received
-        </p>
         <h4 className="font-bebas-neue text-3xl uppercase tracking-wide leading-none mb-4">
           Thank you
         </h4>

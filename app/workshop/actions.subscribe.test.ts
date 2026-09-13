@@ -50,7 +50,7 @@ async function loadAction() {
 
 function fd(fields: Record<string, string | string[]>): FormData {
   const f = new FormData()
-  const defaults = { seasons: ['winter'], cities: ['berlin'] }
+  const defaults = { seasons: ['spring'], cities: ['berlin'] }
   for (const [k, v] of Object.entries({ ...defaults, ...fields })) {
     for (const value of Array.isArray(v) ? v : [v]) f.append(k, value)
   }
@@ -106,7 +106,7 @@ describe('submitWorkshopSubscription', () => {
     expect(mockInsert).toHaveBeenCalledTimes(1)
     expect(mockInsert.mock.calls[0][0]).toMatchObject({
       email: 'fan@example.com',
-      seasons: ['winter'],
+      seasons: ['spring'],
       cities: ['berlin'],
       user_agent: 'test-agent',
     })
@@ -116,7 +116,7 @@ describe('submitWorkshopSubscription', () => {
   it('sends a Resend notification titled "New workshop subscriber"', async () => {
     process.env.RESEND_API_KEY = 'test-key'
     const submit = await loadAction()
-    const result = await submit(fd({ email: 'fan@example.com', seasons: ['winter', 'summer'], cities: ['berlin', 'hamburg', 'paris'] }))
+    const result = await submit(fd({ email: 'fan@example.com', seasons: ['spring', 'summer'], cities: ['berlin', 'hamburg', 'paris'] }))
     expect(result).toEqual({ ok: true })
     expect(mockSend).toHaveBeenCalledTimes(1)
     const sent = mockSend.mock.calls[0][0]
@@ -126,15 +126,15 @@ describe('submitWorkshopSubscription', () => {
       subject: 'New workshop subscriber',
     })
     expect(sent.text).toContain('fan@example.com')
-    expect(sent.text).toContain('Seasons: Winter, Summer')
+    expect(sent.text).toContain('Seasons: Spring, Summer')
     expect(sent.text).toContain('Cities: Berlin, Hamburg, Paris')
   })
 
   it.each([
     { seasons: [], cities: ['berlin'], error: /season/i },
-    { seasons: ['winter'], cities: [], error: /city/i },
-    { seasons: ['winter', 'spring'], cities: ['berlin'], error: /season/i },
-    { seasons: ['winter'], cities: ['paris', 'london'], error: /city/i },
+    { seasons: ['spring'], cities: [], error: /city/i },
+    { seasons: ['spring', 'winter'], cities: ['berlin'], error: /season/i },
+    { seasons: ['spring'], cities: ['paris', 'london'], error: /city/i },
     { seasons: ['__proto__'], cities: ['berlin'], error: /season/i },
   ])('rejects missing or unsupported preferences: $seasons / $cities', async ({ seasons, cities, error }) => {
     const submit = await loadAction()
@@ -148,12 +148,12 @@ describe('submitWorkshopSubscription', () => {
     const submit = await loadAction()
     const result = await submit(fd({
       email: 'fan@example.com',
-      seasons: ['summer', 'winter', 'summer'],
+      seasons: ['summer', 'spring', 'summer'],
       cities: ['paris', 'hamburg', 'berlin', 'paris'],
     }))
     expect(result).toEqual({ ok: true })
     expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
-      seasons: ['winter', 'summer'],
+      seasons: ['spring', 'summer'],
       cities: ['berlin', 'hamburg', 'paris'],
     }))
   })
