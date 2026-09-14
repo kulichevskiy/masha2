@@ -56,7 +56,7 @@ export function SubscribeBand({ workshop }: {
     <section id="subscribe" className="px-0 md:px-10 pt-16 md:pt-28 scroll-mt-12">
       <div className="mx-auto max-w-7xl">
         <div className="bg-black text-white px-6 md:px-16 py-12 md:py-20 relative overflow-hidden">
-          {workshop.closed_heading && (
+          {status.kind !== 'success' && workshop.closed_heading && (
             <h3 className="font-bebas-neue text-[52px] md:text-[80px] leading-[0.95] uppercase text-white m-0 mb-5 md:mb-6 font-normal tracking-[-0.015em] md:tracking-[-0.01em]">
               {workshop.closed_heading}
             </h3>
@@ -71,9 +71,9 @@ export function SubscribeBand({ workshop }: {
 
           {status.kind === 'success' ? (
             <div role="status" aria-live="polite" className="font-inter text-white max-w-[560px]">
-              <h4 className="font-bebas-neue text-3xl uppercase tracking-wide leading-none mb-4">
+              <h3 className="font-bebas-neue text-[52px] md:text-[80px] leading-[0.95] uppercase text-white m-0 mb-5 md:mb-6 font-normal tracking-[-0.015em] md:tracking-[-0.01em]">
                 Thank you
-              </h4>
+              </h3>
               <p className="text-[15px] leading-relaxed text-white/85">
                 We&rsquo;ll write to you the moment the next workshop is announced.
               </p>
