@@ -14,7 +14,7 @@ export function TopNav() {
             >
               Maria Chevskaya
             </Link>
-            <p className="text-s md:text-m font-inter font-normal text-gray-500 text-center tracking-wider md:tracking-widest lowercase mt-0 md:mt-0 leading-relaxed">Portrait and editorial photographer</p>
+            <p className="text-s md:text-m font-inter font-normal text-gray-500 text-center tracking-wider md:tracking-widest lowercase mt-0 md:mt-0 leading-relaxed">Portrait and editorial photographer in Berlin</p>
           </div>
           {/* Section navigation — sits under the tagline on every public page. */}
           <SectionNav />
