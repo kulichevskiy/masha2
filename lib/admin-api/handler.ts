@@ -66,13 +66,13 @@ async function dispatch(request: Request, path: string[], ctx: Context): Promise
     for (const key of url.searchParams.keys()) if (!allowedParams.includes(key)) throw new ApiError(400, 'invalid_request', `Unknown query parameter: ${key}`)
     if (name === 'media') {
       const kind = url.searchParams.get('kind'), page = url.searchParams.get('page')
-      if (kind) { validate({ type: 'string', enum: ['photo', 'video'] }, kind, 'kind'); query = query.eq('kind', kind) }
-      if (page) { validate({ type: 'string', enum: ['portraits', 'kids', 'video'] }, page, 'page'); query = query.contains('pages', [page]) }
+      if (kind !== null) { validate({ type: 'string', enum: ['photo', 'video'] }, kind, 'kind'); query = query.eq('kind', kind) }
+      if (page !== null) { validate({ type: 'string', enum: ['portraits', 'kids', 'video'] }, page, 'page'); query = query.contains('pages', [page]) }
     }
     if (name === 'workshop-subscribers') {
       for (const [key, column, values] of [['season', 'seasons', ['winter', 'spring', 'summer']], ['city', 'cities', ['berlin', 'hamburg', 'paris']]] as const) {
         const value = url.searchParams.get(key)
-        if (value) { validate({ type: 'string', enum: [...values] }, value, key); query = query.contains(column, [value]) }
+        if (value !== null) { validate({ type: 'string', enum: [...values] }, value, key); query = query.contains(column, [value]) }
       }
     }
     const { limit, offset } = pagination(url)

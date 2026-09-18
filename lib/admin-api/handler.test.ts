@@ -67,6 +67,16 @@ describe('HTTP administrative contract', () => {
     const selection = f.calls.find(c => c[1] === 'select')?.[2] as string
     expect(selection).not.toMatch(/ip_hash|user_agent/)
   })
+  it('rejects explicitly empty filters instead of returning an unfiltered list', async () => {
+    for (const path of ['workshop-subscribers?season=', 'workshop-subscribers?city=', 'media?kind=', 'media?page=']) {
+      const f = fixture()
+      const res = await handleApi(request(path), [path.split('?')[0]], f.db)
+      expect(res.status).toBe(400)
+      expect(await res.json()).toMatchObject({ error: { code: 'invalid_request' } })
+      expect(f.calls.some(call => call[1] === 'range')).toBe(false)
+    }
+  })
+
   it('rejects missing versions and records stable failure codes before any mutation', async () => {
     const f = fixture()
     const res = await handleApi(request(`media/${id}`, 'PATCH', { title: 'Customer secret' }), ['media', id], f.db)

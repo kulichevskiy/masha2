@@ -147,6 +147,7 @@ begin
     join auth.users u on u.id = t.owner_id
     join public.admin_emails a on a.email = u.email
     where t.id = p_token_id and t.revoked_at is null
+      and (u.banned_until is null or u.banned_until <= now())
     for share of t, u, a;
   if not found then raise exception 'unauthorized'; end if;
   perform id from public.api_audit_log where id = p_audit_id

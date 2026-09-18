@@ -36,3 +36,6 @@ The independent local verdict above covered initial snapshot `414e4b72ec0cb3d02d
 
 
 The next remote pass on `a2bc962` identified the remaining membership-removal race. Authentication now uses one service-only, row-locking SQL RPC for token, owner, membership and last-use acceptance. SQL/HTTP/auth tests pass, including denied credentials and execute permissions; the full suite passes 258 tests. A fresh remote review is required for this fix. The multi-connection verification limit above still applies.
+
+
+Remote review of `5542da4` found the mutation ban recheck and empty subscriber filter gaps. Both were reproduced and fixed; adjacent media filters received the same empty-value correction. Full validation passes 260 tests plus types, lint and production build. Fresh review is required for the new head.

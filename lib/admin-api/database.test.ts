@@ -205,6 +205,15 @@ describe('admin API database contract', () => {
     expect((await db.query('select version from photos where id=$1', [item.id])).rows).toEqual([{ version: 1 }])
   })
 
+  it('rejects a ban committed after authentication before mutating', async () => {
+    const item = await photo(501)
+    await db.query("update auth.users set banned_until=now()+interval '1 day' where id=$1", [owner])
+    try {
+      await expect(mutate('media', 'update', item.id, 1, { title: 'Denied' })).rejects.toThrow('unauthorized')
+      expect((await db.query('select version from photos where id=$1', [item.id])).rows).toEqual([{ version: 1 }])
+    } finally { await db.query('update auth.users set banned_until=null where id=$1', [owner]) }
+  })
+
   it('creates upload sessions with an atomic success receipt and rechecks access', async () => {
     const id = randomUUID()
     const input = uploadInput(id)
