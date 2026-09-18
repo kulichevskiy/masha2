@@ -45,7 +45,7 @@ beforeAll(async () => {
     create role authenticated;
     create role service_role bypassrls;
     create schema auth;
-    create table auth.users (id uuid primary key, email text);
+    create table auth.users (id uuid primary key, email text, banned_until timestamptz);
     create function auth.uid() returns uuid language sql as $$ select null::uuid $$;
     create function auth.jwt() returns jsonb language sql as $$ select '{}'::jsonb $$;
     create schema storage;
@@ -56,7 +56,7 @@ beforeAll(async () => {
   for (const file of readdirSync(migrationDir).filter(file => file.endsWith('.sql')).sort()) {
     await db.exec(readFileSync(join(migrationDir, file), 'utf8'))
   }
-  await db.query('insert into auth.users values ($1, $2)', [owner, 'admin@example.com'])
+  await db.query('insert into auth.users(id,email) values ($1, $2)', [owner, 'admin@example.com'])
   await db.query('insert into admin_emails(email) values ($1)', ['admin@example.com'])
   await db.query(`insert into api_tokens(id,owner_id,name,prefix,token_hash) values ($1,$2,'Test token','mcp_test',repeat('a',64))`, [token, owner])
 }, 30_000)
@@ -71,15 +71,47 @@ describe('admin API database contract', () => {
         expect((await db.query<{ access: boolean }>('select has_table_privilege($1,$2,\'SELECT,INSERT,UPDATE,DELETE\') as access', [role, `public.${table}`])).rows[0].access).toBe(false)
       }
     }
-    const signature = 'public.admin_api_mutate(text,text,text,integer,jsonb,uuid,uuid)'
-    for (const role of ['anon', 'authenticated', 'service_role']) {
-      expect((await db.query<{ access: boolean }>("select has_function_privilege($1,$2,'EXECUTE') as access", [role, signature])).rows[0].access).toBe(role === 'service_role')
+    for (const signature of ['public.admin_api_mutate(text,text,text,integer,jsonb,uuid,uuid)', 'public.admin_api_authenticate(text)']) {
+      for (const role of ['anon', 'authenticated', 'service_role']) {
+        expect((await db.query<{ access: boolean }>("select has_function_privilege($1,$2,'EXECUTE') as access", [role, signature])).rows[0].access).toBe(role === 'service_role')
+      }
     }
     await db.exec('set role anon')
     try {
+      await expect(db.query("select public.admin_api_authenticate('hash')")).rejects.toThrow(/permission denied/)
       await expect(db.query('select * from public.api_tokens')).rejects.toThrow(/permission denied/)
       await expect(db.query("select public.admin_api_mutate('media','delete','',1,'{}',null,null)")).rejects.toThrow(/permission denied/)
     } finally { await db.exec('reset role') }
+  })
+
+  it('authenticates only current active admin tokens and records last use atomically', async () => {
+    const authenticate = async (hash = 'a'.repeat(64)) => (await db.query<{ principal: unknown }>(
+      'select public.admin_api_authenticate($1) as principal', [hash])).rows[0].principal
+    expect(await authenticate()).toEqual({ id: token, owner_id: owner, name: 'Test token' })
+    expect((await db.query<{ last_used_at: string | null }>('select last_used_at from api_tokens where id=$1', [token])).rows[0].last_used_at).not.toBeNull()
+    expect(await authenticate('c'.repeat(64))).toBeNull()
+    await db.exec("delete from admin_emails where email='admin@example.com'")
+    try { expect(await authenticate()).toBeNull() }
+    finally { await db.exec("insert into admin_emails(email) values ('admin@example.com')") }
+    await db.query('update api_tokens set revoked_at=now() where id=$1', [token])
+    try { expect(await authenticate()).toBeNull() }
+    finally { await db.query('update api_tokens set revoked_at=null where id=$1', [token]) }
+    await db.query("update auth.users set banned_until=now()+interval '1 day' where id=$1", [owner])
+    try { expect(await authenticate()).toBeNull() }
+    finally { await db.query('update auth.users set banned_until=null where id=$1', [owner]) }
+  })
+
+  it('rejects a deleted owner without advancing last use for removed admins', async () => {
+    const otherOwner = randomUUID()
+    const otherToken = randomUUID()
+    await db.query('insert into auth.users(id,email) values ($1,$2)', [otherOwner, 'removed@example.com'])
+    await db.query(`insert into api_tokens(id,owner_id,name,prefix,token_hash) values ($1,$2,'Removed','mcp_removed',repeat('d',64))`, [otherToken, otherOwner])
+    const authenticate = async () => (await db.query<{ principal: unknown }>(
+      "select public.admin_api_authenticate(repeat('d',64)) as principal")).rows[0].principal
+    expect(await authenticate()).toBeNull()
+    expect((await db.query<{ last_used_at: string | null }>('select last_used_at from api_tokens where id=$1', [otherToken])).rows[0].last_used_at).toBeNull()
+    await db.query('delete from auth.users where id=$1', [otherOwner])
+    expect(await authenticate()).toBeNull()
   })
 
   it('rejects stale writes after ordinary UI changes and preserves an interrupted audit', async () => {

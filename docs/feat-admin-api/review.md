@@ -33,3 +33,6 @@ Review verdict covers local implementation, not deployment verification. No live
 ## External PR review follow-up
 
 The independent local verdict above covered initial snapshot `414e4b72ec0cb3d02d99eaf75ae717e9fd8ae63a2df58d3c8c12082ef89f1ad1`. Remote Codex review of `5dde918` subsequently found the conditional-update revocation race in `lib/admin-api/auth.ts`. Its regression failed before the change and passes after requiring a matched active token row. The current `review-snapshot.json` contains the corrected implementation. Full suite now passes 257 tests; fresh remote review is required for the fix commit. Final current-head outcome is recorded by GitHub and in the task delivery message.
+
+
+The next remote pass on `a2bc962` identified the remaining membership-removal race. Authentication now uses one service-only, row-locking SQL RPC for token, owner, membership and last-use acceptance. SQL/HTTP/auth tests pass, including denied credentials and execute permissions; the full suite passes 258 tests. A fresh remote review is required for this fix. The multi-connection verification limit above still applies.

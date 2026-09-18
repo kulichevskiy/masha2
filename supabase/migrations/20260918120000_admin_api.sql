@@ -57,6 +57,29 @@ begin
 end;
 $$;
 
+-- One acceptance point for token state, owner state, membership and last use.
+-- Locks serialize concurrent revocation, owner changes and admin removal.
+create function public.admin_api_authenticate(p_token_hash text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  principal jsonb;
+begin
+  select jsonb_build_object('id', t.id, 'name', t.name, 'owner_id', t.owner_id)
+    into principal
+    from public.api_tokens t
+    join auth.users u on u.id = t.owner_id
+    join public.admin_emails a on a.email = u.email
+    where t.token_hash = p_token_hash and t.revoked_at is null
+      and (u.banned_until is null or u.banned_until <= now())
+    for update of t for share of u, a;
+  if not found then return null; end if;
+  update public.api_tokens set last_used_at = now() where id = (principal->>'id')::uuid;
+  return principal;
+end;
+$$;
+revoke all on function public.admin_api_authenticate(text) from public, anon, authenticated;
+grant execute on function public.admin_api_authenticate(text) to service_role;
+
 -- UI writes and API writes share the same monotonically increasing version.
 create function public.admin_api_bump_version() returns trigger
 language plpgsql set search_path = '' as $$

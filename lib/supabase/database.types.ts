@@ -579,6 +579,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_api_authenticate: {
+        Args: { p_token_hash: string }
+        Returns: Json
+      }
       admin_api_mutate: {
         Args: {
           p_resource: string

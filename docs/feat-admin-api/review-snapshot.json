@@ -1,6 +1,6 @@
 {
   "base": "d34a9f95a965ee4e369db248055e3172cc5f3794",
-  "kind": "PR implementation snapshot after revocation-race fix",
+  "kind": "PR implementation snapshot after atomic authentication fix",
   "files": {
     "app/admin/api-actions.test.ts": "9b484411960fd94d808b66c4d382e3094f39e3b9ef5ef6fb88a81774a19b1b3e",
     "app/admin/api-actions.ts": "9e596b413380a4c8aa8e68d4d59c10464ab164314a6302f2e8e8e00cd9271f08",
@@ -12,9 +12,9 @@
     "app/api/docs/page.tsx": "5f5ac8ee02be3e400af260770afa8fd7965b32ce215d04d96f3b241ed57e4f91",
     "app/api/openapi.json/route.ts": "f88a7bf0a626692d4a7e46e6821fcc40a6f82bc248131013528991209c71c20b",
     "app/api/v1/[...path]/route.ts": "609c10dce05de043e350488f96106915267d47fa19d709dbe2acf79c2e3a0fc1",
-    "lib/admin-api/auth.test.ts": "e34000cde1290d5bd48d8f3a8b6031f851be24e5a659f4c0ae776dd4533dee00",
-    "lib/admin-api/auth.ts": "1b2b500804540f87bfe01ec7a58d2a23386d06d29fa55ecbc41ababa3de46e7b",
-    "lib/admin-api/database.test.ts": "2c6cc9beee628ee2893c87f7a23fc81cb050bec39336e516fbb03e4d2f21b12d",
+    "lib/admin-api/auth.test.ts": "6ce73c4755b99cde370242c819255e2f527219526b8b2b71a59666be11b3ad49",
+    "lib/admin-api/auth.ts": "5a628a451b8f68afbf3ec188bc873dc5963d2e33eeff2fc78b557a0ad210cfb0",
+    "lib/admin-api/database.test.ts": "e24e8a765203ae08816fb9fe3295c6d5d75faaeeec78b6d578f4a83b129b77a1",
     "lib/admin-api/errors.ts": "d1527edbf5b54a342101c34b4f95f57cd51844fcfe609df18edb4573ff41a46e",
     "lib/admin-api/handler.test.ts": "08436087860c9d69f5e267fca43ecd657949c9d08e15c8309a4794ee07f6026d",
     "lib/admin-api/handler.ts": "cc4eba1fb5e236d15e1521d3cbc67d7ca5760446495613a8627b875148331cd8",
@@ -25,9 +25,9 @@
     "lib/admin-api/schema.ts": "86cdf1b70aadf703c1c2c587acab0bd29300c072ae426413ec77e17d74ca2a5b",
     "lib/admin-api/upload-client.test.ts": "d6047d254ec98e3028abcb5cae57ee688d9dc05e75bd895462ebfe031f8a8843",
     "lib/admin-api/uploads.ts": "ce8f7d688e8c0afa977303226457fd73d9241e3d9bf176be640138d412dcf90c",
-    "lib/supabase/database.types.ts": "44f29e6dd386621121514bfea8df93d1aa11af2c5e82b5649e08633e4aeb1bd3",
+    "lib/supabase/database.types.ts": "703539a3a22f591ff8caf175cae949faabe2356dea59a3b393bea55fd00dd533",
     "proxy.ts": "d976a0ffbfa9ad4dc8674277b36a7e546071c22630e4b068921b844d98354f2c",
     "scripts/api-upload.mjs": "1b5bf970e5901d68ce0d494c3d49a1aa5afa5f71cb57968a318a59a074c75d2c",
-    "supabase/migrations/20260918120000_admin_api.sql": "827a383633c45143ddabfb69c3aec1fa04634750930777bcb6fe666d9b61a1c4"
+    "supabase/migrations/20260918120000_admin_api.sql": "d5d3f6ceabefa355a4076f64debeac3e937c53fdfd3d6f85d5ae40769afb3b3a"
   }
 }

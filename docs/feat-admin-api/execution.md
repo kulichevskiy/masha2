@@ -63,3 +63,10 @@ Remote policy inspection: `main` has no branch protection configured. The reposi
 Codex reviewed `5dde9180aa0fbefe8dff6dc74ac4a68bf21947cd` and reported P2 thread `PRRT_kwDOQf7Ojc6js8zs`: a zero-row conditional `last_used_at` update could let `authenticate` return a token revoked/deleted after the first lookup. A regression reproduced the stale-token success before the fix. Authentication now selects the updated token ID and rejects a zero-row result with 401.
 
 After the fix: 257 tests across 35 files pass; full lint and production build pass. Current snapshot hashes include the fix and regression. Next action: push, resolve the supported thread and request fresh Codex review; verify current-head Vercel/review outcomes before declaring ready. No merge or deployment is authorized yet.
+
+
+## Second remote review fix: atomic membership acceptance
+
+Review of `a2bc962` reported P2 thread `PRRT_kwDOQf7Ojc6jtHy-`: removing the owner from `admin_emails` between the membership lookup and final token update still allowed authentication. Replaced all separate lookups with service-only `admin_api_authenticate`: one database transaction checks active token, current owner/membership and ban state, locks those rows, and records last use before returning the principal. The SQL contract test initially failed because this acceptance RPC did not exist; it now verifies acceptance, last use, revoked/unknown tokens, missing membership, banned/deleted owners and restricted execute grants. PGlite does not establish real multi-connection race timing; lock semantics were inspected in the SQL.
+
+Validation: 258 tests / 35 files pass; full lint (same five baseline warnings), production build, TypeScript and whitespace checks pass. TypeScript initially found two missing result types in the new tests; explicit result types fixed those errors. Next action: push, resolve the finding and request fresh current-head remote review. Final remote outcome remains in GitHub and the task delivery message.
