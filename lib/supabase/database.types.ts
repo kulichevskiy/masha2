@@ -14,6 +14,145 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_tokens: {
+        Row: {
+          id: string
+          owner_id: string
+          name: string
+          prefix: string
+          token_hash: string
+          created_at: string
+          last_used_at: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          name: string
+          prefix: string
+          token_hash: string
+          created_at?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          name?: string
+          prefix?: string
+          token_hash?: string
+          created_at?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
+      api_audit_log: {
+        Row: {
+          id: string
+          token_id: string | null
+          token_name: string
+          operation: string
+          resource: string
+          resource_id: string | null
+          status: 'started' | 'succeeded' | 'failed'
+          error_code: string | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          token_id?: string | null
+          token_name: string
+          operation: string
+          resource: string
+          resource_id?: string | null
+          status?: 'started' | 'succeeded' | 'failed'
+          error_code?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          token_id?: string | null
+          token_name?: string
+          operation?: string
+          resource?: string
+          resource_id?: string | null
+          status?: 'started' | 'succeeded' | 'failed'
+          error_code?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Relationships: []
+      }
+      api_uploads: {
+        Row: {
+          id: string
+          token_id: string
+          purpose: string
+          kind: string
+          bucket: string
+          storage_path: string
+          poster_path: string | null
+          metadata: Json
+          expires_at: string
+          completed_at: string | null
+          result: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          token_id: string
+          purpose: string
+          kind: string
+          bucket: string
+          storage_path: string
+          poster_path?: string | null
+          metadata: Json
+          expires_at: string
+          completed_at?: string | null
+          result?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          token_id?: string
+          purpose?: string
+          kind?: string
+          bucket?: string
+          storage_path?: string
+          poster_path?: string | null
+          metadata?: Json
+          expires_at?: string
+          completed_at?: string | null
+          result?: Json | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      api_storage_cleanup: {
+        Row: {
+          id: string
+          bucket: string
+          paths: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          bucket: string
+          paths: string[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          bucket?: string
+          paths?: string[]
+          created_at?: string
+        }
+        Relationships: []
+      }
+
       admin_emails: {
         Row: {
           added_at: string
@@ -31,6 +170,8 @@ export type Database = {
       }
       app_settings: {
         Row: {
+          /** Always present after the admin API migration; optional for legacy UI fixtures. */
+          version?: number
           key: string
           updated_at: string
           value: string
@@ -49,6 +190,8 @@ export type Database = {
       }
       booking_faq: {
         Row: {
+          /** Always present after the admin API migration; optional for legacy UI fixtures. */
+          version?: number
           answer: string
           created_at: string
           id: string
@@ -79,6 +222,8 @@ export type Database = {
       }
       booking_requests: {
         Row: {
+          /** Always present after the admin API migration; optional for legacy UI fixtures. */
+          version?: number
           created_at: string
           email: string
           id: string
@@ -117,6 +262,8 @@ export type Database = {
       }
       booking_tiers: {
         Row: {
+          /** Always present after the admin API migration; optional for legacy UI fixtures. */
+          version?: number
           created_at: string
           description: string | null
           id: string
@@ -156,6 +303,8 @@ export type Database = {
       }
       gift_certificate: {
         Row: {
+          /** Always present after the admin API migration; optional for legacy UI fixtures. */
+          version?: number
           amounts: Json
           body: string | null
           created_at: string
@@ -186,6 +335,8 @@ export type Database = {
       }
       gift_certificate_requests: {
         Row: {
+          /** Always present after the admin API migration; optional for legacy UI fixtures. */
+          version?: number
           amount: string | null
           created_at: string
           email: string
@@ -213,6 +364,8 @@ export type Database = {
       }
       photos: {
         Row: {
+          /** Always present after the admin API migration; optional for legacy UI fixtures. */
+          version?: number
           alt_text: string | null
           created_at: string
           description: string | null
@@ -264,6 +417,8 @@ export type Database = {
       }
       workshop: {
         Row: {
+          /** Always present after the admin API migration; optional for legacy UI fixtures. */
+          version?: number
           banner_visible: boolean
           apply_heading: string | null
           apply_intro: string | null
@@ -351,6 +506,8 @@ export type Database = {
       }
       workshop_applications: {
         Row: {
+          /** Always present after the admin API migration; optional for legacy UI fixtures. */
+          version?: number
           created_at: string
           email: string
           id: string
@@ -387,6 +544,8 @@ export type Database = {
       }
       workshop_subscribers: {
         Row: {
+          /** Always present after the admin API migration; optional for legacy UI fixtures. */
+          version?: number
           cities: string[]
           seasons: string[]
           created_at: string
@@ -420,6 +579,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_api_mutate: {
+        Args: {
+          p_resource: string
+          p_action: string
+          p_id: string
+          p_expected_version: number | null
+          p_data: Json
+          p_token_id: string
+          p_audit_id: string
+        }
+        Returns: Json
+      }
       is_admin: {
         Args: Record<string, never>
         Returns: boolean

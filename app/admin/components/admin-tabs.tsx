@@ -8,6 +8,7 @@ export type AdminTab =
   | 'gift'
   | 'requests'
   | 'settings'
+  | 'api'
 
 const TABS: { id: AdminTab, label: string }[] = [
   { id: 'photos', label: 'Фото' },
@@ -17,6 +18,7 @@ const TABS: { id: AdminTab, label: string }[] = [
   { id: 'gift', label: 'Сертификаты' },
   { id: 'requests', label: 'Заявки' },
   { id: 'settings', label: 'Настройки' },
+  { id: 'api', label: 'API' },
 ]
 
 export function AdminTabs({ active }: { active: AdminTab }) {

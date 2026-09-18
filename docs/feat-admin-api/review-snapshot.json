@@ -1,0 +1,33 @@
+{
+  "base": "d34a9f95a965ee4e369db248055e3172cc5f3794",
+  "kind": "uncommitted local implementation",
+  "files": {
+    "app/admin/api-actions.test.ts": "9b484411960fd94d808b66c4d382e3094f39e3b9ef5ef6fb88a81774a19b1b3e",
+    "app/admin/api-actions.ts": "9e596b413380a4c8aa8e68d4d59c10464ab164314a6302f2e8e8e00cd9271f08",
+    "app/admin/api-types.ts": "512c5e8eb10800b5738eb1db6ef96cdb05ea5389ea4c908a508a56461f710375",
+    "app/admin/components/admin-tabs.tsx": "314e52cc7278701c3cd724c2cb5efd26e4595ce7089daaf4f92fdc6026b5ebcf",
+    "app/admin/components/api-tab.test.tsx": "f15c1919c25dddf3464438aef85c00e4158e401631db2cbeb51ab679ac7baaa2",
+    "app/admin/components/api-tab.tsx": "fd6e9adbaa7ef3b15c0ff27998f3a2311cba57bd046eb5b6f95bbab922f80b31",
+    "app/admin/page.tsx": "d5b50970c2c15304c6cfd751aca22d88efdf9c3cfaa5e4fb2bd1efbd9c91e511",
+    "app/api/docs/page.tsx": "5f5ac8ee02be3e400af260770afa8fd7965b32ce215d04d96f3b241ed57e4f91",
+    "app/api/openapi.json/route.ts": "f88a7bf0a626692d4a7e46e6821fcc40a6f82bc248131013528991209c71c20b",
+    "app/api/v1/[...path]/route.ts": "609c10dce05de043e350488f96106915267d47fa19d709dbe2acf79c2e3a0fc1",
+    "lib/admin-api/auth.test.ts": "d5aa3ee141327ca0b901bce7a1f4bfb696b99572825960155bec5b113d933b5e",
+    "lib/admin-api/auth.ts": "d05db0e62037bec77bfbd6ecdadd1e8885276cc0c9fe342d688c6449785b2d98",
+    "lib/admin-api/database.test.ts": "2c6cc9beee628ee2893c87f7a23fc81cb050bec39336e516fbb03e4d2f21b12d",
+    "lib/admin-api/errors.ts": "d1527edbf5b54a342101c34b4f95f57cd51844fcfe609df18edb4573ff41a46e",
+    "lib/admin-api/handler.test.ts": "08436087860c9d69f5e267fca43ecd657949c9d08e15c8309a4794ee07f6026d",
+    "lib/admin-api/handler.ts": "cc4eba1fb5e236d15e1521d3cbc67d7ca5760446495613a8627b875148331cd8",
+    "lib/admin-api/http.ts": "5a96a81225fda6bd64d2f53dd67653c2cf2d51007ba5fb505607ea39a05732ad",
+    "lib/admin-api/openapi.ts": "d7ae39d2c7c6225a190e0590e2b16cc870fa210c1cacf5735227f96250e2852d",
+    "lib/admin-api/resources.ts": "0664f4e739deb4026f1ddf28b82328b22605024800e316c44915f84338357757",
+    "lib/admin-api/schema.test.ts": "2007ff6c72844435e44abd0b0adaa48dfe5cd016d567236558a5933ec1372488",
+    "lib/admin-api/schema.ts": "86cdf1b70aadf703c1c2c587acab0bd29300c072ae426413ec77e17d74ca2a5b",
+    "lib/admin-api/upload-client.test.ts": "d6047d254ec98e3028abcb5cae57ee688d9dc05e75bd895462ebfe031f8a8843",
+    "lib/admin-api/uploads.ts": "ce8f7d688e8c0afa977303226457fd73d9241e3d9bf176be640138d412dcf90c",
+    "lib/supabase/database.types.ts": "44f29e6dd386621121514bfea8df93d1aa11af2c5e82b5649e08633e4aeb1bd3",
+    "proxy.ts": "d976a0ffbfa9ad4dc8674277b36a7e546071c22630e4b068921b844d98354f2c",
+    "scripts/api-upload.mjs": "1b5bf970e5901d68ce0d494c3d49a1aa5afa5f71cb57968a318a59a074c75d2c",
+    "supabase/migrations/20260918120000_admin_api.sql": "827a383633c45143ddabfb69c3aec1fa04634750930777bcb6fe666d9b61a1c4"
+  }
+}

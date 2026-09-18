@@ -1,3 +1,5 @@
+import { ApiTab } from './components/api-tab'
+import { getApiAdminData } from './api-actions'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { PhotosTable } from './components/photos-table'
@@ -14,7 +16,7 @@ import { getAdminWorkshop } from '@/app/workshop/data'
 import { GiftTab } from './components/gift-tab'
 import { getAdminGiftCertificate } from '@/app/gift/data'
 
-const VALID_TABS: AdminTab[] = ['photos', 'tiers', 'faq', 'workshop', 'gift', 'requests', 'settings']
+const VALID_TABS: AdminTab[] = ['photos', 'tiers', 'faq', 'workshop', 'gift', 'requests', 'settings', 'api']
 
 type Props = {
   searchParams: Promise<{ tab?: string }>
@@ -73,6 +75,7 @@ export default async function AdminPage({ searchParams }: Props) {
       {tab === 'gift' && <GiftTabSection />}
       {tab === 'requests' && <RequestsTab />}
       {tab === 'settings' && <SettingsTab />}
+      {tab === 'api' && <ApiTabSection />}
     </div>
   )
 }
@@ -247,4 +250,8 @@ async function SettingsTab() {
   }
 
   return <SettingsForm recipientEmail={row?.value ?? ''} />
+}
+
+async function ApiTabSection() {
+  return <ApiTab initial={await getApiAdminData()} />
 }
