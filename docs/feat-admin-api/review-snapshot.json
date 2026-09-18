@@ -1,6 +1,6 @@
 {
   "base": "d34a9f95a965ee4e369db248055e3172cc5f3794",
-  "kind": "uncommitted local implementation",
+  "kind": "PR implementation snapshot after revocation-race fix",
   "files": {
     "app/admin/api-actions.test.ts": "9b484411960fd94d808b66c4d382e3094f39e3b9ef5ef6fb88a81774a19b1b3e",
     "app/admin/api-actions.ts": "9e596b413380a4c8aa8e68d4d59c10464ab164314a6302f2e8e8e00cd9271f08",
@@ -12,8 +12,8 @@
     "app/api/docs/page.tsx": "5f5ac8ee02be3e400af260770afa8fd7965b32ce215d04d96f3b241ed57e4f91",
     "app/api/openapi.json/route.ts": "f88a7bf0a626692d4a7e46e6821fcc40a6f82bc248131013528991209c71c20b",
     "app/api/v1/[...path]/route.ts": "609c10dce05de043e350488f96106915267d47fa19d709dbe2acf79c2e3a0fc1",
-    "lib/admin-api/auth.test.ts": "d5aa3ee141327ca0b901bce7a1f4bfb696b99572825960155bec5b113d933b5e",
-    "lib/admin-api/auth.ts": "d05db0e62037bec77bfbd6ecdadd1e8885276cc0c9fe342d688c6449785b2d98",
+    "lib/admin-api/auth.test.ts": "e34000cde1290d5bd48d8f3a8b6031f851be24e5a659f4c0ae776dd4533dee00",
+    "lib/admin-api/auth.ts": "1b2b500804540f87bfe01ec7a58d2a23386d06d29fa55ecbc41ababa3de46e7b",
     "lib/admin-api/database.test.ts": "2c6cc9beee628ee2893c87f7a23fc81cb050bec39336e516fbb03e4d2f21b12d",
     "lib/admin-api/errors.ts": "d1527edbf5b54a342101c34b4f95f57cd51844fcfe609df18edb4573ff41a46e",
     "lib/admin-api/handler.test.ts": "08436087860c9d69f5e267fca43ecd657949c9d08e15c8309a4794ee07f6026d",

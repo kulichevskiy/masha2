@@ -18,7 +18,8 @@ export async function authenticate(request: Request, db: AdminDb): Promise<Princ
   const { data: membership, error: memberError } = await db.from('admin_emails').select('email').eq('email', user.email).maybeSingle()
   databaseError(memberError)
   if (!membership) throw new ApiError(401, 'unauthorized', 'Token owner is no longer an administrator')
-  const used = await db.from('api_tokens').update({ last_used_at: new Date().toISOString() }).eq('id', token.id).is('revoked_at', null)
+  const used = await db.from('api_tokens').update({ last_used_at: new Date().toISOString() }).eq('id', token.id).is('revoked_at', null).select('id').maybeSingle()
   databaseError(used.error)
+  if (!used.data) throw new ApiError(401, 'unauthorized', 'Invalid or revoked token')
   return token
 }

@@ -57,3 +57,9 @@ The user subsequently requested `commit, push, pr, sdlc-babysit`. This authorize
 PR: https://github.com/kulichevskiy/masha2/pull/55 . Implementation commit: `51fa39d65a779990b101328839b1cadaa67178d1`, pushed to `origin/codex/admin-api`; base `origin/main` remains `d34a9f95a965ee4e369db248055e3172cc5f3794`. Worktree was clean after the implementation commit.
 
 Remote policy inspection: `main` has no branch protection configured. The repository runs Vercel build/preview checks and an automatic Codex review when a PR opens. Local project gates remain mandatory; their exact code snapshot matches the published implementation. Remote checks/review are pending at publication of this receipt; next action is to wait for current-head results, fix actionable findings, and leave the PR ready for the user's merge decision. A receipt-only commit does not change the implementation snapshot. Final remote outcome will also be reported in the task delivery message, avoiding receipt-only commit loops.
+
+## Remote review follow-up
+
+Codex reviewed `5dde9180aa0fbefe8dff6dc74ac4a68bf21947cd` and reported P2 thread `PRRT_kwDOQf7Ojc6js8zs`: a zero-row conditional `last_used_at` update could let `authenticate` return a token revoked/deleted after the first lookup. A regression reproduced the stale-token success before the fix. Authentication now selects the updated token ID and rejects a zero-row result with 401.
+
+After the fix: 257 tests across 35 files pass; full lint and production build pass. Current snapshot hashes include the fix and regression. Next action: push, resolve the supported thread and request fresh Codex review; verify current-head Vercel/review outcomes before declaring ready. No merge or deployment is authorized yet.

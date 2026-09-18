@@ -4,17 +4,18 @@ import { describe, expect, it, vi } from 'vitest'
 import { authenticate, type AdminDb } from './auth'
 
 const secret = `mcp_${'a'.repeat(64)}`
-function dbFixture(options: { revoked?: boolean; member?: boolean; user?: boolean; dbError?: boolean } = {}) {
+function dbFixture(options: { revoked?: boolean; member?: boolean; user?: boolean; dbError?: boolean; finalTokenMissing?: boolean } = {}) {
   const calls: unknown[][] = []
   const db = {
     auth: { admin: { getUserById: vi.fn(async () => ({ data: { user: options.user === false ? null : { id: 'owner', email: 'admin@example.com' } }, error: null })) } },
     from: vi.fn((table: string) => {
+      let updating = false
       const builder = {
         select: (...args: unknown[]) => { calls.push([table, 'select', ...args]); return builder },
-        update: (...args: unknown[]) => { calls.push([table, 'update', ...args]); return builder },
+        update: (...args: unknown[]) => { updating = true; calls.push([table, 'update', ...args]); return builder },
         eq: (...args: unknown[]) => { calls.push([table, 'eq', ...args]); return builder },
         is: () => builder,
-        maybeSingle: async () => ({ data: table === 'api_tokens' ? { id: 'token', owner_id: 'owner', name: 'Script', revoked_at: options.revoked ? '2026-01-01' : null } : options.member === false ? null : { email: 'admin@example.com' }, error: options.dbError ? { message: 'private DB details' } : null }),
+        maybeSingle: async () => ({ data: updating ? options.finalTokenMissing ? null : { id: 'token' } : table === 'api_tokens' ? { id: 'token', owner_id: 'owner', name: 'Script', revoked_at: options.revoked ? '2026-01-01' : null } : options.member === false ? null : { email: 'admin@example.com' }, error: options.dbError ? { message: 'private DB details' } : null }),
         then: (resolve: (value: unknown) => unknown) => Promise.resolve({ error: null }).then(resolve),
       }
       return builder
@@ -43,6 +44,10 @@ describe('PAT authentication', () => {
       const f = dbFixture(options)
       await expect(authenticate(new Request('https://site.test', { headers: { Authorization: `Bearer ${secret}` } }), f.db)).rejects.toMatchObject({ status: 401 })
     }
+  })
+  it('rejects revocation or owner deletion between lookup and the final conditional update', async () => {
+    const f = dbFixture({ finalTokenMissing: true })
+    await expect(authenticate(new Request('https://site.test', { headers: { Authorization: `Bearer ${secret}` } }), f.db)).rejects.toMatchObject({ status: 401, code: 'unauthorized' })
   })
   it('fails closed without leaking database messages', async () => {
     const f = dbFixture({ dbError: true })
