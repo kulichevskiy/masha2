@@ -12,9 +12,11 @@ import { SettingsForm } from './components/settings-form'
 import { WorkshopTab } from './components/workshop-tab'
 import { getAdminWorkshop } from '@/app/workshop/data'
 import { GiftTab } from './components/gift-tab'
+import { HomeTab } from './components/home-tab'
+import { loadHomeContent } from '@/app/components/home/home-content'
 import { getAdminGiftCertificate } from '@/app/gift/data'
 
-const VALID_TABS: AdminTab[] = ['photos', 'tiers', 'faq', 'workshop', 'gift', 'requests', 'settings']
+const VALID_TABS: AdminTab[] = ['photos', 'home', 'tiers', 'faq', 'workshop', 'gift', 'requests', 'settings']
 
 type Props = {
   searchParams: Promise<{ tab?: string }>
@@ -67,6 +69,7 @@ export default async function AdminPage({ searchParams }: Props) {
       <AdminTabs active={tab} />
 
       {tab === 'photos' && <PhotosTab />}
+      {tab === 'home' && <HomeTabSection />}
       {tab === 'tiers' && <TiersTab />}
       {tab === 'faq' && <FaqTab />}
       {tab === 'workshop' && <WorkshopTabSection />}
@@ -75,6 +78,11 @@ export default async function AdminPage({ searchParams }: Props) {
       {tab === 'settings' && <SettingsTab />}
     </div>
   )
+}
+
+async function HomeTabSection() {
+  const content = await loadHomeContent()
+  return <HomeTab content={content} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} />
 }
 
 async function PhotosTab() {

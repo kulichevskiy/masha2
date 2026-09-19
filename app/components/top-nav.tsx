@@ -1,10 +1,17 @@
 import Link from "next/link"
 import { SectionNav } from "./section-nav"
 
-export function TopNav() {
+// `sections` hides the Portraits / Kids / Video row. The home story at /new
+// carries its own links to those feeds inside the page, so the header there is
+// the wordmark alone.
+export function TopNav({ sections = true }: { sections?: boolean } = {}) {
   return (
     <nav className="bg-white/50 backdrop-blur-md w-full">
-      <div className="mx-auto max-w-7xl px-4 md:px-6 flex items-center justify-center pt-6 md:pt-8">
+      <div
+        className={`mx-auto max-w-7xl px-4 md:px-6 flex items-center justify-center pt-6 md:pt-8 ${
+          sections ? '' : 'pb-6 md:pb-8'
+        }`}
+      >
         <div className="flex flex-col items-center w-full gap-3">
           {/* Logo and Title Section */}
           <div className="flex flex-col items-center text-center">
@@ -17,7 +24,7 @@ export function TopNav() {
             <p className="text-s md:text-m font-inter font-normal text-gray-500 text-center tracking-wider md:tracking-widest lowercase mt-0 md:mt-0 leading-relaxed">Portrait and editorial photographer in Berlin</p>
           </div>
           {/* Section navigation — sits under the tagline on every public page. */}
-          <SectionNav />
+          {sections && <SectionNav />}
         </div>
       </div>
     </nav>

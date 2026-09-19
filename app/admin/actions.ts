@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { PhotoPage } from '@/lib/photo-pages'
 import { reassignSlots } from '@/lib/photo-filter'
+import type { HomeStoryContent } from '@/lib/home-story-content'
+import type { Json } from '@/lib/supabase/database.types'
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>
 
@@ -380,5 +382,36 @@ export async function updateSetting(key: string, value: string) {
     throw new Error(`Failed to update setting: ${error.message}`)
   }
 
+  revalidatePath('/admin')
+}
+
+// --- home story ------------------------------------------------------------
+
+// The whole page in one blob. The form always sends the complete shape, so the
+// column is replaced rather than merged; anything blank in it falls back to the
+// shipped copy when the page reads it (lib/home-story-content.ts).
+export async function updateHomeStory(content: HomeStoryContent) {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const { data: row, error: fetchErr } = await supabase
+    .from('home_story')
+    .select('id')
+    .limit(1)
+    .maybeSingle()
+  if (fetchErr || !row) {
+    throw new Error('Home story row not found')
+  }
+
+  const { error } = await supabase
+    .from('home_story')
+    .update({ content: content as unknown as Json })
+    .eq('id', row.id)
+
+  if (error) {
+    throw new Error(`Failed to update home story: ${error.message}`)
+  }
+
+  revalidatePath('/new')
   revalidatePath('/admin')
 }

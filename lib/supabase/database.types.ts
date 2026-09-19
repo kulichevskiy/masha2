@@ -211,6 +211,27 @@ export type Database = {
         }
         Relationships: []
       }
+      home_story: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           alt_text: string | null
