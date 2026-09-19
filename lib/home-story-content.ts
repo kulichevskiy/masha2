@@ -10,11 +10,20 @@
 //   body    — a blank line starts a new paragraph.
 //   photos  — a storage path in the `photos` bucket. An empty path means "take
 //             the frame from the feed", which is the default curation (see
-//             lib/home-story-photos.ts).
+//             lib/home-story-photos.ts). `focus` is the point of the photograph
+//             the crop keeps in view, in percent of its width and height — the
+//             CSS object-position. Faces sit where the author says, not where
+//             the centre of the frame happens to fall.
+
+export type StoryFocus = {
+  x: number
+  y: number
+}
 
 export type StoryPhoto = {
   path: string
   alt: string
+  focus: StoryFocus
 }
 
 export type StoryCategory = {
@@ -47,7 +56,10 @@ export type HomeStoryContent = {
 
 export type StoryKey = keyof HomeStoryContent
 
-const noPhoto: StoryPhoto = { path: '', alt: '' }
+// An unpinned slot with the crop it shipped with.
+function slot(x: number, y: number, alt = ''): StoryPhoto {
+  return { path: '', alt, focus: { x, y } }
+}
 
 export const DEFAULT_CONTENT: HomeStoryContent = {
   hero: {
@@ -56,7 +68,10 @@ export const DEFAULT_CONTENT: HomeStoryContent = {
     body: 'I photograph people — their character, presence and the way they connect with each other and themselves.',
     cta: 'Book a session',
     link: 'See the work',
-    photos: [noPhoto],
+    // The hero is full-bleed, so a phone only shows the middle of it. The face
+    // in the opening frame sits in the left third, hence the left anchor;
+    // on a desktop the frame is wider than the photo and x has no effect.
+    photos: [slot(20, 30)],
   },
   people: {
     label: 'people',
@@ -67,7 +82,7 @@ export const DEFAULT_CONTENT: HomeStoryContent = {
       'attention.',
     cta: '',
     link: '',
-    photos: [noPhoto, noPhoto, noPhoto],
+    photos: [slot(50, 20), slot(50, 30), slot(50, 50)],
   },
   session: {
     label: 'the session',
@@ -79,7 +94,7 @@ export const DEFAULT_CONTENT: HomeStoryContent = {
       'to arrive into yourself before the camera starts to matter.',
     cta: '',
     link: 'See the sessions',
-    photos: [noPhoto],
+    photos: [slot(50, 50)],
   },
   work: {
     label: 'the work',
@@ -125,7 +140,7 @@ export const DEFAULT_CONTENT: HomeStoryContent = {
       'camera, the process is the same: collaborative, calm and attentive.',
     cta: '',
     link: '',
-    photos: [{ path: '', alt: 'Maria Chevskaya' }],
+    photos: [slot(50, 20, 'Maria Chevskaya')],
   },
   workshops: {
     label: '',
@@ -135,7 +150,7 @@ export const DEFAULT_CONTENT: HomeStoryContent = {
       'subjects, but as presences.',
     cta: '',
     link: 'See the workshop',
-    photos: [noPhoto],
+    photos: [slot(50, 35)],
   },
   invitation: {
     label: 'get in touch',
@@ -143,7 +158,7 @@ export const DEFAULT_CONTENT: HomeStoryContent = {
     body: '',
     cta: 'Book a session',
     link: 'Email me',
-    photos: [noPhoto],
+    photos: [slot(50, 40)],
   },
 }
 
@@ -151,6 +166,17 @@ export const DEFAULT_CONTENT: HomeStoryContent = {
 // the admin sends null, which puts the shipped copy back.
 function text(value: unknown, fallback: string): string {
   return typeof value === 'string' && value.trim() !== '' ? value : fallback
+}
+
+// A percentage along one axis of the frame; anything else keeps the default.
+function axis(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
+  return Math.min(100, Math.max(0, value))
+}
+
+function focus(value: unknown, fallback: StoryFocus): StoryFocus {
+  const stored = (value ?? {}) as Partial<StoryFocus>
+  return { x: axis(stored.x, fallback.x), y: axis(stored.y, fallback.y) }
 }
 
 function photos(value: unknown, fallback: StoryPhoto[]): StoryPhoto[] {
@@ -163,6 +189,7 @@ function photos(value: unknown, fallback: StoryPhoto[]): StoryPhoto[] {
     return {
       path: typeof stored.path === 'string' ? stored.path : slot.path,
       alt: typeof stored.alt === 'string' ? stored.alt : slot.alt,
+      focus: focus(stored.focus, slot.focus),
     }
   })
 }
@@ -210,6 +237,11 @@ export function normaliseStoryContent(value: unknown): HomeStoryContent {
     workshops: section(stored.workshops, DEFAULT_CONTENT.workshops),
     invitation: section(stored.invitation, DEFAULT_CONTENT.invitation),
   }
+}
+
+// The CSS object-position for a slot's photograph.
+export function focusPosition(photo: StoryPhoto): string {
+  return `${photo.focus.x}% ${photo.focus.y}%`
 }
 
 // "a\n\nb" → two paragraphs; "a\nb" → one paragraph on two lines.

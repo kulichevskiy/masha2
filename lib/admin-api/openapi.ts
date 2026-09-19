@@ -1,5 +1,6 @@
 import { creates, patches, reorderSchema, uploadSchema, type Schema } from './schema'
 import { resources } from './resources'
+import { PHOTO_PAGES } from '../photo-pages'
 
 const json = (schema: unknown) => ({ 'application/json': { schema } })
 const error = { description: 'Request failed; see error.code. Failed preconditions never apply a change.', content: json({ $ref: '#/components/schemas/Error' }) }
@@ -70,7 +71,7 @@ export function makeOpenApi() {
     } : {
       summary: `List ${name}`, operationId: `list_${name.replaceAll('-', '_')}`, tags: tag,
       description: 'Follow pagination.next_offset until null. Ordering is position/id for ordered content; otherwise created_at/id descending. Lists are live, not snapshots.',
-      parameters: [...listParameters, ...(name === 'media' ? [{ name: 'kind', in: 'query', schema: { enum: ['photo', 'video'] } }, { name: 'page', in: 'query', schema: { enum: ['portraits', 'kids', 'video'] } }] : []), ...(name === 'workshop-subscribers' ? [{ name: 'season', in: 'query', schema: { enum: ['winter', 'spring', 'summer'] } }, { name: 'city', in: 'query', schema: { enum: ['berlin', 'hamburg', 'paris'] } }] : [])],
+      parameters: [...listParameters, ...(name === 'media' ? [{ name: 'kind', in: 'query', schema: { enum: ['photo', 'video'] } }, { name: 'page', in: 'query', schema: { enum: [...PHOTO_PAGES] } }] : []), ...(name === 'workshop-subscribers' ? [{ name: 'season', in: 'query', schema: { enum: ['winter', 'spring', 'summer'] } }, { name: 'city', in: 'query', schema: { enum: ['berlin', 'hamburg', 'paris'] } }] : [])],
       responses: { '200': { description: 'Page of records', content: json({ type: 'object', properties: { data: { type: 'array', items: row }, pagination: { type: 'object', properties: { limit: { type: 'integer' }, offset: { type: 'integer' }, next_offset: { type: ['integer', 'null'] } } } } }) }, ...commonErrors },
     }
     paths[path] = { get: collectionGet }

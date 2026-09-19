@@ -15,7 +15,8 @@ import { WorkshopTab } from './components/workshop-tab'
 import { getAdminWorkshop } from '@/app/workshop/data'
 import { GiftTab } from './components/gift-tab'
 import { HomeTab } from './components/home-tab'
-import { loadHomeContentForAdmin } from '@/app/components/home/home-content'
+import { feedPreviews, loadHomeContentForAdmin } from '@/app/components/home/home-content'
+import { loadHomePhotos } from '@/app/components/home/home-photos'
 import { getAdminGiftCertificate } from '@/app/gift/data'
 
 const VALID_TABS: AdminTab[] = ['photos', 'home', 'tiers', 'faq', 'workshop', 'gift', 'requests', 'settings', 'api']
@@ -84,7 +85,7 @@ export default async function AdminPage({ searchParams }: Props) {
 }
 
 async function HomeTabSection() {
-  const read = await loadHomeContentForAdmin()
+  const [read, slots] = await Promise.all([loadHomeContentForAdmin(), loadHomePhotos()])
 
   // Showing the form on a failed read would load the shipped defaults into it,
   // and the next Save would write them over the stored copy.
@@ -100,7 +101,13 @@ async function HomeTabSection() {
     )
   }
 
-  return <HomeTab content={read.content} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} />
+  return (
+    <HomeTab
+      content={read.content}
+      previews={feedPreviews(slots)}
+      supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}
+    />
+  )
 }
 
 async function PhotosTab() {

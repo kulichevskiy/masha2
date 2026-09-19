@@ -12,9 +12,10 @@ import { createClient } from '@/lib/supabase/server'
 import {
   normaliseStoryContent,
   type HomeStoryContent,
+  type StoryKey,
   type StoryPhoto,
 } from '@/lib/home-story-content'
-import type { HomeFrame } from '@/lib/home-story-photos'
+import type { HomeFrame, HomePhotoSlots } from '@/lib/home-story-photos'
 
 export type HomeContentRead =
   | { ok: true; content: HomeStoryContent }
@@ -49,6 +50,55 @@ export async function loadHomeContentForAdmin(): Promise<HomeContentRead> {
 
 export function publicPhotoUrl(supabaseUrl: string, path: string): string {
   return `${supabaseUrl}/storage/v1/object/public/photos/${path}`
+}
+
+// The portrait of Maria belongs to no feed, so the "behind the camera" slot
+// falls back to the same file the booking page uses until she pins another.
+export const MARIA_PORTRAIT: HomeFrame = {
+  id: 'maria-portrait',
+  src: '/photos/photo_2026-02-01 17.14.58.jpeg',
+  alt: 'Maria Chevskaya',
+  width: 1600,
+  height: 2000,
+}
+
+// The frame each slot shows while nothing is pinned to it — the top of the
+// matching feed, in the order the sections consume it. Shared by the page and
+// by the admin preview, so both look at the same photograph.
+export function feedFrames(slots: HomePhotoSlots): Record<StoryKey, (HomeFrame | null)[]> {
+  return {
+    hero: [slots.hero],
+    people: slots.people,
+    session: [slots.experience],
+    work: [],
+    video: [],
+    behind: [MARIA_PORTRAIT],
+    workshops: [slots.workshops],
+    invitation: [slots.invitation],
+  }
+}
+
+// Every slot resolved: pinned photograph first, feed frame otherwise.
+export function resolveFrames(
+  content: HomeStoryContent,
+  slots: HomePhotoSlots
+): Record<StoryKey, (HomeFrame | null)[]> {
+  const feed = feedFrames(slots)
+  const keys = Object.keys(feed) as StoryKey[]
+  return Object.fromEntries(
+    keys.map((key) => [key, content[key].photos.map((photo, index) => resolveFrame(photo, feed[key][index] ?? null))])
+  ) as Record<StoryKey, (HomeFrame | null)[]>
+}
+
+// What the admin preview shows behind the sliders when no photograph is
+// pinned: the feed frame's URL, or nothing.
+export function feedPreviews(slots: HomePhotoSlots): Record<StoryKey, (string | null)[]> {
+  const feed = feedFrames(slots)
+  const keys = Object.keys(feed) as StoryKey[]
+  return Object.fromEntries(keys.map((key) => [key, feed[key].map((frame) => frame?.src ?? null)])) as Record<
+    StoryKey,
+    (string | null)[]
+  >
 }
 
 // One slot: the pinned photograph when there is one, the feed frame otherwise.

@@ -1,6 +1,6 @@
 // The public sections a photo can be tagged onto (photos.pages[]). Keep in sync
 // with the photos_pages_valid check constraint in the DB. Empty pages = hidden.
-export const PHOTO_PAGES = ['portraits', 'kids', 'video'] as const
+export const PHOTO_PAGES = ['portraits', 'kids', 'video', 'editorial'] as const
 
 export type PhotoPage = (typeof PHOTO_PAGES)[number]
 
@@ -9,6 +9,7 @@ export const PHOTO_PAGE_LABELS: Record<PhotoPage, string> = {
   portraits: 'Portraits',
   kids: 'Kids',
   video: 'Video',
+  editorial: 'Editorial',
 }
 
 // Toggle a section on/off for a photo, returning the next pages array. The

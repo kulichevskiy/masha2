@@ -28,7 +28,7 @@ export async function loadHomePhotos(): Promise<HomePhotoSlots> {
   const { data: rows, error } = await supabase
     .from('photos')
     .select('id, kind, storage_path, poster_path, duration_seconds, title, alt_text, pages, width, height')
-    .overlaps('pages', ['portraits', 'kids', 'video'])
+    .overlaps('pages', ['portraits', 'kids', 'video', 'editorial'])
     .order('position', { ascending: true })
     .order('id', { ascending: true })
 
@@ -39,6 +39,7 @@ export async function loadHomePhotos(): Promise<HomePhotoSlots> {
 
   const portraits: HomeFrame[] = []
   const kids: HomeFrame[] = []
+  const editorial: HomeFrame[] = []
   const videos: HomeVideoFrame[] = []
 
   for (const row of rows) {
@@ -63,11 +64,14 @@ export async function loadHomePhotos(): Promise<HomePhotoSlots> {
 
     const { data: image } = supabase.storage.from('photos').getPublicUrl(row.storage_path)
     const frame: HomeFrame = { id: row.id, src: image.publicUrl, alt, ...dimensions }
-    // A photo tagged onto both sections appears in whichever feed is read
-    // first; the assignment never reuses an id within a feed.
-    if (row.pages.includes('portraits')) portraits.push(frame)
+    // A photo tagged onto several sections goes to one feed only, so the same
+    // face never appears twice on the page. The narrower section wins: a
+    // portrait that is also editorial belongs to the editorial row here (and
+    // still shows on /portraits, which reads the feeds directly).
+    if (row.pages.includes('editorial')) editorial.push(frame)
     else if (row.pages.includes('kids')) kids.push(frame)
+    else if (row.pages.includes('portraits')) portraits.push(frame)
   }
 
-  return assignHomePhotos({ portraits, kids, videos })
+  return assignHomePhotos({ portraits, kids, editorial, videos })
 }

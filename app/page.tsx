@@ -1,26 +1,23 @@
 import { Suspense } from "react";
 import { TopNav } from "./components/top-nav";
-import { MasonryGrid, MasonryGridSkeleton } from "./components/ui/masonry-grid";
 import { Footer } from "./components/footer";
-import { FloatingCta } from "./components/floating-cta";
-import { WorkshopBanner } from "./components/workshop-banner";
+import { HomeStory, HomeStorySkeleton } from "./components/home/home-story";
 
-export default function Home() {
+// The home page (design variant C): hero, people, the session, the work,
+// video, behind the camera, workshops, invitation. Title, description and
+// OpenGraph come from the root layout. The story carries its own CTAs (hero,
+// session, work rows, invitation) and a live workshops section, so the
+// floating BOOK cluster and the workshop banner stay off this page — they live
+// on the feeds (/portraits, /kids, /editorial, /video). The header shows the
+// wordmark alone: the story links to every section from inside the page.
+export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <TopNav />
-      <Suspense fallback={null}>
-        <WorkshopBanner />
+      <TopNav sections={false} />
+      <Suspense fallback={<HomeStorySkeleton />}>
+        <HomeStory />
       </Suspense>
-      <div className="mx-auto max-w-7xl w-full px-4 md:px-6 py-8">
-        <Suspense fallback={<MasonryGridSkeleton />}>
-          <MasonryGrid />
-        </Suspense>
-      </div>
-      <Footer floatingCtaSpacer />
-      <Suspense fallback={null}>
-        <FloatingCta />
-      </Suspense>
+      <Footer />
     </div>
   );
 }

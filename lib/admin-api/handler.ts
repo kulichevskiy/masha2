@@ -7,6 +7,7 @@ import { expectedVersion, jsonBody, pagination, response, result } from './http'
 import { resources } from './resources'
 import { reorderSchema, uuid, validate, validatePatch } from './schema'
 import { beginUpload, drainStorageCleanup, getUpload, verifyUpload } from './uploads'
+import { PHOTO_PAGES } from '../photo-pages'
 
 type Context = { db: AdminDb; token: Principal; auditId: string | null }
 const supportedMethods = ['GET', 'POST', 'PATCH', 'DELETE']
@@ -21,7 +22,7 @@ async function mutate(ctx: Context, resource: string, action: string, id: string
 }
 
 function invalidate() {
-  for (const path of ['/admin', '/', '/new', '/kids', '/video', '/book', '/workshop', '/gift']) revalidatePath(path)
+  for (const path of ['/admin', '/', '/portraits', '/kids', '/editorial', '/video', '/book', '/workshop', '/gift']) revalidatePath(path)
 }
 
 function validateId(id: string) { validate(uuid, id, 'id'); return id }
@@ -67,7 +68,7 @@ async function dispatch(request: Request, path: string[], ctx: Context): Promise
     if (name === 'media') {
       const kind = url.searchParams.get('kind'), page = url.searchParams.get('page')
       if (kind !== null) { validate({ type: 'string', enum: ['photo', 'video'] }, kind, 'kind'); query = query.eq('kind', kind) }
-      if (page !== null) { validate({ type: 'string', enum: ['portraits', 'kids', 'video'] }, page, 'page'); query = query.contains('pages', [page]) }
+      if (page !== null) { validate({ type: 'string', enum: [...PHOTO_PAGES] }, page, 'page'); query = query.contains('pages', [page]) }
     }
     if (name === 'workshop-subscribers') {
       for (const [key, column, values] of [['season', 'seasons', ['winter', 'spring', 'summer']], ['city', 'cities', ['berlin', 'hamburg', 'paris']]] as const) {

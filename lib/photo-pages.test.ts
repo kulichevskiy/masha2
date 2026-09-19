@@ -3,8 +3,9 @@ import { togglePhotoPage, PHOTO_PAGE_LABELS, PHOTO_PAGES } from './photo-pages'
 
 describe('photo pages', () => {
   it('exposes all public sections in canonical order', () => {
-    expect(PHOTO_PAGES).toEqual(['portraits', 'kids', 'video'])
+    expect(PHOTO_PAGES).toEqual(['portraits', 'kids', 'video', 'editorial'])
     expect(PHOTO_PAGE_LABELS.video).toBe('Video')
+    expect(PHOTO_PAGE_LABELS.editorial).toBe('Editorial')
   })
 })
 

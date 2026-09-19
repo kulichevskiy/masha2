@@ -324,7 +324,9 @@ export async function updateWorkshop(
   }
 
   revalidatePath('/')
+  revalidatePath('/portraits')
   revalidatePath('/kids')
+  revalidatePath('/editorial')
   revalidatePath('/video')
   revalidatePath('/workshop')
   revalidatePath('/admin')

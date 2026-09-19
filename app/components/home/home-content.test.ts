@@ -58,23 +58,50 @@ describe('resolveFrame', () => {
 
   it('keeps the feed frame while no photograph is pinned', async () => {
     const { resolveFrame } = await import('./home-content')
-    expect(resolveFrame({ path: '', alt: '' }, feedFrame)).toEqual(feedFrame)
+    expect(resolveFrame({ path: '', alt: '', focus: { x: 50, y: 50 } }, feedFrame)).toEqual(feedFrame)
   })
 
   it('lets the pinned alt text override the feed frame alt', async () => {
     const { resolveFrame } = await import('./home-content')
-    expect(resolveFrame({ path: '', alt: 'written in admin' }, feedFrame)?.alt).toBe('written in admin')
+    expect(resolveFrame({ path: '', alt: 'written in admin', focus: { x: 50, y: 50 } }, feedFrame)?.alt).toBe('written in admin')
   })
 
   it('uses the pinned photograph when there is one', async () => {
     const { resolveFrame } = await import('./home-content')
-    const frame = resolveFrame({ path: 'home/a.jpg', alt: 'pinned' }, feedFrame)
+    const frame = resolveFrame({ path: 'home/a.jpg', alt: 'pinned', focus: { x: 50, y: 50 } }, feedFrame)
     expect(frame?.src).toContain('/storage/v1/object/public/photos/home/a.jpg')
     expect(frame?.alt).toBe('pinned')
   })
 
   it('returns nothing when neither the slot nor the feed has a frame', async () => {
     const { resolveFrame } = await import('./home-content')
-    expect(resolveFrame({ path: '', alt: '' }, null)).toBeNull()
+    expect(resolveFrame({ path: '', alt: '', focus: { x: 50, y: 50 } }, null)).toBeNull()
+  })
+})
+
+describe('feedFrames', () => {
+  it('hands each slot the top of its feed, and Maria her own portrait', async () => {
+    const { feedFrames, MARIA_PORTRAIT } = await import('./home-content')
+    const f = (id: string) => ({ id, src: `https://cdn/${id}.jpg`, alt: id, width: 1, height: 1 })
+    const slots = {
+      hero: f('hero'),
+      people: [f('p1'), f('k1'), f('p2')],
+      experience: f('exp'),
+      work: { portraits: [], kids: [], editorial: [] },
+      video: null,
+      workshops: f('ws'),
+      invitation: null,
+    }
+
+    const feed = feedFrames(slots)
+    expect(feed.hero[0]?.id).toBe('hero')
+    expect(feed.people.map((x) => x?.id)).toEqual(['p1', 'k1', 'p2'])
+    expect(feed.session[0]?.id).toBe('exp')
+    expect(feed.behind[0]).toBe(MARIA_PORTRAIT)
+    expect(feed.workshops[0]?.id).toBe('ws')
+    expect(feed.invitation).toEqual([null])
+    // The work rows and the video frame are not slots.
+    expect(feed.work).toEqual([])
+    expect(feed.video).toEqual([])
   })
 })

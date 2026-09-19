@@ -4,25 +4,49 @@ import { useState, useTransition } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { PhotoUploader } from './photo-uploader'
+import { PhotoUploader, publicPhotoUrl } from './photo-uploader'
 import { updateHomeStory } from '../actions'
-import type { HomeStoryContent, StoryKey, StorySection } from '@/lib/home-story-content'
+import {
+  focusPosition,
+  type HomeStoryContent,
+  type StoryFocus,
+  type StoryKey,
+  type StorySection,
+} from '@/lib/home-story-content'
 
 // Editor for the home story page. The whole record is one client form: edits
 // live in local state and persist on Save, like the workshop tab.
 //
 // The layout owns the slots — how many photographs a section holds, where its
-// link goes — so this form only offers the fields each section actually shows.
-// Clearing a field puts the shipped wording back rather than blanking the page.
+// link goes, what shape it is cropped to — so this form only offers the fields
+// each section actually shows. Clearing a field puts the shipped wording back
+// rather than blanking the page.
+//
+// Each photo slot carries two sliders for the point the crop keeps in view,
+// with a live preview in the slot's own shape. Full-bleed frames preview at a
+// phone's proportions, because that is the only place their crop bites: on a
+// desktop they are wider than the photograph.
 
 type FieldKey = 'label' | 'heading' | 'body' | 'cta' | 'link'
+
+type PhotoSpec = {
+  label: string
+  // Tailwind aspect class of the preview — the shape the page crops to.
+  ratio: string
+  hint?: string
+}
 
 type SectionSpec = {
   key: StoryKey
   title: string
   note?: string
   fields: { key: FieldKey; label: string; multiline?: boolean }[]
-  photos: string[]
+  photos: PhotoSpec[]
+}
+
+const PHONE_BLEED: Omit<PhotoSpec, 'label'> = {
+  ratio: 'aspect-[9/16]',
+  hint: 'Превью в пропорциях телефона — там кадр обрезается сильнее всего.',
 }
 
 const HEADING = { key: 'heading' as const, label: 'Заголовок (перенос строки = новая строка)', multiline: true }
@@ -40,24 +64,28 @@ const SECTIONS: SectionSpec[] = [
       { key: 'cta', label: 'Кнопка (ведёт на /book)' },
       { key: 'link', label: 'Ссылка-стрелка (ведёт к разделу «работы»)' },
     ],
-    photos: ['Кадр на весь экран'],
+    photos: [{ label: 'Кадр на весь экран', ...PHONE_BLEED }],
   },
   {
     key: 'people',
     title: '2 · Люди',
     fields: [LABEL, HEADING, BODY],
-    photos: ['Левый кадр', 'Средний кадр', 'Правый кадр'],
+    photos: [
+      { label: 'Левый кадр', ratio: 'aspect-[4/5]' },
+      { label: 'Средний кадр', ratio: 'aspect-[4/5]' },
+      { label: 'Правый кадр', ratio: 'aspect-[4/5]' },
+    ],
   },
   {
     key: 'session',
     title: '3 · Съёмка',
     fields: [LABEL, HEADING, BODY, { key: 'link', label: 'Ссылка-стрелка (ведёт на /book)' }],
-    photos: ['Кадр справа'],
+    photos: [{ label: 'Кадр справа', ratio: 'aspect-[3/4]' }],
   },
   {
     key: 'work',
     title: '4 · Работы',
-    note: 'Фотографии в этом блоке берутся из начала лент «Портреты», «Дети» и снова «Портреты» — порядок меняется на вкладке «Фото».',
+    note: 'Фотографии в этом блоке берутся из начала лент «Портреты», «Дети» и «Editorial» — порядок меняется на вкладке «Фото». Пока в ленте Editorial ничего не отмечено, её строка стоит без кадров.',
     fields: [LABEL],
     photos: [],
   },
@@ -72,14 +100,14 @@ const SECTIONS: SectionSpec[] = [
     key: 'behind',
     title: '6 · За камерой',
     fields: [LABEL, HEADING, BODY],
-    photos: ['Портрет Марии'],
+    photos: [{ label: 'Портрет Марии', ratio: 'aspect-[4/5]' }],
   },
   {
     key: 'workshops',
     title: '7 · Воркшопы',
     note: 'Пока воркшоп анонсирован, под текстом сами появляются его название, даты и места, а подпись у ссылки берётся с баннера.',
     fields: [LABEL, HEADING, BODY, { key: 'link', label: 'Ссылка-стрелка, когда воркшопа нет' }],
-    photos: ['Кадр справа'],
+    photos: [{ label: 'Кадр справа', ratio: 'aspect-[3/2]' }],
   },
   {
     key: 'invitation',
@@ -90,11 +118,20 @@ const SECTIONS: SectionSpec[] = [
       { key: 'cta', label: 'Кнопка (ведёт на /book)' },
       { key: 'link', label: 'Ссылка-стрелка (письмо Марии)' },
     ],
-    photos: ['Кадр на весь экран'],
+    photos: [{ label: 'Кадр на весь экран', ...PHONE_BLEED }],
   },
 ]
 
-export function HomeTab({ content, supabaseUrl }: { content: HomeStoryContent; supabaseUrl: string }) {
+export function HomeTab({
+  content,
+  previews,
+  supabaseUrl,
+}: {
+  content: HomeStoryContent
+  // The feed frame behind each slot, for the preview while nothing is pinned.
+  previews: Record<StoryKey, (string | null)[]>
+  supabaseUrl: string
+}) {
   const [state, setState] = useState<HomeStoryContent>(content)
   const [pending, startTransition] = useTransition()
   const [savedAt, setSavedAt] = useState<Date | null>(null)
@@ -104,7 +141,7 @@ export function HomeTab({ content, supabaseUrl }: { content: HomeStoryContent; s
     setState((current) => ({ ...current, [key]: { ...current[key], ...patch } }))
   }
 
-  const patchPhoto = (key: StoryKey, index: number, patch: Partial<{ path: string; alt: string }>) => {
+  const patchPhoto = (key: StoryKey, index: number, patch: Partial<{ path: string; alt: string; focus: StoryFocus }>) => {
     setState((current) => ({
       ...current,
       [key]: {
@@ -192,26 +229,40 @@ export function HomeTab({ content, supabaseUrl }: { content: HomeStoryContent; s
                 </div>
               ))}
 
-            {spec.photos.map((photoLabel, index) => (
-              <div key={index} className="flex flex-col gap-2">
-                <Label>{photoLabel}</Label>
-                <p className="text-xs text-muted-foreground m-0">
-                  Пока фотография не выбрана, кадр берётся из начала ленты.
-                </p>
-                <PhotoUploader
-                  folder="home"
-                  supabaseUrl={supabaseUrl}
-                  currentPath={section.photos[index]?.path || null}
-                  onUploaded={(path) => patchPhoto(spec.key, index, { path })}
-                  onClear={() => patchPhoto(spec.key, index, { path: '' })}
-                />
-                <Field
-                  label="Описание кадра (alt)"
-                  value={section.photos[index]?.alt ?? ''}
-                  onChange={(value) => patchPhoto(spec.key, index, { alt: value })}
-                />
-              </div>
-            ))}
+            {spec.photos.map((photoSpec, index) => {
+              const photo = section.photos[index]
+              const src = photo?.path ? publicPhotoUrl(supabaseUrl, photo.path) : previews[spec.key]?.[index] ?? null
+              return (
+                <div key={index} className="flex flex-col gap-2">
+                  <Label>{photoSpec.label}</Label>
+                  <p className="text-xs text-muted-foreground m-0">
+                    Пока фотография не выбрана, кадр берётся из начала ленты.
+                  </p>
+                  <PhotoUploader
+                    folder="home"
+                    supabaseUrl={supabaseUrl}
+                    currentPath={photo?.path || null}
+                    onUploaded={(path) => patchPhoto(spec.key, index, { path })}
+                    onClear={() => patchPhoto(spec.key, index, { path: '' })}
+                  />
+                  <Field
+                    label="Описание кадра (alt)"
+                    value={photo?.alt ?? ''}
+                    onChange={(value) => patchPhoto(spec.key, index, { alt: value })}
+                  />
+                  {photo && (
+                    <FocusEditor
+                      id={`${spec.key}-${index}`}
+                      photo={photo}
+                      src={src}
+                      ratio={photoSpec.ratio}
+                      hint={photoSpec.hint}
+                      onChange={(focus) => patchPhoto(spec.key, index, { focus })}
+                    />
+                  )}
+                </div>
+              )
+            })}
           </section>
         )
       })}
@@ -249,6 +300,92 @@ function Field({
       ) : (
         <Input value={value} onChange={(e) => onChange(e.target.value)} />
       )}
+    </div>
+  )
+}
+
+// The point the crop keeps in view. Two sliders, and the frame itself redrawn
+// on every move so the author sees the crop, not a number.
+function FocusEditor({
+  id,
+  photo,
+  src,
+  ratio,
+  hint,
+  onChange,
+}: {
+  id: string
+  photo: StorySection['photos'][number]
+  src: string | null
+  ratio: string
+  hint?: string
+  onChange: (focus: StoryFocus) => void
+}) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-[160px_1fr] sm:items-start">
+      <div className={`relative overflow-hidden bg-muted ${ratio} w-40`}>
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: focusPosition(photo) }}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center p-3 text-center text-xs text-muted-foreground">
+            В ленте пока нет кадра для этого места
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-3">
+        <Label className="text-xs text-muted-foreground">Что оставить в кадре</Label>
+        <Slider
+          id={`${id}-x`}
+          label="По горизонтали"
+          value={photo.focus.x}
+          onChange={(x) => onChange({ ...photo.focus, x })}
+        />
+        <Slider
+          id={`${id}-y`}
+          label="По вертикали"
+          value={photo.focus.y}
+          onChange={(y) => onChange({ ...photo.focus, y })}
+        />
+        {hint && <p className="text-xs text-muted-foreground m-0">{hint}</p>}
+      </div>
+    </div>
+  )
+}
+
+function Slider({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string
+  label: string
+  value: number
+  onChange: (value: number) => void
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <Label htmlFor={id} className="w-32 shrink-0 text-xs">
+        {label}
+      </Label>
+      <input
+        id={id}
+        type="range"
+        min={0}
+        max={100}
+        step={1}
+        value={value}
+        aria-label={label}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-foreground"
+      />
+      <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{value}%</span>
     </div>
   )
 }

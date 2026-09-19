@@ -1,0 +1,47 @@
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import { TopNav } from "../components/top-nav";
+import { MasonryGrid, MasonryGridSkeleton } from "../components/ui/masonry-grid";
+import { Footer } from "../components/footer";
+import { FloatingCta } from "../components/floating-cta";
+import { WorkshopBanner } from "../components/workshop-banner";
+
+const title = "Editorial";
+const description =
+  "Editorial photography by Maria Chevskaya — stories, model tests and collaborations with magazines, artists and authors.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  openGraph: {
+    title: `${title} | Maria Chevskaya`,
+    description,
+  },
+  twitter: {
+    title: `${title} | Maria Chevskaya`,
+    description,
+  },
+};
+
+// Mirrors the home shell (top nav, workshop banner, floating CTA, footer) but
+// renders the editorial feed. MasonryGrid page="editorial" filters
+// on photos.pages @> {editorial} and carries its own empty state.
+export default function EditorialPage() {
+  return (
+    <div className="flex min-h-screen flex-col bg-white">
+      <TopNav />
+      <Suspense fallback={null}>
+        <WorkshopBanner />
+      </Suspense>
+      <div className="mx-auto max-w-7xl w-full px-4 md:px-6 py-8">
+        <Suspense fallback={<MasonryGridSkeleton />}>
+          <MasonryGrid page="editorial" />
+        </Suspense>
+      </div>
+      <Footer floatingCtaSpacer />
+      <Suspense fallback={null}>
+        <FloatingCta />
+      </Suspense>
+    </div>
+  );
+}

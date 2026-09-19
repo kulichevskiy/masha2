@@ -3,6 +3,7 @@ import rehypeParse from 'rehype-parse'
 import rehypeSanitize from 'rehype-sanitize'
 import rehypeStringify from 'rehype-stringify'
 import { ApiError } from './errors'
+import { PHOTO_PAGES } from '../photo-pages'
 
 // The same schemas drive runtime validation and the published OpenAPI contract.
 export type Schema = {
@@ -28,7 +29,7 @@ const faq = array(object({ question: string, answer: html }, ['question', 'answe
 const tariff = object({ key: { type: 'string', enum: ['short', 'full'] }, name: string, days: string, price: string, summary: string, desc: string, days_list: strings, extras: strings, note: string, featured: boolean }, ['key', 'name', 'days', 'price', 'summary', 'desc', 'days_list', 'extras', 'note', 'featured'])
 
 export const patches: Record<string, Schema> = {
-  media: object({ title: nullableString, description: nullableString, alt_text: nullableString, pages: { type: 'array', items: { type: 'string', enum: ['portraits', 'kids', 'video'] }, uniqueItems: true, maxItems: 3 } }),
+  media: object({ title: nullableString, description: nullableString, alt_text: nullableString, pages: { type: 'array', items: { type: 'string', enum: [...PHOTO_PAGES] }, uniqueItems: true, maxItems: PHOTO_PAGES.length } }),
   tiers: object({ name: string, price_text: string, subtitle: nullableString, description: nullableHtml, is_active: boolean, is_accent: boolean }),
   faq: object({ question: string, answer: html, is_visible: boolean }),
   workshop: object({

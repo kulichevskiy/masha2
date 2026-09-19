@@ -1,9 +1,9 @@
 import Link from "next/link"
 import { SectionNav } from "./section-nav"
 
-// `sections` hides the Portraits / Kids / Video row. The home story at /new
-// carries its own links to those feeds inside the page, so the header there is
-// the wordmark alone.
+// `sections` hides the Portraits / Kids / Editorial / Video row. The home story
+// carries its own links to those feeds inside the page, so the header on "/"
+// is the wordmark alone.
 export function TopNav({ sections = true }: { sections?: boolean } = {}) {
   return (
     <nav className="bg-white/50 backdrop-blur-md w-full">
