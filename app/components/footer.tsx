@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { CONTACT_EMAIL } from "@/lib/site"
+import { typeset } from "@/lib/typography"
 
 // Phosphor-style sharp icons: square line caps, mitered corners, 1.25 stroke.
 // Keeps the footer visually consistent with the zero-radius public surface.
@@ -60,7 +61,7 @@ export function Footer({ floatingCtaSpacer = false }: { floatingCtaSpacer?: bool
               Maria Chevskaya
             </Link>
             <p className="text-sm font-inter text-gray-500 tracking-wider lowercase opacity-50">
-              Portrait and editorial photographer
+              {typeset("Portrait and editorial photographer")}
             </p>
           </div>
 

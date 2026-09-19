@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 import { PHOTO_IMAGE_QUALITY } from '@/lib/image-config'
 import type { HomeFrame } from '@/lib/home-story-photos'
 import { paragraphs } from '@/lib/home-story-content'
+import { typeset } from '@/lib/typography'
 
 // ── type ──────────────────────────────────────────────────────
 // Two tones carry the whole page: `paper` (black type on a white section) and
@@ -25,7 +26,7 @@ const LABEL_TONE: Record<Tone, string> = {
 export function Label({ children, tone = 'paper' }: { children: ReactNode; tone?: Tone }) {
   return (
     <p className={`font-inter text-[11px] md:text-xs tracking-[0.3em] lowercase m-0 mb-4 md:mb-6 ${LABEL_TONE[tone]}`}>
-      {children}
+      {typeof children === 'string' ? typeset(children) : children}
     </p>
   )
 }
@@ -83,7 +84,7 @@ export function Body({
   const color = strong ? 'text-black' : BODY_TONE[tone]
   return (
     <p className={`font-inter text-base md:text-lg leading-[1.7] m-0 max-w-[520px] [text-wrap:pretty] ${color} ${className}`}>
-      {children}
+      {typeof children === 'string' ? typeset(children) : children}
     </p>
   )
 }
@@ -106,7 +107,8 @@ export function Arrow({
       href={href}
       className={`inline-block font-bebas-neue text-lg tracking-[0.1em] uppercase border-b pb-1 transition-opacity hover:opacity-60 ${color}`}
     >
-      {children} →
+      {typeof children === 'string' ? typeset(children) : children}
+      {'\u00A0→'}
     </Link>
   )
 }
@@ -119,7 +121,7 @@ export function Plate({ href, children }: { href: string; children: ReactNode })
       href={href}
       className="block w-full md:inline-block md:w-auto bg-white text-black text-center font-bebas-neue text-xl tracking-[0.12em] uppercase px-10 md:px-14 py-4 transition-colors hover:bg-gray-200"
     >
-      {children}
+      {typeof children === 'string' ? typeset(children) : children}
     </Link>
   )
 }
@@ -241,9 +243,10 @@ export function Bleed({
 // ── editable copy ─────────────────────────────────────────────
 
 // A heading straight from the admin: every newline is a line break, so the
-// author decides where "and editorial" sits.
+// author decides where "and editorial" sits. Within a line the typesetter
+// keeps short words and dashes from hanging.
 export function Lines({ text }: { text: string }) {
-  const rows = text.split('\n')
+  const rows = typeset(text).split('\n')
   return (
     <>
       {rows.map((row, index) => (
@@ -268,7 +271,7 @@ export function Paragraphs({
   className?: string
   gap?: string
 }) {
-  const parts = paragraphs(text)
+  const parts = paragraphs(text).map(typeset)
   if (parts.length === 0) return null
   if (parts.length === 1) {
     return (

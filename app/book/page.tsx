@@ -7,6 +7,7 @@ import { BookingFaq } from "./booking-faq"
 import { RichText } from "@/components/rich-text"
 import { PHOTO_IMAGE_QUALITY } from "@/lib/image-config"
 import { CONTACT_EMAIL } from "@/lib/site"
+import { typeset } from "@/lib/typography"
 
 export const metadata = {
   title: "Booking",
@@ -51,8 +52,10 @@ export default async function BookPage() {
         </h1>
 
         <p className="mb-8">
-          People I work with are seen, not just photographed. Each session is built around presence, character and rhythm, not poses or time slots.
-          It is a collaborative process, calm and attentive, with space to arrive into yourself.
+          {typeset(
+            "People I work with are seen, not just photographed. Each session is built around presence, character and rhythm, not poses or time slots. " +
+              "It is a collaborative process, calm and attentive, with space to arrive into yourself."
+          )}
         </p>
 
         {activeTiers.length > 0 && (
@@ -86,9 +89,7 @@ export default async function BookPage() {
         )}
 
         <div className="mb-8 -mx-4 md:-mx-6 bg-gray-50 p-6 md:p-10">
-          <p className="mb-8">
-            If this feels like a match, pick a tier, leave your email and a few words.
-          </p>
+          <p className="mb-8">{typeset("If this feels like a match, pick a tier, leave your email and a few words.")}</p>
           {activeTiers.length > 0 ? (
             <BookingForm tiers={activeTiers.map(({ id, name, price_text }) => ({ id, name, price_text }))} />
           ) : (
