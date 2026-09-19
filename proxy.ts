@@ -2,6 +2,11 @@ import { updateSession } from '@/lib/supabase/middleware'
 import { type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
+  // API owns Bearer authentication; docs stay public without cookie refresh.
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    const { NextResponse } = await import('next/server')
+    return NextResponse.next()
+  }
   return await updateSession(request)
 }
 
