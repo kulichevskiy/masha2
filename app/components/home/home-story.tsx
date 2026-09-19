@@ -15,6 +15,7 @@ import type { HomeStoryContent, StorySection } from '@/lib/home-story-content'
 import { getPublicWorkshop } from '../../workshop/data'
 import { loadHomePhotos } from './home-photos'
 import { loadHomeContent, resolveFrame } from './home-content'
+import { CONTACT_EMAIL } from '@/lib/site'
 import { VideoSection } from './video-section'
 import {
   Arrow,
@@ -29,8 +30,6 @@ import {
   Plate,
   Section,
 } from './story-ui'
-
-const CONTACT_EMAIL = 'maria.chevskaya@gmail.com'
 
 // The portrait of Maria belongs to no feed, so the "behind the camera" slot
 // falls back to the same file the booking page uses until she pins another.

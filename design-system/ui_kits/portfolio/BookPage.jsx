@@ -2,7 +2,7 @@ function EmailCTA() {
   const [hover, setHover] = React.useState(false);
   return (
     <a
-      href="mailto:maria.chevskaya@gmail.com"
+      href="mailto:maria@chevskaya.com"
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{

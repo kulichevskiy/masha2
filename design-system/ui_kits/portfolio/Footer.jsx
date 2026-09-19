@@ -76,7 +76,7 @@ function Footer({ onHome, onLogin }) {
           </div>
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
             <DimLink href="https://www.instagram.com/maria.chevskaya/" label="Instagram"><IG/></DimLink>
-            <DimLink href="mailto:maria.chevskaya@gmail.com" label="Email"><Mail/></DimLink>
+            <DimLink href="mailto:maria@chevskaya.com" label="Email"><Mail/></DimLink>
             <DimLink href="#" label="Login" onClick={(e) => { e.preventDefault(); onLogin && onLogin(); }}><User/></DimLink>
           </div>
           <div style={{ fontSize: 14, color: "var(--muted)", opacity: 0.5 }}>

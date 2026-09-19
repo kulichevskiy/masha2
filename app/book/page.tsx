@@ -6,6 +6,7 @@ import { BookingForm } from "./booking-form"
 import { BookingFaq } from "./booking-faq"
 import { RichText } from "@/components/rich-text"
 import { PHOTO_IMAGE_QUALITY } from "@/lib/image-config"
+import { CONTACT_EMAIL } from "@/lib/site"
 
 export const metadata = {
   title: "Booking",
@@ -92,7 +93,7 @@ export default async function BookPage() {
             <BookingForm tiers={activeTiers.map(({ id, name, price_text }) => ({ id, name, price_text }))} />
           ) : (
             <a
-              href="mailto:maria.chevskaya@gmail.com"
+              href={`mailto:${CONTACT_EMAIL}`}
               className="inline-block bg-black text-white px-14 py-3 font-bebas-neue text-xl tracking-wider uppercase hover:bg-gray-800 transition-colors"
             >
               Email me

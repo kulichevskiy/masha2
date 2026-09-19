@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { CONTACT_EMAIL } from "@/lib/site"
 
 // Phosphor-style sharp icons: square line caps, mitered corners, 1.25 stroke.
 // Keeps the footer visually consistent with the zero-radius public surface.
@@ -74,7 +75,7 @@ export function Footer({ floatingCtaSpacer = false }: { floatingCtaSpacer?: bool
               <InstagramSharp />
             </Link>
             <a
-              href="mailto:maria.chevskaya@gmail.com"
+              href={`mailto:${CONTACT_EMAIL}`}
               aria-label="Email"
               className="text-gray-500 opacity-50 transition-opacity hover:opacity-100"
             >
