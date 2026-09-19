@@ -53,7 +53,10 @@ export function VideoSection({ content, video }: { content: StorySection; video:
 
   // Phones only, and only for readers who accept motion.
   useEffect(() => {
-    const query = window.matchMedia('(max-width: 767px) and (prefers-reduced-motion: no-preference)')
+    // Same breakpoint the `max-md:motion-safe:hidden` control uses, written
+    // the way Tailwind writes it, so the two cannot disagree on a fractional
+    // viewport width.
+    const query = window.matchMedia('(not (min-width: 768px)) and (prefers-reduced-motion: no-preference)')
     const update = () => setScrollDriven(query.matches)
     update()
     query.addEventListener('change', update)
@@ -109,9 +112,11 @@ export function VideoSection({ content, video }: { content: StorySection; video:
       }
       controls={
         video && (
-          // On a phone the scroll drives the film, so the square would only
-          // sit in the middle of the headline for nothing.
-          <div className="absolute inset-0 hidden md:flex items-center justify-center">
+          // The square hides exactly where the scroll drives the film — the
+          // same condition the observer runs on. A phone that asked for
+          // reduced motion keeps the control, since nothing else would start
+          // the film there.
+          <div className="absolute inset-0 flex max-md:motion-safe:hidden items-center justify-center">
             <button
               type="button"
               onClick={toggle}

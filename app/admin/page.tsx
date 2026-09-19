@@ -15,7 +15,7 @@ import { WorkshopTab } from './components/workshop-tab'
 import { getAdminWorkshop } from '@/app/workshop/data'
 import { GiftTab } from './components/gift-tab'
 import { HomeTab } from './components/home-tab'
-import { loadHomeContent } from '@/app/components/home/home-content'
+import { loadHomeContentForAdmin } from '@/app/components/home/home-content'
 import { getAdminGiftCertificate } from '@/app/gift/data'
 
 const VALID_TABS: AdminTab[] = ['photos', 'home', 'tiers', 'faq', 'workshop', 'gift', 'requests', 'settings', 'api']
@@ -84,8 +84,23 @@ export default async function AdminPage({ searchParams }: Props) {
 }
 
 async function HomeTabSection() {
-  const content = await loadHomeContent()
-  return <HomeTab content={content} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} />
+  const read = await loadHomeContentForAdmin()
+
+  // Showing the form on a failed read would load the shipped defaults into it,
+  // and the next Save would write them over the stored copy.
+  if (!read.ok) {
+    return (
+      <div className="border border-destructive/50 rounded-md p-4 text-sm">
+        <p className="font-medium m-0">Не удалось загрузить тексты главной</p>
+        <p className="text-muted-foreground mt-2 mb-0">
+          {read.error}. Обновите страницу — редактировать сейчас нельзя, иначе сохранение затрёт то, что уже
+          записано.
+        </p>
+      </div>
+    )
+  }
+
+  return <HomeTab content={read.content} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} />
 }
 
 async function PhotosTab() {
