@@ -39,14 +39,18 @@ describe('normaliseStoryContent', () => {
     expect(content.people.photos[1]).toEqual(DEFAULT_CONTENT.people.photos[1])
   })
 
-  it('ships a focus for every slot, with the hero anchored left for phones', () => {
-    for (const section of Object.values(DEFAULT_CONTENT)) {
-      for (const photo of section.photos) {
-        expect(photo.focus.x).toBeGreaterThanOrEqual(0)
-        expect(photo.focus.y).toBeLessThanOrEqual(100)
-      }
-    }
-    expect(DEFAULT_CONTENT.hero.photos[0].focus).toEqual({ x: 20, y: 30 })
+  it('ships the crops the layout had, with the hero anchored left for phones', () => {
+    const focus = (key: keyof typeof DEFAULT_CONTENT) => DEFAULT_CONTENT[key].photos.map((p) => p.focus)
+    // These were the hardcoded object-position values before the crop moved
+    // into the content; 50/50 is CSS "center", the old default.
+    expect(focus('hero')).toEqual([{ x: 20, y: 30 }])
+    expect(focus('people')).toEqual([{ x: 50, y: 20 }, { x: 50, y: 30 }, { x: 50, y: 50 }])
+    expect(focus('session')).toEqual([{ x: 50, y: 50 }])
+    expect(focus('behind')).toEqual([{ x: 50, y: 20 }])
+    expect(focus('workshops')).toEqual([{ x: 50, y: 35 }])
+    expect(focus('invitation')).toEqual([{ x: 50, y: 40 }])
+    expect(focus('work')).toEqual([])
+    expect(focus('video')).toEqual([])
   })
 
   it('keeps a stored focus, clamps it to the frame, and ignores junk', () => {

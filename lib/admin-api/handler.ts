@@ -7,7 +7,7 @@ import { expectedVersion, jsonBody, pagination, response, result } from './http'
 import { resources } from './resources'
 import { reorderSchema, uuid, validate, validatePatch } from './schema'
 import { beginUpload, drainStorageCleanup, getUpload, verifyUpload } from './uploads'
-import { PHOTO_PAGES } from '../photo-pages'
+import { PHOTO_PAGES, PHOTO_PAGE_PATHS } from '../photo-pages'
 
 type Context = { db: AdminDb; token: Principal; auditId: string | null }
 const supportedMethods = ['GET', 'POST', 'PATCH', 'DELETE']
@@ -22,7 +22,7 @@ async function mutate(ctx: Context, resource: string, action: string, id: string
 }
 
 function invalidate() {
-  for (const path of ['/admin', '/', '/portraits', '/kids', '/editorial', '/video', '/book', '/workshop', '/gift']) revalidatePath(path)
+  for (const path of ['/admin', '/', ...PHOTO_PAGE_PATHS, '/book', '/workshop', '/gift']) revalidatePath(path)
 }
 
 function validateId(id: string) { validate(uuid, id, 'id'); return id }

@@ -5,6 +5,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { resolveImageDimensions } from '@/lib/image-dimensions'
+import { PHOTO_PAGES } from '@/lib/photo-pages'
 import {
   assignHomePhotos,
   type HomeFrame,
@@ -28,7 +29,7 @@ export async function loadHomePhotos(): Promise<HomePhotoSlots> {
   const { data: rows, error } = await supabase
     .from('photos')
     .select('id, kind, storage_path, poster_path, duration_seconds, title, alt_text, pages, width, height')
-    .overlaps('pages', ['portraits', 'kids', 'video', 'editorial'])
+    .overlaps('pages', [...PHOTO_PAGES])
     .order('position', { ascending: true })
     .order('id', { ascending: true })
 

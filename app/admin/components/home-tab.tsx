@@ -44,10 +44,9 @@ type SectionSpec = {
   photos: PhotoSpec[]
 }
 
-const PHONE_BLEED: Omit<PhotoSpec, 'label'> = {
-  ratio: 'aspect-[9/16]',
-  hint: 'Превью в пропорциях телефона — там кадр обрезается сильнее всего.',
-}
+const PHONE_HINT = 'Превью в пропорциях телефона — там кадр обрезается сильнее всего.'
+
+const PHONE_BLEED: Omit<PhotoSpec, 'label'> = { ratio: 'aspect-[9/16]', hint: PHONE_HINT }
 
 const HEADING = { key: 'heading' as const, label: 'Заголовок (перенос строки = новая строка)', multiline: true }
 const BODY = { key: 'body' as const, label: 'Текст (пустая строка = новый абзац)', multiline: true }
@@ -73,14 +72,14 @@ const SECTIONS: SectionSpec[] = [
     photos: [
       { label: 'Левый кадр', ratio: 'aspect-[4/5]' },
       { label: 'Средний кадр', ratio: 'aspect-[4/5]' },
-      { label: 'Правый кадр', ratio: 'aspect-[4/5]' },
+      { label: 'Правый кадр', ratio: 'aspect-[3/2]', hint: PHONE_HINT },
     ],
   },
   {
     key: 'session',
     title: '3 · Съёмка',
     fields: [LABEL, HEADING, BODY, { key: 'link', label: 'Ссылка-стрелка (ведёт на /book)' }],
-    photos: [{ label: 'Кадр справа', ratio: 'aspect-[3/4]' }],
+    photos: [{ label: 'Кадр справа', ratio: 'aspect-[4/5]', hint: PHONE_HINT }],
   },
   {
     key: 'work',
@@ -322,8 +321,8 @@ function FocusEditor({
   onChange: (focus: StoryFocus) => void
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-[160px_1fr] sm:items-start">
-      <div className={`relative overflow-hidden bg-muted ${ratio} w-40`}>
+    <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-start">
+      <div className={`relative w-40 overflow-hidden bg-muted ${ratio}`}>
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

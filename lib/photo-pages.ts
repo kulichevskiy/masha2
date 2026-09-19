@@ -4,6 +4,11 @@ export const PHOTO_PAGES = ['portraits', 'kids', 'video', 'editorial'] as const
 
 export type PhotoPage = (typeof PHOTO_PAGES)[number]
 
+// Each section is served at /<section>. Anything that has to touch every feed
+// — a revalidation, a query across all sections — reads this list rather than
+// spelling the routes out.
+export const PHOTO_PAGE_PATHS = PHOTO_PAGES.map((page) => `/${page}`)
+
 // Admin-facing labels for each section.
 export const PHOTO_PAGE_LABELS: Record<PhotoPage, string> = {
   portraits: 'Portraits',

@@ -78,27 +78,28 @@ export function feedFrames(slots: HomePhotoSlots): Record<StoryKey, (HomeFrame |
   }
 }
 
-// Every slot resolved: pinned photograph first, feed frame otherwise.
-export function resolveFrames(
-  content: HomeStoryContent,
-  slots: HomePhotoSlots
-): Record<StoryKey, (HomeFrame | null)[]> {
+// The same walk over every section's slots, for whatever each slot becomes.
+function mapSlots<T>(
+  slots: HomePhotoSlots,
+  fn: (key: StoryKey, feed: HomeFrame | null, index: number) => T
+): Record<StoryKey, T[]> {
   const feed = feedFrames(slots)
   const keys = Object.keys(feed) as StoryKey[]
-  return Object.fromEntries(
-    keys.map((key) => [key, content[key].photos.map((photo, index) => resolveFrame(photo, feed[key][index] ?? null))])
-  ) as Record<StoryKey, (HomeFrame | null)[]>
+  return Object.fromEntries(keys.map((key) => [key, feed[key].map((frame, index) => fn(key, frame, index))])) as Record<
+    StoryKey,
+    T[]
+  >
+}
+
+// Every slot resolved: pinned photograph first, feed frame otherwise.
+export function resolveFrames(content: HomeStoryContent, slots: HomePhotoSlots): Record<StoryKey, (HomeFrame | null)[]> {
+  return mapSlots(slots, (key, feed, index) => resolveFrame(content[key].photos[index], feed))
 }
 
 // What the admin preview shows behind the sliders when no photograph is
 // pinned: the feed frame's URL, or nothing.
 export function feedPreviews(slots: HomePhotoSlots): Record<StoryKey, (string | null)[]> {
-  const feed = feedFrames(slots)
-  const keys = Object.keys(feed) as StoryKey[]
-  return Object.fromEntries(keys.map((key) => [key, feed[key].map((frame) => frame?.src ?? null)])) as Record<
-    StoryKey,
-    (string | null)[]
-  >
+  return mapSlots(slots, (_key, feed) => feed?.src ?? null)
 }
 
 // One slot: the pinned photograph when there is one, the feed frame otherwise.

@@ -10,6 +10,7 @@ import { checkRate } from '@/lib/rate-limit'
 import type { TablesUpdate } from '@/lib/supabase/database.types'
 import type { Tariff } from './data'
 import { parseWaitlistPreferences, WAITLIST_SEASONS, WAITLIST_CITIES } from './waitlist'
+import { PHOTO_PAGE_PATHS } from '@/lib/photo-pages'
 
 export type WorkshopSubmitResult =
   | { ok: true }
@@ -323,13 +324,8 @@ export async function updateWorkshop(
     throw new Error(`Failed to update workshop: ${error.message}`)
   }
 
-  revalidatePath('/')
-  revalidatePath('/portraits')
-  revalidatePath('/kids')
-  revalidatePath('/editorial')
-  revalidatePath('/video')
-  revalidatePath('/workshop')
-  revalidatePath('/admin')
+  // The banner sits on the home page and on every feed.
+  for (const path of ['/', ...PHOTO_PAGE_PATHS, '/workshop', '/admin']) revalidatePath(path)
 }
 
 export async function deleteWorkshopApplication(id: string): Promise<void> {

@@ -2,17 +2,17 @@
 
 > Portrait and editorial photographer crafting luminous, cinematic stories for thoughtful brands and people.
 
-This design system documents the visual language, components, and content voice of **Maria Chevskaya**'s portfolio site — a quiet, image-first presence that lets the photography do the talking. The chrome is intentionally thin: a centered name plate, a black-and-white masonry grid, a floating `BOOK` button, and a minimal booking page. Everything else gets out of the way.
+This design system documents the visual language, components, and content voice of **Maria Chevskaya**'s portfolio site — a quiet, image-first presence that lets the photography do the talking. The chrome is intentionally thin: a centered name plate, a home page that tells the story in eight image-led sections, four black-and-white masonry feeds (`/portraits`, `/kids`, `/editorial`, `/video`) with a floating `BOOK` button, and a minimal booking page. Everything else gets out of the way.
 
 ## Sources
 
 - **Codebase:** [github.com/kulichevskiy/masha2](https://github.com/kulichevskiy/masha2) (Next.js 16, React 19, Tailwind 4, shadcn/ui, Supabase). Public site + admin CMS for managing a photo portfolio.
-- **Live brand surfaces we modeled:** `app/page.tsx` (home masonry), `app/book/page.tsx` (booking), `app/components/top-nav.tsx`, `app/components/footer.tsx`, `app/components/floating-book-button.tsx`, `components/login-form.tsx`, `app/admin/**` (photographer CMS).
+- **Live brand surfaces we modeled:** `app/page.tsx` (home story; the masonry it was modeled on now lives at `app/portraits/page.tsx` via `app/components/feed-page.tsx`), `app/book/page.tsx` (booking), `app/components/top-nav.tsx`, `app/components/footer.tsx`, `app/components/floating-book-button.tsx`, `components/login-form.tsx`, `app/admin/**` (photographer CMS).
 - **Imagery:** 16 portfolio photographs imported from `public/photos/` into `assets/photos/`. All are black-and-white portrait / editorial frames — the whole visual weight of the brand.
 
 ## Products in scope
 
-1. **Public portfolio site** — one-page masonry gallery + a single booking page. In two languages of tone: English marketing copy (home, booking, SEO) and Russian UI copy (auth, admin CMS). Serves as the photographer's calling card.
+1. **Public portfolio site** — a story home page, four masonry feeds and a single booking page. In two languages of tone: English marketing copy (home, booking, SEO) and Russian UI copy (auth, admin CMS). Serves as the photographer's calling card.
 2. **Photographer admin** — password/Google-protected CMS to upload, reorder (drag handles), edit metadata, and toggle visibility on photos. Uses shadcn/ui primitives (Card, Input, Button, Switch) on a neutral surface, Russian labels throughout.
 
 ## Index
@@ -58,7 +58,7 @@ This design system documents the visual language, components, and content voice 
 > *Editorial / personal projects — upon request*
 > For magazines, artists, authors and long-term collaborations.
 
-**CTAs.** One per page, always. Solid black block, white text, condensed display caps, generous horizontal padding (`px-14` on booking, `px-20` on the floating button). Never stroked, never outline, never ghost — the button is a plate.
+**CTAs.** One per page, always. Solid black block, white text, condensed display caps, generous horizontal padding (`px-14` on booking, `px-20` on the floating button). Never stroked, never outline, never ghost — the button is a plate. The one exception is the home story: it opens and closes on a plate (white on the full-bleed frames), because the page is a single scroll with a beginning and an end; everything between them is an underlined arrow link, never a second plate.
 
 ---
 
