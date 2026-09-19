@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { Trash2, Plus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,8 +8,7 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { RichTextEditor } from '@/components/rich-text-editor'
 import { RichText } from '@/components/rich-text'
-import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
-import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
+import { PhotoUploader } from './photo-uploader'
 import { newId } from '@/lib/id'
 import { WAITLIST_SEASONS_RU, WAITLIST_CITIES_RU } from '@/app/workshop/waitlist'
 import {
@@ -53,11 +52,6 @@ type Props = {
   applications: Application[]
   subscribers: Subscriber[]
   supabaseUrl: string
-}
-
-function publicUrl(supabaseUrl: string, path: string | null | undefined): string | null {
-  if (!path) return null
-  return `${supabaseUrl}/storage/v1/object/public/photos/${path}`
 }
 
 // Ephemeral client-side id stitched onto list items whose row hosts an init-
@@ -752,96 +746,6 @@ function StringListEditor({
         {addLabel}
       </Button>
     </div>
-  )
-}
-
-function PhotoUploader({
-  currentPath,
-  onUploaded,
-  onClear,
-  supabaseUrl,
-}: {
-  currentPath: string | null
-  onUploaded: (path: string) => void
-  onClear: () => void
-  supabaseUrl: string
-}) {
-  // Each upload runs inside a fresh UploadSession instance keyed by sessionId.
-  // After a successful upload we bump sessionId so the inner component
-  // unmounts and remounts — the supabase upload hook re-initialises with
-  // empty `successes` / `files`, which avoids `isSuccess` flipping to true the
-  // moment the user drops a second file (and hiding the upload controls).
-  // The per-session id doubles as the storage key prefix so filenames that
-  // collide across sessions (e.g. `IMG_0001.jpg`) don't overwrite each other.
-  const [sessionId, setSessionId] = useState<string>(() => newId())
-  const currentUrl = publicUrl(supabaseUrl, currentPath)
-
-  return (
-    <div className="flex flex-col gap-3">
-      {currentUrl && (
-        <div className="flex items-center gap-3 border border-border rounded-md p-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={currentUrl}
-            alt=""
-            className="w-20 h-20 object-cover rounded border"
-          />
-          <div className="flex-1 text-xs text-muted-foreground truncate">
-            {currentPath}
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={onClear}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-      <UploadSession
-        key={sessionId}
-        prefix={sessionId}
-        onUploaded={(path) => {
-          onUploaded(path)
-          setSessionId(newId())
-        }}
-      />
-    </div>
-  )
-}
-
-function UploadSession({
-  prefix,
-  onUploaded,
-}: {
-  prefix: string
-  onUploaded: (storagePath: string) => void
-}) {
-  const upload = useSupabaseUpload({
-    bucketName: 'photos',
-    path: `workshop/${prefix}`,
-    allowedMimeTypes: ['image/*'],
-    maxFileSize: 10 * 1024 * 1024,
-    maxFiles: 1,
-    upsert: false,
-  })
-
-  const { successes } = upload
-  const firedRef = useRef(false)
-  useEffect(() => {
-    if (firedRef.current) return
-    if (successes.length === 0) return
-    firedRef.current = true
-    onUploaded(`workshop/${prefix}/${successes[0]}`)
-  }, [successes, prefix, onUploaded])
-
-  return (
-    <Dropzone {...upload}>
-      <DropzoneEmptyState />
-      <DropzoneContent />
-    </Dropzone>
   )
 }
 
