@@ -1,9 +1,10 @@
 import Link from "next/link"
 import { SectionNav } from "./section-nav"
+import { typeset } from "@/lib/typography"
 
-// `sections` hides the Portraits / Kids / Video row. The home story at /new
-// carries its own links to those feeds inside the page, so the header there is
-// the wordmark alone.
+// `sections` hides the Portraits / Kids / Editorial / Video row. The home story
+// carries its own links to those feeds inside the page, so the header on "/"
+// is the wordmark alone.
 export function TopNav({ sections = true }: { sections?: boolean } = {}) {
   return (
     <nav className="bg-white/50 backdrop-blur-md w-full">
@@ -21,7 +22,7 @@ export function TopNav({ sections = true }: { sections?: boolean } = {}) {
             >
               Maria Chevskaya
             </Link>
-            <p className="text-s md:text-m font-inter font-normal text-gray-500 text-center tracking-wider md:tracking-widest lowercase mt-0 md:mt-0 leading-relaxed">Portrait and editorial photographer in Berlin</p>
+            <p className="text-s md:text-m font-inter font-normal text-gray-500 text-center tracking-wider md:tracking-widest lowercase mt-0 md:mt-0 leading-relaxed">{typeset("Portrait and editorial photographer in Berlin")}</p>
           </div>
           {/* Section navigation — sits under the tagline on every public page. */}
           {sections && <SectionNav />}

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { resources } from '@/lib/admin-api/resources'
 import { patches } from '@/lib/admin-api/schema'
+import { PHOTO_PAGES } from '@/lib/photo-pages'
 
 export const metadata = { title: 'Admin API · Maria Chevskaya' }
 export default function ApiDocs() {
@@ -27,7 +28,7 @@ curl -X PATCH "$SITE/api/v1/workshop" \\
       <pre className="overflow-auto bg-gray-50 p-4 text-sm">{`# Requires Node 20+, ffmpeg and ffprobe.
 node scripts/api-upload.mjs --url "$SITE" --purpose media photo.jpg clip.mp4
 node scripts/api-upload.mjs --url "$SITE" --purpose workshop hero.jpg`}</pre>
-      <p>Use the repository script with <code>MASHA_API_TOKEN</code> in the environment. For a camera MOV, prepare an MP4 first with <code>scripts/prepare-video.sh</code>. New portfolio media have empty <code>pages</code>; PATCH them to assign portraits, kids or video. For page assets, use the returned storage_path in hero_photo_path, program or gallery.</p>
+      <p>Use the repository script with <code>MASHA_API_TOKEN</code> in the environment. For a camera MOV, prepare an MP4 first with <code>scripts/prepare-video.sh</code>. New portfolio media have empty <code>pages</code>; PATCH them to assign any of {PHOTO_PAGES.join(', ')}. For page assets, use the returned storage_path in hero_photo_path, program or gallery.</p>
       <p>Deleting portfolio media removes the record and queues file cleanup durably. If storage is unavailable, later API mutations retry cleanup. Unfinished uploads do not create portfolio records; their uploaded files can remain in storage.</p></section>
     <section className="space-y-3"><h2 className="text-xl">Editable fields</h2>{Object.entries(patches).map(([name, schema]) => <details key={name} className="border-b pb-3"><summary className="cursor-pointer">{name}</summary><pre className="mt-3 overflow-auto bg-gray-50 p-4 text-xs">{JSON.stringify(schema, null, 2)}</pre></details>)}</section>
     <section className="space-y-3"><h2 className="text-xl">Journal and errors</h2><p>Authenticated mutations appear in the admin journal and <code>/audit-log</code>, including validation failures. Entries contain time, token name, operation, target and result—not secrets or submitted content. A <code>started</code> entry means execution was interrupted or is still in progress; inspect the resource before retrying.</p><p>Errors use <code>{'{"error":{"code":"conflict","message":"…"}}'}</code>. Invalid input: 400; absent/revoked PAT: 401; missing record: 404; stale version: 409; oversized JSON: 413; wrong content type: 415; absent If-Match: 428; server failure: 500. JSON bodies are limited to 1 MiB. All authenticated responses are private and uncached.</p></section>

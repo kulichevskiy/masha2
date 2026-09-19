@@ -11,26 +11,26 @@ const frame = (id: string): HomeFrame => ({
 
 const portraits = Array.from({ length: 14 }, (_, i) => frame(`p${i}`))
 const kids = Array.from({ length: 6 }, (_, i) => frame(`k${i}`))
+const editorial = Array.from({ length: 5 }, (_, i) => frame(`e${i}`))
 const video = { ...frame('v0'), videoSrc: 'https://cdn.test/v0.mp4', durationSeconds: 42 }
 
 describe('assignHomePhotos', () => {
   it('fills every slot from the top of each feed, in admin order', () => {
-    const slots = assignHomePhotos({ portraits, kids, videos: [video] })
+    const slots = assignHomePhotos({ portraits, kids, editorial, videos: [video] })
 
     expect(slots.hero?.id).toBe('p0')
     expect(slots.people.map((f) => f?.id)).toEqual(['p1', 'k0', 'p2'])
     expect(slots.experience?.id).toBe('p3')
     expect(slots.work.portraits.map((f) => f.id)).toEqual(['p4', 'p5', 'p6'])
     expect(slots.work.kids.map((f) => f.id)).toEqual(['k1', 'k2', 'k3'])
-    // No editorial feed exists; editorial frames are the next portraits.
-    expect(slots.work.editorial.map((f) => f.id)).toEqual(['p7', 'p8', 'p9'])
+    expect(slots.work.editorial.map((f) => f.id)).toEqual(['e0', 'e1', 'e2'])
     expect(slots.video?.id).toBe('v0')
-    expect(slots.workshops?.id).toBe('p10')
-    expect(slots.invitation?.id).toBe('p11')
+    expect(slots.workshops?.id).toBe('p7')
+    expect(slots.invitation?.id).toBe('p8')
   })
 
   it('never reuses a frame across slots', () => {
-    const slots = assignHomePhotos({ portraits, kids, videos: [video] })
+    const slots = assignHomePhotos({ portraits, kids, editorial, videos: [video] })
     const ids = [
       slots.hero,
       ...slots.people,
@@ -47,7 +47,7 @@ describe('assignHomePhotos', () => {
   })
 
   it('degrades to nulls and short rows when a feed is thin', () => {
-    const slots = assignHomePhotos({ portraits: portraits.slice(0, 5), kids: [], videos: [] })
+    const slots = assignHomePhotos({ portraits: portraits.slice(0, 5), kids: [], editorial: [], videos: [] })
 
     expect(slots.hero?.id).toBe('p0')
     expect(slots.people.map((f) => f?.id ?? null)).toEqual(['p1', null, 'p2'])
@@ -57,6 +57,13 @@ describe('assignHomePhotos', () => {
     expect(slots.video).toBeNull()
     expect(slots.workshops).toBeNull()
     expect(slots.invitation).toBeNull()
+  })
+})
+
+describe('assignHomePhotos — editorial row', () => {
+  it('shows only what the editorial feed holds, never a portrait in its place', () => {
+    const slots = assignHomePhotos({ portraits, kids, editorial: editorial.slice(0, 1), videos: [] })
+    expect(slots.work.editorial.map((f) => f.id)).toEqual(['e0'])
   })
 })
 

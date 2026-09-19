@@ -21,7 +21,7 @@ describe('matchesFilter', () => {
   })
 
   it('exposes each filter exactly once in display order', () => {
-    expect(PHOTO_FILTERS).toEqual(['all', 'portraits', 'kids', 'video', 'hidden'])
+    expect(PHOTO_FILTERS).toEqual(['all', 'portraits', 'kids', 'video', 'editorial', 'hidden'])
   })
 
   it('the video section matches a video assigned to it', () => {

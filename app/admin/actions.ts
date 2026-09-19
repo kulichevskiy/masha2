@@ -412,6 +412,6 @@ export async function updateHomeStory(content: HomeStoryContent) {
     throw new Error(`Failed to update home story: ${error.message}`)
   }
 
-  revalidatePath('/new')
+  revalidatePath('/')
   revalidatePath('/admin')
 }

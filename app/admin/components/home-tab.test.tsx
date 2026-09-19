@@ -29,9 +29,24 @@ beforeAll(async () => {
   ;({ HomeTab } = await import('./home-tab'))
 })
 
+const NO_PREVIEWS = {
+  hero: [null],
+  people: [null, null, null],
+  session: [null],
+  work: [],
+  video: [],
+  behind: ['/photos/maria.jpg'],
+  workshops: [null],
+  invitation: [null],
+}
+
 function renderTab() {
   return render(
-    <HomeTab content={structuredClone(DEFAULT_CONTENT)} supabaseUrl="http://localhost:54321" />
+    <HomeTab
+      content={structuredClone(DEFAULT_CONTENT)}
+      previews={NO_PREVIEWS}
+      supabaseUrl="http://localhost:54321"
+    />
   )
 }
 
@@ -87,9 +102,34 @@ describe('HomeTab', () => {
     expect(sent.people.body).toBe(DEFAULT_CONTENT.people.body)
   })
 
+  it('gives every photo slot two sliders for the point the crop keeps', () => {
+    const { container } = renderTab()
+    // hero 1 + people 3 + session 1 + behind 1 + workshops 1 + invitation 1 = 8 slots
+    expect(container.querySelectorAll('input[type="range"]')).toHaveLength(16)
+    const heroX = container.querySelector<HTMLInputElement>('#hero-0-x')!
+    expect(Number(heroX.value)).toBe(DEFAULT_CONTENT.hero.photos[0].focus.x)
+  })
+
+  it('redraws the preview as the focus moves and saves the new point', async () => {
+    const { container, getAllByText } = renderTab()
+    const preview = container.querySelector<HTMLImageElement>('img[src="/photos/maria.jpg"]')!
+    expect(preview.style.objectPosition).toBe('50% 20%')
+
+    fireEvent.change(container.querySelector('#behind-0-x')!, { target: { value: '70' } })
+    expect(preview.style.objectPosition).toBe('70% 20%')
+
+    fireEvent.click(getAllByText('Сохранить')[0])
+    await waitFor(() => expect(updateHomeStory).toHaveBeenCalledTimes(1))
+    const sent = vi.mocked(updateHomeStory).mock.calls[0][0]
+    expect(sent.behind.photos[0].focus).toEqual({ x: 70, y: 20 })
+    // Other slots keep the crop they shipped with.
+    expect(sent.hero.photos[0].focus).toEqual(DEFAULT_CONTENT.hero.photos[0].focus)
+  })
+
   it('sends a pinned frame for the slot it was set on', async () => {
     const { container, getAllByText } = renderTab()
-    const alt = [...container.querySelectorAll('input')].at(-1)!
+    // The last text input on the page is the invitation frame's alt.
+    const alt = [...container.querySelectorAll('input:not([type="range"])')].at(-1)!
     fireEvent.change(alt, { target: { value: 'A pinned frame' } })
     fireEvent.click(getAllByText('Сохранить')[0])
 

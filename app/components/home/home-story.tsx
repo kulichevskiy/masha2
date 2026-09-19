@@ -11,10 +11,10 @@
 
 import Link from 'next/link'
 import { type HomeCategory, type HomeFrame, type HomePhotoSlots } from '@/lib/home-story-photos'
-import type { HomeStoryContent, StorySection } from '@/lib/home-story-content'
+import { focusPosition, type HomeStoryContent, type StorySection } from '@/lib/home-story-content'
 import { getPublicWorkshop } from '../../workshop/data'
 import { loadHomePhotos } from './home-photos'
-import { loadHomeContent, resolveFrame } from './home-content'
+import { loadHomeContent, resolveFrames } from './home-content'
 import { CONTACT_EMAIL } from '@/lib/site'
 import { VideoSection } from './video-section'
 import {
@@ -31,31 +31,19 @@ import {
   Section,
 } from './story-ui'
 
-// The portrait of Maria belongs to no feed, so the "behind the camera" slot
-// falls back to the same file the booking page uses until she pins another.
-const MARIA_PORTRAIT: HomeFrame = {
-  id: 'maria-portrait',
-  src: '/photos/photo_2026-02-01 17.14.58.jpeg',
-  alt: 'Maria Chevskaya',
-  width: 1600,
-  height: 2000,
-}
-
 // Where each category row points. The wording is editable; the routes are not,
-// because they are the site's own sections. Editorial has no feed of its own:
-// its frames come from the portraits feed and its link lands on the main
-// gallery, where the editorial work lives too.
+// because they are the site's own sections.
 const CATEGORY_HREF: Record<HomeCategory, string> = {
-  portraits: '/',
+  portraits: '/portraits',
   kids: '/kids',
-  editorial: '/',
+  editorial: '/editorial',
 }
 
 // ── 1 · introduction ──────────────────────────────────────────
 
 function Intro({ content, frame }: { content: StorySection; frame: HomeFrame | null }) {
   return (
-    <Bleed frame={frame} height="h-[640px] md:h-[860px]" position="center 30%" priority>
+    <Bleed frame={frame} height="h-[640px] md:h-[860px]" position={focusPosition(content.photos[0])} priority>
       <Label tone="frame">{content.label}</Label>
       <Display as="h1" tone="frame" size="hero">
         <Lines text={content.heading} />
@@ -80,11 +68,12 @@ function People({ content, frames }: { content: StorySection; frames: (HomeFrame
     <Section>
       <Label>{content.label}</Label>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 md:gap-4 mb-10 md:mb-16">
-        <Photo frame={left} ratio="aspect-[4/5]" position="center 20%" sizes={cellSizes} />
-        <Photo frame={middle} ratio="aspect-[4/5]" position="center 30%" sizes={cellSizes} />
+        <Photo frame={left} ratio="aspect-[4/5]" position={focusPosition(content.photos[0])} sizes={cellSizes} />
+        <Photo frame={middle} ratio="aspect-[4/5]" position={focusPosition(content.photos[1])} sizes={cellSizes} />
         <Photo
           frame={right}
           ratio="aspect-[3/2] md:aspect-[4/5]"
+          position={focusPosition(content.photos[2])}
           sizes="(max-width: 768px) 100vw, 400px"
           className="col-span-full md:col-span-1"
         />
@@ -117,7 +106,12 @@ function Session({ content, frame }: { content: StorySection; frame: HomeFrame |
             </Arrow>
           </div>
         </div>
-        <Photo frame={frame} ratio="aspect-[4/5] md:aspect-[3/4]" sizes="(max-width: 768px) 100vw, 660px" />
+        <Photo
+          frame={frame}
+          ratio="aspect-[4/5] md:aspect-[3/4]"
+          position={focusPosition(content.photos[0])}
+          sizes="(max-width: 768px) 100vw, 660px"
+        />
       </div>
     </Section>
   )
@@ -200,7 +194,7 @@ function Behind({ content, frame }: { content: StorySection; frame: HomeFrame | 
         <Photo
           frame={frame}
           ratio="aspect-[4/5]"
-          position="center 20%"
+          position={focusPosition(content.photos[0])}
           sizes="(max-width: 768px) 280px, 400px"
           className="max-w-[280px] md:max-w-none"
         />
@@ -249,7 +243,12 @@ function Workshops({
             </Arrow>
           </div>
         </div>
-        <Photo frame={frame} ratio="aspect-[3/2]" position="center 35%" sizes="(max-width: 768px) 100vw, 560px" />
+        <Photo
+          frame={frame}
+          ratio="aspect-[3/2]"
+          position={focusPosition(content.photos[0])}
+          sizes="(max-width: 768px) 100vw, 560px"
+        />
       </div>
     </Section>
   )
@@ -259,7 +258,12 @@ function Workshops({
 
 function Invitation({ content, frame }: { content: StorySection; frame: HomeFrame | null }) {
   return (
-    <Bleed frame={frame} height="h-[680px] md:h-[880px]" position="center 40%" align="center">
+    <Bleed
+      frame={frame}
+      height="h-[680px] md:h-[880px]"
+      position={focusPosition(content.photos[0])}
+      align="center"
+    >
       <Label tone="frame">{content.label}</Label>
       <Display tone="frame" size="closing">
         <Lines text={content.heading} />
@@ -292,22 +296,18 @@ export async function HomeStory() {
     loadHomeContent(),
   ])
 
-  const people = content.people.photos.map((photo, index) => resolveFrame(photo, slots.people[index] ?? null))
+  const frames = resolveFrames(content, slots)
 
   return (
     <main className="w-full bg-white">
-      <Intro content={content.hero} frame={resolveFrame(content.hero.photos[0], slots.hero)} />
-      <People content={content.people} frames={people} />
-      <Session content={content.session} frame={resolveFrame(content.session.photos[0], slots.experience)} />
+      <Intro content={content.hero} frame={frames.hero[0]} />
+      <People content={content.people} frames={frames.people} />
+      <Session content={content.session} frame={frames.session[0]} />
       <Work content={content.work} work={slots.work} />
       <VideoSection content={content.video} video={slots.video} />
-      <Behind content={content.behind} frame={resolveFrame(content.behind.photos[0], MARIA_PORTRAIT)} />
-      <Workshops
-        content={content.workshops}
-        frame={resolveFrame(content.workshops.photos[0], slots.workshops)}
-        note={workshopNote(workshop)}
-      />
-      <Invitation content={content.invitation} frame={resolveFrame(content.invitation.photos[0], slots.invitation)} />
+      <Behind content={content.behind} frame={frames.behind[0]} />
+      <Workshops content={content.workshops} frame={frames.workshops[0]} note={workshopNote(workshop)} />
+      <Invitation content={content.invitation} frame={frames.invitation[0]} />
     </main>
   )
 }
