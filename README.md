@@ -22,6 +22,14 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Learn More
 
+### Sitemap
+
+`pnpm build` automatically generates `/sitemap.xml` from `app/sitemap.ts`.
+It includes the public portfolio, booking, gift, workshop, and legal pages.
+Set `NEXT_PUBLIC_SITE_URL` to the site's public origin before building
+(defaults to `https://chevskaya.com`). Photo section URLs follow
+`lib/photo-pages.ts`; add other public routes to `app/sitemap.ts` as needed.
+
 To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.

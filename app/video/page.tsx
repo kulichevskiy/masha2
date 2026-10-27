@@ -1,6 +1,7 @@
 import { FeedPage, feedMetadata } from "../components/feed-page";
 
 export const metadata = feedMetadata(
+  "video",
   "Video",
   "Short moving pieces by Maria Chevskaya – presence, rhythm and light in motion."
 );

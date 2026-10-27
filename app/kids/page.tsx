@@ -1,6 +1,7 @@
 import { FeedPage, feedMetadata } from "../components/feed-page";
 
 export const metadata = feedMetadata(
+  "kids",
   "Kids",
   "Children's portraiture by Maria Chevskaya – unhurried, natural light, real presence."
 );

@@ -4,12 +4,13 @@ import { TopNav } from '../components/top-nav'
 import { Footer } from '../components/footer'
 import { getPublicWorkshop, workshopPhotoUrl } from './data'
 import { WorkshopContent } from './components/workshop-content'
+import { OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 
 export async function generateMetadata(): Promise<Metadata> {
   const workshop = await getPublicWorkshop()
-  if (!workshop) return { title: 'Workshop' }
+  if (!workshop) return { title: 'Workshop', alternates: { canonical: '/workshop' } }
 
   const heroUrl = workshopPhotoUrl(SUPABASE_URL, workshop.hero_photo_path)
   const title = workshop.title ?? 'Workshop'
@@ -18,18 +19,19 @@ export async function generateMetadata(): Promise<Metadata> {
     'Three days inside a working portrait practice with Maria Chevskaya.'
 
   return {
+    alternates: { canonical: '/workshop' },
     title,
     description,
     openGraph: {
       title,
       description,
-      ...(heroUrl ? { images: [{ url: heroUrl }] } : {}),
+      images: [heroUrl ? { url: heroUrl } : OPEN_GRAPH_IMAGE],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      ...(heroUrl ? { images: [heroUrl] } : {}),
+      images: [heroUrl || TWITTER_IMAGE],
     },
   }
 }

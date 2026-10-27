@@ -6,6 +6,7 @@ import { Footer } from "./footer";
 import { FloatingCta } from "./floating-cta";
 import { WorkshopBanner } from "./workshop-banner";
 import type { PhotoPage } from "@/lib/photo-pages";
+import { OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from "@/lib/site";
 
 // One section of the portfolio — /portraits, /kids, /editorial, /video: the
 // header with the section row, the workshop banner, the masonry feed for
@@ -33,11 +34,12 @@ export function FeedPage({ page }: { page: PhotoPage }) {
 
 // Title + description, repeated into the OpenGraph and Twitter cards the way
 // every section page does it.
-export function feedMetadata(title: string, description: string): Metadata {
+export function feedMetadata(page: PhotoPage, title: string, description: string): Metadata {
   return {
     title,
     description,
-    openGraph: { title: `${title} | Maria Chevskaya`, description },
-    twitter: { title: `${title} | Maria Chevskaya`, description },
+    alternates: { canonical: `/${page}` },
+    openGraph: { title: `${title} | Maria Chevskaya`, description, images: [OPEN_GRAPH_IMAGE] },
+    twitter: { title: `${title} | Maria Chevskaya`, description, images: [TWITTER_IMAGE] },
   };
 }

@@ -3,6 +3,10 @@ import { redirect } from 'next/navigation'
 import { LogoutButton } from '@/components/logout-button'
 import { createClient } from '@/lib/supabase/server'
 
+export const metadata = {
+  alternates: { canonical: "/protected" },
+};
+
 export default async function ProtectedPage() {
   const supabase = await createClient()
 

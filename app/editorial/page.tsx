@@ -1,6 +1,7 @@
 import { FeedPage, feedMetadata } from "../components/feed-page";
 
 export const metadata = feedMetadata(
+  "editorial",
   "Editorial",
   "Editorial photography by Maria Chevskaya – stories, model tests and collaborations with magazines, artists and authors."
 );

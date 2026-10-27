@@ -10,6 +10,7 @@ import { CONTACT_EMAIL } from "@/lib/site"
 import { typeset } from "@/lib/typography"
 
 export const metadata = {
+  alternates: { canonical: "/book" },
   title: "Booking",
   description: "Book a portrait or editorial photography session with Maria Chevskaya.",
 }

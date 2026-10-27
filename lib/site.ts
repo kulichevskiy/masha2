@@ -5,3 +5,22 @@
 // the inbox booking requests are delivered to: that one is
 // `app_settings.booking_recipient_email`, which Maria sets in admin.
 export const CONTACT_EMAIL = 'maria@chevskaya.com'
+
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://chevskaya.com'
+
+// Absolute URLs bypass Next.js file-based social image localhost fallback in dev.
+const SOCIAL_IMAGE = {
+  width: 1200,
+  height: 630,
+  alt: 'Maria Chevskaya - Portrait and Editorial Photographer',
+}
+
+export const OPEN_GRAPH_IMAGE = {
+  ...SOCIAL_IMAGE,
+  url: new URL('/opengraph-image', SITE_URL).href,
+}
+
+export const TWITTER_IMAGE = {
+  ...SOCIAL_IMAGE,
+  url: new URL('/twitter-image', SITE_URL).href,
+}

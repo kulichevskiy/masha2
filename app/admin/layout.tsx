@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/admin" },
   title: {
     default: "Admin",
     template: "%s | Maria Chevskaya",
