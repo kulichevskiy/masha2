@@ -3,7 +3,10 @@ import { resources } from '@/lib/admin-api/resources'
 import { patches } from '@/lib/admin-api/schema'
 import { PHOTO_PAGES } from '@/lib/photo-pages'
 
-export const metadata = { title: 'Admin API · Maria Chevskaya' }
+export const metadata = {
+  title: 'Admin API · Maria Chevskaya',
+  alternates: { canonical: '/api/docs' },
+}
 export default function ApiDocs() {
   return <main className="mx-auto max-w-4xl px-4 py-12 space-y-8">
     <header><h1 className="text-3xl">Admin API</h1><p className="mt-3 text-gray-600">Manage the portfolio and site content from agents and scripts.</p>

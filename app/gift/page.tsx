@@ -8,6 +8,7 @@ import { GiftContent } from './components/gift-content'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/gift" },
   title: 'Gift Certificate',
   description:
     'A portrait session with Maria Chevskaya, given as a gift.',

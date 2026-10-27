@@ -1,14 +1,11 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Maria Chevskaya - Portrait and Editorial Photographer";
-export const size = {
+const size = {
   width: 1200,
   height: 630,
 };
 
-export const contentType = "image/png";
-
-export default async function Image() {
+export function SocialPreviewImage() {
   return new ImageResponse(
     (
       <div

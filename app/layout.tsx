@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Roboto_Mono, Bebas_Neue, Inter, Oswald } from "next/font/google";
 import "./globals.css";
+import { SITE_URL, OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,10 +42,8 @@ const oswald = Oswald({
   weight: ["400", "500"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Maria Chevskaya | Portrait and Editorial Photographer",
     template: "%s | Maria Chevskaya",
@@ -52,6 +51,7 @@ export const metadata: Metadata = {
   description:
     "Portrait and editorial photographer crafting luminous, cinematic stories for thoughtful brands and people.",
   openGraph: {
+    images: [OPEN_GRAPH_IMAGE],
     type: "website",
     siteName: "Maria Chevskaya",
     locale: "en_US",
@@ -60,6 +60,7 @@ export const metadata: Metadata = {
       "Portrait and editorial photographer crafting luminous, cinematic stories for thoughtful brands and people.",
   },
   twitter: {
+    images: [TWITTER_IMAGE],
     card: "summary_large_image",
     title: "Maria Chevskaya | Portrait and Editorial Photographer",
     description:

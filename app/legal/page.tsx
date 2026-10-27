@@ -4,6 +4,7 @@ import { fetchLegalDoc, LEGAL_DOC_IDS } from "@/lib/legal-doc"
 import { CONTACT_EMAIL } from "@/lib/site"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/legal" },
   title: "Legal Notice",
 }
 

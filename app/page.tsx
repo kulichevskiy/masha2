@@ -11,6 +11,10 @@ import { HomeStory, HomeStorySkeleton } from "./components/home/home-story";
 // on the feeds (/portraits, /kids, /editorial, /video). The header is the
 // same as everywhere, section row included; the story starts the same
 // distance below it that the feeds keep (their grid's py-8).
+export const metadata = {
+  alternates: { canonical: "/" },
+};
+
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
