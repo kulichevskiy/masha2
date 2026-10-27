@@ -198,4 +198,26 @@ describe('submitWorkshopApplication validation', () => {
     expect(mockInsert).toHaveBeenCalledTimes(1)
     expect(mockInsert.mock.calls[0][0]).toMatchObject({ intake: null })
   })
+  it('preserves the application when mail delivery is enabled', async () => {
+    vi.stubEnv('RESEND_API_KEY','test-key')
+    try {
+      const submit=await loadAction()
+      expect(await submit(fd({name:'Alex',email:'who@example.com',instagram:'alex',message:'Studio',intake:'full'}))).toEqual({ok:true})
+      expect(await submit(fd({name:'Alex',email:'who@example.com'}))).toEqual({ok:true})
+    } finally { vi.unstubAllEnvs() }
+  })
+  it('reports failed sales, recipient and persistence queries', async () => {
+    const submit=await loadAction()
+    const fields={name:'Alex',email:'who@example.com'}
+    mockWorkshopMaybeSingle.mockResolvedValueOnce({data:null,error:{message:'offline'}} as never)
+    expect((await submit(fd(fields))).ok).toBe(false)
+    mockRecipientMaybeSingle.mockResolvedValueOnce({data:null,error:{message:'offline'}} as never)
+    expect((await submit(fd(fields))).ok).toBe(false)
+    mockRecipientMaybeSingle.mockResolvedValueOnce({data:null,error:null} as never)
+    expect((await submit(fd(fields))).ok).toBe(false)
+    __resetRateLimitForTests()
+    mockInsert.mockResolvedValueOnce({error:{message:'offline'}} as never)
+    expect((await submit(fd(fields))).ok).toBe(false)
+  })
+
 })

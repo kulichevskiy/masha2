@@ -1,0 +1,540 @@
+{
+  "date": "2026-10-27",
+  "base_commit": "d699acfe0252b2359431f376edca744c71932aaf",
+  "command": "pnpm verify",
+  "exit_code": 0,
+  "results": {
+    "lint": {
+      "exit_code": 0,
+      "baseline_warnings": 5
+    },
+    "tests": {
+      "files": 65,
+      "passed": 370,
+      "failed": 0
+    },
+    "crap": {
+      "adapter": 1,
+      "files": 125,
+      "functions": 880,
+      "failed": 0,
+      "maximum": 29.179549155302254,
+      "maximum_location": "lib/admin-api/handler.ts:109"
+    },
+    "production_build": "pass",
+    "e2e_build": "pass",
+    "e2e": {
+      "passed": 6,
+      "failed": 0,
+      "retries": 0,
+      "seconds": 9.5
+    },
+    "typecheck": "pass",
+    "diff_check": "pass",
+    "independent_review": "pass: intent/spec and correctness/standards"
+  },
+  "source_inventory": [
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/actions.ts",
+      "sha256": "f117b3f34e349bde565355bec449d8f9d5b4de7dbb4ace6dcb97752c71df6954"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/api-actions.ts",
+      "sha256": "9e596b413380a4c8aa8e68d4d59c10464ab164314a6302f2e8e8e00cd9271f08"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/api-types.ts",
+      "sha256": "512c5e8eb10800b5738eb1db6ef96cdb05ea5389ea4c908a508a56461f710375"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/admin-tabs.tsx",
+      "sha256": "a1bd36dde0b4891b9bee95a9520d9dcea28828990a3da78d84588f15c52a2158"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/api-tab.tsx",
+      "sha256": "fd6e9adbaa7ef3b15c0ff27998f3a2311cba57bd046eb5b6f95bbab922f80b31"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/faq-row.tsx",
+      "sha256": "45e4dd116aeee5f5bebd2216f288a29e49f1377fb88c647b46a97085d322e001"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/faq-table.tsx",
+      "sha256": "d07dd9658ada0213a3cbb1c57fb907d74e566e908a516a86fc684f4c6d5a5ecc"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/gift-tab.tsx",
+      "sha256": "9f2e8150b1d181c64c23013973c8d5376c53e2e68a919d28508759dec475d4a6"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/home-tab.tsx",
+      "sha256": "f7e4b0951bad3ef7ac98ba32766d3556cdeb9fabb28eed02dfc10401f44a9a89"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/photo-row.tsx",
+      "sha256": "9c70c371bfc550f0bbd2b0714e03eb1982d090f9131c75ebc60b992a96e11b12"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/photo-upload-dropzone.tsx",
+      "sha256": "26bc4a5104bf4a83ea658594e854b2c302fa0d809c6d79ac3bda2f5c117efe78"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/photo-uploader.tsx",
+      "sha256": "2cfd217bb88749955f2b07b2f073ab826620bea1e5875adbade9864efd774280"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/photos-table.tsx",
+      "sha256": "655defc29cb97d3f37db1a6e7d7bee03db2df7bf9bd14bcb107545de726af939"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/requests-table.tsx",
+      "sha256": "24b3940bc8907ec4955195f5124557c1e208ead5bf378ac40fe2aae7cde9f74c"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/settings-form.tsx",
+      "sha256": "f85f28bd0f5b5843fa96136f3be24742ac53f7212b76f37c277a0ea58da703e9"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/tier-row.tsx",
+      "sha256": "4e6637201f585150a7c89a76ffdf53bf7bee9ed84db715d89855823082f7e3eb"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/tiers-table.tsx",
+      "sha256": "ada66684e03fdbd6782dfe6f85521f535e77110182efc4dcb24ce0e860465f76"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/components/workshop-tab.tsx",
+      "sha256": "e37e911ae3ac66405f54574c78c826b740f4c0497ced2500f5ca92228a4b825d"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/layout.tsx",
+      "sha256": "d13f91ec451ceed98d5b33c85c517badceca572028e97391862b053fc1a17231"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/admin/page.tsx",
+      "sha256": "ddd5d8ab50c2fb1347d647045e112c93eed1b93c11b89a37b4b1b25c3e31a884"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/api/docs/page.tsx",
+      "sha256": "6b48ca571276eb717d24a27dd46d317ce739a95fcbbb73e4d0ef231d085dacd4"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/api/openapi.json/route.ts",
+      "sha256": "f88a7bf0a626692d4a7e46e6821fcc40a6f82bc248131013528991209c71c20b"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/api/v1/[...path]/route.ts",
+      "sha256": "609c10dce05de043e350488f96106915267d47fa19d709dbe2acf79c2e3a0fc1"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/auth/callback/route.ts",
+      "sha256": "1b48ed8009ad86bcd0f0680ec1988fca8107df486e46acc1d67fc160523435bc"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/auth/confirm/route.ts",
+      "sha256": "753124546675b50d2609af3ca89a7b1f9c48a32b401bd1d9686d0718cc0f51bb"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/auth/error/page.tsx",
+      "sha256": "9b120add71b67a675cdee09a490dcf1a945487dea00522e3087a6dbb0e4b29eb"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/auth/forgot-password/page.tsx",
+      "sha256": "3ce07e69e6d94916dd231c3cd4761f2745f68a57eb1a2bcf37a5d66949a695e1"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/auth/layout.tsx",
+      "sha256": "e4d1dcec47cd5bfc42f3d8dc8909a83f3a71d9c57379d7d144d3b4a5cdb80111"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/auth/login/page.tsx",
+      "sha256": "e787824e4870170e1bfee8142d926fce272b6b9749da3ccecb1b44674d771a09"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/auth/update-password/page.tsx",
+      "sha256": "78bad8bd99a94f9de55e1c4635cf1164432e9d4833970258856b2bb1d48ee3e9"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/book/actions.ts",
+      "sha256": "9ef38a512ce7459ac3c87425d8dedd4436fd5c3b1d26b42921ff1b47119fc1bf"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/book/booking-faq.tsx",
+      "sha256": "ded52e08cf830fed0e0fc012929cedfbae57363bc624f82955b631aa5ec5027d"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/book/booking-form.tsx",
+      "sha256": "9a8095d4f7e8212bd8e4df18046693752902078afcac9afcc001c9c6f95b639b"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/book/page.tsx",
+      "sha256": "4cfc40315b95374d9c395b25ba0654fc6bdb16bb3696cdfeadd7c47d033fc5b3"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/feed-page.tsx",
+      "sha256": "6760232c1d3483e3d373e7afc16d9fb45ad60eefe9c7ef986a6fc95915dfa3bb"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/floating-book-button.tsx",
+      "sha256": "fbb444379c440b43e73ac030e66dbb4f01563034536da55add2c56cde97bd44e"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/floating-cta.tsx",
+      "sha256": "837f7641f6bc8a970068947c3ea4490b8b72378cbd2c1eaf921300760ad1605b"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/footer.tsx",
+      "sha256": "6f68504466cc0924d642e41a9d3d72e5d711d204299aca0302c6cfced054324f"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/home/home-content.ts",
+      "sha256": "6b5fbdab0924a8da0034c474490fc0ee67ae4bced5444d253a2236c77736558c"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/home/home-photos.ts",
+      "sha256": "762469a7c0d9f4c25bc83778d5148cf66cac21904f6c9fe43469bcbce869831f"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/home/home-story.tsx",
+      "sha256": "3bde2d722fa36fa983ee3753855657e6abe900bd0478364ccbb5764baf85271c"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/home/story-ui.tsx",
+      "sha256": "17f5e267a425aae73c11c9e930c8e474743fb3619fe9b45c0ce9140e62cc7d0c"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/home/video-section.tsx",
+      "sha256": "05b470dc37a0fcb690c90e72a80417cf694dd53862c46e7351ac67365c55646c"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/legal-page.tsx",
+      "sha256": "76fd2e4711c447a5cbef0e1ba3c1795b397af43d99370df62f266d549a283a48"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/section-nav.tsx",
+      "sha256": "ad0a104a135b93599f91bebf5a75728ef030f2dcf2887c943040b654b38d6c6d"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/top-nav.tsx",
+      "sha256": "95f02368f75a718f3f51d79ea10f74dd0a5371bfcf40ff3aec6e2e9fd0515a46"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/ui/masonry-grid.tsx",
+      "sha256": "c66546ac81a056ef37a311c2942ad7d4fc781b740d876ccd758bf49e9b58ee37"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/ui/photo-lightbox.tsx",
+      "sha256": "ef958749fff708b073e35b4cfdd347691d1c485f1ba8eda8abf08ed0a111335b"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/components/workshop-banner.tsx",
+      "sha256": "495f7a72b2f214c371c2edf9e5d2d9f37b5992c0062de1ba57f0df0b38907b46"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/editorial/page.tsx",
+      "sha256": "490b82ce25089183d44f0f3b13af32c98b200f763105e95c83536f378ccd993e"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/gift/actions.ts",
+      "sha256": "f363ff36e02d9cd2ecb1dd3c27a406229d7a6f8bcdd36a164489d151864f34bb"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/gift/components/gift-content.tsx",
+      "sha256": "8ec252a6ef7ff486a2be2eeeda59922e8e06ccda75eb289b3ea9d9c776029396"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/gift/components/gift-order.tsx",
+      "sha256": "417faf66e16d9c7a0aa789b4aedcac119b6ffec703c535f0de3f3b58f9395a2f"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/gift/data.ts",
+      "sha256": "6399a08ca7c9cdbde13df12f98387970b3c410551867a6b69521d88cbace376a"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/gift/page.tsx",
+      "sha256": "5a77d1f2a50ff4f28ccd18ada5ec83a325f9492881f9660c465b291947fca2c9"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/global-error.tsx",
+      "sha256": "a87654b9b871e30d39ba097de9c6ce61bb1fd45198435ee4505a7085bd76ca7c"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/kids/page.tsx",
+      "sha256": "fbc4ef1634118506e613fe863abc84e36d2403a602f818df46a280787e9946b9"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/layout.tsx",
+      "sha256": "35626d9ace6e6d541a07344bbedfd342e02e110a990b883daf1a368e75019334"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/legal/page.tsx",
+      "sha256": "bd970dadfa5f6b439be19952aaaeeeeacf0790f3021a67b6f54d41fc11b91c9c"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/opengraph-image/route.ts",
+      "sha256": "1aabd44e369ad709c25314a9415bdd7a4d119073cee3667ee4b0f2209690d3fc"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/page.tsx",
+      "sha256": "8a090c6778d67b108d241d26cc640037d708386b14a72ecd7b275715679f6e86"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/portraits/page.tsx",
+      "sha256": "38eb7a8a7884cd0157d106c1cc65f635239a0afc203a398e9356d599f221f024"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/privacy/page.tsx",
+      "sha256": "7bf3cace532c45a1fe63a3508cf7847a16f44846d10e5d6debd85db50797b76f"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/protected/layout.tsx",
+      "sha256": "59554c218a1b561e97e924bba669aa761972d4af20d3f4f5e2dfbec793e9fea7"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/protected/page.tsx",
+      "sha256": "be96249c984bfb05903172075372ef9aa44ba895618cf202a7c9ce451421b598"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/sitemap.ts",
+      "sha256": "ef8cb51ec34fff938234077d4196d6de2b10081698d0b7899e0da032aed987bf"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/twitter-image/route.ts",
+      "sha256": "1aabd44e369ad709c25314a9415bdd7a4d119073cee3667ee4b0f2209690d3fc"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/video/page.tsx",
+      "sha256": "9ac67bce56d2a069f9b2e8acf3b5a6540e9f9dd982aa8ba91b3812fbf6cdd254"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/workshop/actions.ts",
+      "sha256": "6fe2264b4c151f36fb0587cd90fbfabcac062a47901912a264288e0ddb8282b9"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/workshop/components/apply-band.tsx",
+      "sha256": "b403dfe8d951ae5fc5106765347b531f79421060f4062d2cf98408545dca49bc"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/workshop/components/intake-context.tsx",
+      "sha256": "afd56581703cab92cf7b21f68951872fb023e4c9950f17d42853dc207f3ffb0e"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/workshop/components/subscribe-band.tsx",
+      "sha256": "4d6369680bb272cad7e22233fa1ad8469b44654f100e7a3dfeb50ade7c08c2f2"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/workshop/components/workshop-apply-form.tsx",
+      "sha256": "6ba7cb75a74bb77e2e422b4c948e2fb993120f3f0ce6c4104a9156b66631b591"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/workshop/components/workshop-content.tsx",
+      "sha256": "f51862f38e09778ecb3ea887f3648fddfc6d2cd8c5deb955cdd482a0ecebc2d4"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/workshop/data.ts",
+      "sha256": "aa7c5763b04b5215aa9309fc55c1647df11e6fca384f68d34f3dc3edfc751567"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/workshop/page.tsx",
+      "sha256": "9378a531d9e2a7d5488b2c4199c6654ae2d12b7a2b5b0e79de8711fd0021f2ee"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/app/workshop/waitlist.ts",
+      "sha256": "bde635eac282c3ee3e4f58da7b11b4989aa19e16a104765a294fd0f030dd87bd"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/dropzone.tsx",
+      "sha256": "21f8ccc007d1f9a18891e95397c505ef4db8381f9f64b130fe79df3183acadfb"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/forgot-password-form.tsx",
+      "sha256": "84c8efe88f2bc5ce965b76b8950632728271c68064dad7acc40f45dc7a4ec029"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/login-form.tsx",
+      "sha256": "4523d340015efbebf106a55667dbc72de01f772f332d8aadb693e21cdf7b1df9"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/logout-button.tsx",
+      "sha256": "e11e07bd86fab6658a52ea07812e03e0c4ff5a1e3194143b418612ae50092b8f"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/posthog-identify.tsx",
+      "sha256": "439eae0c6929d1170d6a25027655133086c39de211f7cf248d049304cc07daaf"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/rich-text-editor.tsx",
+      "sha256": "f08fcb914d06f79b2ff3e4df8eb7402ac50f0eb92c27fcae8d0cea8e0ddab462"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/rich-text.tsx",
+      "sha256": "a58aa94700e221a42a56c3db361367f5fb243705cc2183b63b368ef38e83381b"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/ui/button.tsx",
+      "sha256": "8116b8529db6dc4e3c04bd5ebdd223a38535dcc737830d12ec4b290433d469d8"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/ui/card.tsx",
+      "sha256": "2040cdff27cd1ed771e0ebbd15abcd73d31f2f1e4be6664bd6816fffd2a87476"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/ui/input.tsx",
+      "sha256": "56b7fd30208addbcc2468cfda4f5bc0a55342211deaab61ee35b1c352b1622f1"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/ui/label.tsx",
+      "sha256": "9ec42c8a57e82311118b794318409ee02b2cebfa49ba6cce8457cff6448cd471"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/ui/switch.tsx",
+      "sha256": "ab2d009e0fa7366f47ae1a6e0ca35d0aac55c6264c5f61718e12366c196163b4"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/components/update-password-form.tsx",
+      "sha256": "9256452e815396082bc0c05b47a61d873103458958abb5a1305f971d1e620e33"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/hooks/use-supabase-upload.ts",
+      "sha256": "d920b7e3c5d4d792f104e53c8c4aba38010f0c06b9fc1b818a72e54c2cc4b366"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/instrumentation-client.ts",
+      "sha256": "c84b1ceddba3dbf0e85737969852ff1cc0a50cc1bac08f2aa93cc6196423c40d"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/instrumentation.ts",
+      "sha256": "890688c426cfaf6bd5f6a9fbbca754ad00b4d675d8c6abf0b546d199a1a1e073"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/admin-api/auth.ts",
+      "sha256": "5a628a451b8f68afbf3ec188bc873dc5963d2e33eeff2fc78b557a0ad210cfb0"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/admin-api/errors.ts",
+      "sha256": "d1527edbf5b54a342101c34b4f95f57cd51844fcfe609df18edb4573ff41a46e"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/admin-api/handler.ts",
+      "sha256": "adce490bdf735370436db2edc4c4c363432fe3d17441410dca40f23f39e9cfa7"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/admin-api/http.ts",
+      "sha256": "5a96a81225fda6bd64d2f53dd67653c2cf2d51007ba5fb505607ea39a05732ad"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/admin-api/openapi.ts",
+      "sha256": "24a3ccc6fb7eb65b68415cf548afb7fb526dc8a127a4e9020c92189c4003b7e5"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/admin-api/resources.ts",
+      "sha256": "0664f4e739deb4026f1ddf28b82328b22605024800e316c44915f84338357757"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/admin-api/schema.ts",
+      "sha256": "f880d16738e12549664842f8976b8ea4807c5f3ecd24e28d22a53f10094db511"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/admin-api/uploads.ts",
+      "sha256": "ce8f7d688e8c0afa977303226457fd73d9241e3d9bf176be640138d412dcf90c"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/analytics.ts",
+      "sha256": "5348ebb193dd3249d6831eebb36ceff6897e3b33c8df1e1deb57f6bf683317e7"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/home-story-content.ts",
+      "sha256": "aaf5fcb92f566db0c9eb2c83d8c1d7c2915092404c09d243ee8288b579222f1a"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/home-story-photos.ts",
+      "sha256": "2fc751bf602d810491b05d034e143b4b3596b6874c58bc6a3490d1580fde0787"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/id.ts",
+      "sha256": "55be681c214bd7ceb4dd604cea1ee8d532ca1a64f2db26e977bab6781dc53900"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/image-config.ts",
+      "sha256": "74a753bc22734804f69b155672fc841094fff59fda401ce6545e1ac40ea1d49e"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/image-dimensions.ts",
+      "sha256": "a0194e0511709af020c7a8ad7444b5e262835202ec4c29d635c3a0709b79c352"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/immutable-storage-upload.ts",
+      "sha256": "ad94bd6726b821924bc8b51bc79f380456348c65ee5e60425032a748e5fc390e"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/legal-doc.ts",
+      "sha256": "f0dd86823d12c21b6453cf644e2c8407576fe22d8a5182862316d0a3eb11e995"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/media-upload.ts",
+      "sha256": "148066f91da0824b3aa2f5638fbf24a00056de91340ed16744ea3865753a4527"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/photo-filter.ts",
+      "sha256": "22e2ec2a3ab80ba603d30258abe1c845f8699f985c40634620518751ea3d205d"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/photo-pages.ts",
+      "sha256": "9786ead091599243a92a1b4c0debb5044ace941c31499364e3dc0a067d3fa4a1"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/rate-limit.ts",
+      "sha256": "765b08f3898fcf6021755bac48fc77402298c27f917cf3b10a5b1a8e4dde2cc0"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/request-notification.ts",
+      "sha256": "693d0f8dc2f2289b95f3aa98627cb4c80c88e0dc9c57f9c65266e9c235a9f9d4"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/site.ts",
+      "sha256": "8ef8df7295b1a58f2aa2e0b44dffe951ca94eb1283365fc7a8ba6c733b0651f0"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/social-preview.tsx",
+      "sha256": "e0f8dc0416f2ea37cc6c2fda2a08d36fed131f1bed5f814d93c2e1c3cbb5a5c1"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/supabase/admin.ts",
+      "sha256": "e87c5e7e2c589d45fed6fed908d9280636ba45b58f9569a2e38b6dd416e68304"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/supabase/client.ts",
+      "sha256": "529e436c5d9540be733c86798822dfd67108bbe59e35d50952634b05ac161927"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/supabase/database.types.ts",
+      "sha256": "a485d1ae105290168de6450d470f097ca1c6d771f065755b3d6c40db69bc789b"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/supabase/middleware.ts",
+      "sha256": "3fe8a239de75b51213aa2c3180a19a2cf6abbb2e4a794ed510aec7087f83d201"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/supabase/server.ts",
+      "sha256": "5c3d1d03c76d8eed52a9530bfe7fb8e83a5d60111c1462095aa1aee3d5f0dceb"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/typography.ts",
+      "sha256": "bea9bdb500f1233d61e4705612888b44288f08d5a37c216a389708ff2d734fd6"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/lib/utils.ts",
+      "sha256": "7c8c3dfc0cdd370d44932828eb067ef771c8fe7996693221d5d4b90af6d54f2d"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/proxy.ts",
+      "sha256": "d976a0ffbfa9ad4dc8674277b36a7e546071c22630e4b068921b844d98354f2c"
+    },
+    {
+      "file": "/Users/ak/Code/masha2/scripts/backfill-photo-dimensions.ts",
+      "sha256": "4568776c742ce5a685a0605d46c792490d2f46d173ee8c2bebe04aae30574c8d"
+    }
+  ],
+  "scope": "Local uncommitted implementation only; no commit, push or deploy",
+  "log": "evidence/setup-verify.log"
+}

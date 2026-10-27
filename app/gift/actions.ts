@@ -3,7 +3,7 @@
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { createHash } from 'node:crypto'
-import { Resend } from 'resend'
+import { notificationSender, sendNotification } from '@/lib/request-notification'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRate } from '@/lib/rate-limit'
@@ -101,10 +101,7 @@ export async function submitGiftOrder(
 
   // Same display-name-as-buyer trick the booking flow uses, so the inbox shows
   // "buyer@example.com via gift"; Reply-To still goes to the buyer.
-  const fromAddressRaw = process.env.BOOKING_FROM_ADDRESS ?? 'onboarding@resend.dev'
-  const fromAddress = fromAddressRaw.match(/<([^>]+)>/)?.[1]?.trim() ?? fromAddressRaw.trim()
-  const displayName = email.replace(/["<>\r\n]/g, '').slice(0, 80)
-  const from = `"${displayName} via gift" <${fromAddress}>`
+  const from = notificationSender(email)
 
   const body = [
     'New gift certificate order',
@@ -115,21 +112,7 @@ export async function submitGiftOrder(
     `Received: ${new Date().toISOString()}`,
   ].join('\n')
 
-  try {
-    const resend = new Resend(apiKey)
-    const result = await resend.emails.send({
-      from,
-      to: recipient,
-      replyTo: email,
-      subject: 'New gift certificate order',
-      text: body,
-    })
-    if (result.error) {
-      console.error('gift: resend returned error', result.error)
-    }
-  } catch (err) {
-    console.error('gift: resend threw', err)
-  }
+  await sendNotification(apiKey, { from, to: recipient, replyTo: email, subject: 'New gift certificate order', text: body }, 'gift')
 
   return { ok: true }
 }

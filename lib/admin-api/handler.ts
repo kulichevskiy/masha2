@@ -30,20 +30,8 @@ function notFound(): never { throw new ApiError(404, 'not_found', 'Unknown API e
 function notAllowed(): never { throw new ApiError(405, 'method_not_allowed', 'Method not available for this resource') }
 
 async function dispatch(request: Request, path: string[], ctx: Context): Promise<Response> {
-  const [name, id, action] = path
-  const url = new URL(request.url)
-  if (name === 'uploads') {
-    if (path.length === 1 && request.method === 'POST') return result(await beginUpload(ctx.db, ctx.token, await jsonBody(request), ctx.auditId!), 201)
-    if (path.length === 2 && request.method === 'GET') {
-      const upload = await getUpload(ctx.db, ctx.token, validateId(id))
-      return result({ id: upload.id, expires_at: upload.expires_at, completed_at: upload.completed_at, result: upload.result })
-    }
-    if (path.length === 3 && action === 'complete' && request.method === 'POST') {
-      await verifyUpload(ctx.db, ctx.token, validateId(id))
-      return result(await mutate(ctx, 'uploads', 'complete-upload', id, null, {}))
-    }
-    notFound()
-  }
+  const [name, id] = path
+  if (name === 'uploads') return dispatchUpload(request, path, ctx)
   const resource = Object.hasOwn(resources, name) ? resources[name] : undefined
   if (!resource || path.length > 2 || (resource.singleton && id)) notFound()
   if (id === 'reorder') {
@@ -53,35 +41,7 @@ async function dispatch(request: Request, path: string[], ctx: Context): Promise
     return result(await mutate(ctx, name, 'reorder', '', null, data))
   }
   if (id) validateId(id)
-  if (request.method === 'GET') {
-    let query = ctx.db.from(resource.table).select(resource.columns)
-    if (name === 'settings') query = query.eq('key', 'booking_recipient_email')
-    if (id) query = query.eq('id', id)
-    if (resource.singleton || id) {
-      const { data, error } = await query.limit(1).maybeSingle()
-      databaseError(error)
-      if (!data) throw new ApiError(404, 'not_found', 'Resource not found')
-      return result(data)
-    }
-    const allowedParams = ['limit', 'offset', ...(name === 'media' ? ['kind', 'page'] : []), ...(name === 'workshop-subscribers' ? ['season', 'city'] : [])]
-    for (const key of url.searchParams.keys()) if (!allowedParams.includes(key)) throw new ApiError(400, 'invalid_request', `Unknown query parameter: ${key}`)
-    if (name === 'media') {
-      const kind = url.searchParams.get('kind'), page = url.searchParams.get('page')
-      if (kind !== null) { validate({ type: 'string', enum: ['photo', 'video'] }, kind, 'kind'); query = query.eq('kind', kind) }
-      if (page !== null) { validate({ type: 'string', enum: [...PHOTO_PAGES] }, page, 'page'); query = query.contains('pages', [page]) }
-    }
-    if (name === 'workshop-subscribers') {
-      for (const [key, column, values] of [['season', 'seasons', ['winter', 'spring', 'summer']], ['city', 'cities', ['berlin', 'hamburg', 'paris']]] as const) {
-        const value = url.searchParams.get(key)
-        if (value !== null) { validate({ type: 'string', enum: [...values] }, value, key); query = query.contains(column, [value]) }
-      }
-    }
-    const { limit, offset } = pagination(url)
-    query = resource.ordered ? query.order('position').order('id') : query.order('created_at', { ascending: false }).order('id', { ascending: false })
-    const { data, error } = await query.range(offset, offset + limit)
-    databaseError(error)
-    return response({ data: (data ?? []).slice(0, limit), pagination: { limit, offset, next_offset: (data?.length ?? 0) > limit ? offset + limit : null } })
-  }
+  if (request.method === 'GET') return readResource(request, name, id, ctx)
   if (request.method === 'POST' && !id && resource.create) {
     const data = validatePatch(name, await jsonBody(request), true)
     return result(await mutate(ctx, name, 'create', '', null, data), 201)
@@ -130,4 +90,50 @@ export async function handleApi(request: Request, path: string[], suppliedDb?: A
     }
     return response({ error: { code: error.code, message: error.message } }, error.status, error.status === 401 ? { 'WWW-Authenticate': 'Bearer' } : {})
   }
+}
+
+async function dispatchUpload(request: Request, path: string[], ctx: Context) {
+  const [, id, action] = path
+    if (path.length === 1 && request.method === 'POST') return result(await beginUpload(ctx.db, ctx.token, await jsonBody(request), ctx.auditId!), 201)
+    if (path.length === 2 && request.method === 'GET') {
+      const upload = await getUpload(ctx.db, ctx.token, validateId(id))
+      return result({ id: upload.id, expires_at: upload.expires_at, completed_at: upload.completed_at, result: upload.result })
+    }
+    if (path.length === 3 && action === 'complete' && request.method === 'POST') {
+      await verifyUpload(ctx.db, ctx.token, validateId(id))
+      return result(await mutate(ctx, 'uploads', 'complete-upload', id, null, {}))
+    }
+    notFound()
+}
+
+async function readResource(request: Request, name: string, id: string | undefined, ctx: Context) {
+  const resource = resources[name]
+  const url = new URL(request.url)
+    let query = ctx.db.from(resource.table).select(resource.columns)
+    if (name === 'settings') query = query.eq('key', 'booking_recipient_email')
+    if (id) query = query.eq('id', id)
+    if (resource.singleton || id) {
+      const { data, error } = await query.limit(1).maybeSingle()
+      databaseError(error)
+      if (!data) throw new ApiError(404, 'not_found', 'Resource not found')
+      return result(data)
+    }
+    const allowedParams = ['limit', 'offset', ...(name === 'media' ? ['kind', 'page'] : []), ...(name === 'workshop-subscribers' ? ['season', 'city'] : [])]
+    for (const key of url.searchParams.keys()) if (!allowedParams.includes(key)) throw new ApiError(400, 'invalid_request', `Unknown query parameter: ${key}`)
+    if (name === 'media') {
+      const kind = url.searchParams.get('kind'), page = url.searchParams.get('page')
+      if (kind !== null) { validate({ type: 'string', enum: ['photo', 'video'] }, kind, 'kind'); query = query.eq('kind', kind) }
+      if (page !== null) { validate({ type: 'string', enum: [...PHOTO_PAGES] }, page, 'page'); query = query.contains('pages', [page]) }
+    }
+    if (name === 'workshop-subscribers') {
+      for (const [key, column, values] of [['season', 'seasons', ['winter', 'spring', 'summer']], ['city', 'cities', ['berlin', 'hamburg', 'paris']]] as const) {
+        const value = url.searchParams.get(key)
+        if (value !== null) { validate({ type: 'string', enum: [...values] }, value, key); query = query.contains(column, [value]) }
+      }
+    }
+    const { limit, offset } = pagination(url)
+    query = resource.ordered ? query.order('position').order('id') : query.order('created_at', { ascending: false }).order('id', { ascending: false })
+    const { data, error } = await query.range(offset, offset + limit)
+    databaseError(error)
+    return response({ data: (data ?? []).slice(0, limit), pagination: { limit, offset, next_offset: (data?.length ?? 0) > limit ? offset + limit : null } })
 }

@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local verification artifacts
+/.next-e2e/
+/test-results/
+/playwright-report/
+/e2e/.runtime/
+/e2e/supabase/.temp/
+/e2e/supabase/.branches/

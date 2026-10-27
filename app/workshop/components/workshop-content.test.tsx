@@ -169,4 +169,10 @@ describe('<WorkshopContent />', () => {
     expect(view.container.textContent).not.toContain('you ask')
     expect(view.container.querySelector('details')).toBeNull()
   })
+  it('keeps a sparse workshop usable without promotional metadata', () => {
+    const view=render(<WorkshopContent workshop={{...SAMPLE,title:null,tagline:null,dates:null,seats:null,price:null,tariffs:[],gallery:[],faq:[]}} publicUrlFor={() => null} />)
+    expect(view.container.querySelector('a[href="#apply"]')).not.toBeNull()
+    expect(view.queryByText('Save')).toBeNull()
+  })
+
 })

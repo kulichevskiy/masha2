@@ -1,9 +1,9 @@
 import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
 import path from 'node:path'
+import { sourceCoverage } from './scripts/coverage-plugin.mjs'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [sourceCoverage()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './'),
@@ -12,6 +12,25 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: false,
-    include: ['{app,lib,components,hooks}/**/*.{test,spec}.{ts,tsx}'],
+    include: ['{app,lib,components,hooks,scripts}/**/*.{test,spec}.{ts,tsx,mjs}'],
+    coverage: {
+      provider: 'custom',
+      customProviderModule: './scripts/coverage-provider.mjs',
+      reporter: ['json', 'text-summary'],
+      include: ['**/*.{ts,tsx}'],
+      exclude: [
+        '**/*.{test,spec}.{ts,tsx}',
+        '**/*.d.ts',
+        '**/node_modules/**',
+        '**/.next*/**',
+        '**/design-system/**',
+        '**/e2e/**',
+        '**/coverage/**',
+        '**/*config.*',
+        '**/test-results/**',
+        '**/playwright-report/**',
+      ],
+      clean: true,
+    },
   },
 })

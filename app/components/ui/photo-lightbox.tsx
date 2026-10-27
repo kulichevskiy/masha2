@@ -650,6 +650,30 @@ export function PhotoLightboxGrid({
   useEffect(() => {
     if (!isOpen) return
 
+    const trapFocus = (event: KeyboardEvent) => {
+      const dialog = closeButtonRef.current?.closest('[role="dialog"]')
+      const focusable = Array.from(
+        dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])') ?? []
+      ).filter((element) => {
+        const style = window.getComputedStyle(element)
+        return style.display !== 'none' && style.visibility !== 'hidden'
+      })
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      } else if (!dialog?.contains(document.activeElement)) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
@@ -689,27 +713,7 @@ export function PhotoLightboxGrid({
 
       if (event.key !== 'Tab') return
 
-      const dialog = closeButtonRef.current?.closest('[role="dialog"]')
-      const focusable = Array.from(
-        dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])') ?? []
-      ).filter((element) => {
-        const style = window.getComputedStyle(element)
-        return style.display !== 'none' && style.visibility !== 'hidden'
-      })
-      if (focusable.length === 0) return
-
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first.focus()
-      } else if (!dialog?.contains(document.activeElement)) {
-        event.preventDefault()
-        first.focus()
-      }
+      trapFocus(event)
     }
 
     document.addEventListener('keydown', onKeyDown)

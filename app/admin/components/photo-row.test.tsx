@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import { PhotoRow } from './photo-row'
 
 vi.mock('@dnd-kit/sortable', () => ({
@@ -52,4 +52,20 @@ describe('<PhotoRow /> video presentation', () => {
     )
     expect(screen.getByText('1:02')).toBeTruthy()
   })
+})
+
+import { updatePhoto } from '../actions'
+it('saves metadata fields and cancels edits without persistence', async () => {
+  cleanup()
+  render(<table><tbody><PhotoRow photo={{ ...basePhoto, kind:'photo', poster_path:null, duration_seconds:null }} supabaseUrl="https://example.supabase.co" /></tbody></table>)
+  for(const [label, placeholder, field] of [['Заголовок','Заголовок','title'],['Описание','Описание','description'],['Portrait','Alt текст','alt_text']]) {
+    fireEvent.click(screen.getByText(label,{exact:true}))
+    const input=screen.getByPlaceholderText(placeholder)
+    fireEvent.change(input,{target:{value:`Edited ${field}`}})
+    fireEvent.keyDown(input,{key:'Enter'})
+    await waitFor(()=>expect(updatePhoto).toHaveBeenCalledWith('media-1',{[field]:`Edited ${field}`}))
+    await waitFor(()=>expect(screen.queryByPlaceholderText(placeholder)).toBeNull())
+    fireEvent.click(screen.getByText(`Edited ${field}`,{exact:true}))
+    fireEvent.keyDown(screen.getByPlaceholderText(placeholder),{key:'Escape'})
+  }
 })
