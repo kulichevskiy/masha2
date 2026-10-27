@@ -51,14 +51,7 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
   // Hero price: surface both intake prices ("450 € / 600 €") pulled from the
   // short and full/featured tariff rows. Falls back to the single legacy
   // workshop.price when fewer than two tariffs exist.
-  const shortTariff = workshop.tariffs.find((t) => t.key === 'short')
-  const fullTariff =
-    workshop.tariffs.find((t) => t.featured) ??
-    workshop.tariffs.find((t) => t.key === 'full')
-  const heroPrice =
-    shortTariff && fullTariff
-      ? `${shortTariff.price} / ${fullTariff.price}`
-      : workshop.price
+  const heroPrice = workshopPrice(workshop)
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -344,4 +337,14 @@ export function WorkshopContent({ workshop, publicUrlFor }: Props) {
     </div>
     </IntakeProvider>
   )
+}
+
+function workshopPrice(workshop: Workshop) {
+  const shortTariff = workshop.tariffs.find((t) => t.key === 'short')
+  const fullTariff =
+    workshop.tariffs.find((t) => t.featured) ??
+    workshop.tariffs.find((t) => t.key === 'full')
+  return shortTariff && fullTariff
+      ? `${shortTariff.price} / ${fullTariff.price}`
+      : workshop.price
 }

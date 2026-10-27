@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { PHOTO_IMAGE_QUALITY } from "./lib/image-config";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.SDLC_E2E === '1' ? '.next-e2e' : '.next',
   images: {
     // Serve AVIF first (better quality-per-byte than WebP), so raising quality
     // for the photography doesn't blow up transfer size.
@@ -10,7 +11,9 @@ const nextConfig: NextConfig = {
     // photo surfaces render at PHOTO_IMAGE_QUALITY; 75 stays for any default
     // <Image>.
     qualities: [75, PHOTO_IMAGE_QUALITY],
+    dangerouslyAllowLocalIP: process.env.SDLC_E2E === '1',
     remotePatterns: [
+      ...(process.env.SDLC_E2E === '1' ? [{ protocol: 'http' as const, hostname: '127.0.0.1', port: '55321', pathname: '/storage/v1/object/public/**' }] : []),
       {
         protocol: 'https',
         hostname: '*.supabase.co',

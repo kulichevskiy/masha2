@@ -71,29 +71,10 @@ export function validate(schema: Schema, value: unknown, at = 'body'): unknown {
   if (!types.includes(actual) && !(actual === 'number' && types.includes('integer') && Number.isInteger(value))) fail()
   if (value === null) return value
   if (schema.enum && !schema.enum.includes(value as string)) fail()
-  if (typeof value === 'string') {
-    if (value.length < (schema.minLength ?? 0) || value.length > (schema.maxLength ?? Infinity)) fail()
-    if (schema.pattern && !new RegExp(schema.pattern).test(value)) fail()
-    if (schema.format === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) fail()
-    if (schema.format === 'storage-path' && (value.startsWith('/') || value.includes('..') || /[:?#\\\x00-\x1f]/.test(value))) fail()
-    if (schema.format === 'html') return String(sanitizer.processSync(value))
-  }
+  if (typeof value === 'string') return validateString(schema, value, fail)
   if (typeof value === 'number' && (!Number.isFinite(value) || value < (schema.minimum ?? -Infinity) || value > (schema.maximum ?? Infinity))) fail()
-  if (Array.isArray(value)) {
-    if (value.length < (schema.minItems ?? 0) || value.length > (schema.maxItems ?? Infinity)) fail()
-    if (schema.uniqueItems && new Set(value.map(v => JSON.stringify(v))).size !== value.length) fail()
-    return value.map((v, i) => validate(schema.items!, v, `${at}[${i}]`))
-  }
-  if (typeof value === 'object') {
-    const data = value as Record<string, unknown>
-    if (schema.required?.some(key => !(key in data))) fail()
-    const result: Record<string, unknown> = {}
-    for (const [key, val] of Object.entries(data)) {
-      if (!Object.hasOwn(schema.properties ?? {}, key)) fail()
-      result[key] = validate(schema.properties![key], val, `${at}.${key}`)
-    }
-    return result
-  }
+  if (Array.isArray(value)) return validateArray(schema, value, at, fail)
+  if (typeof value === 'object') return validateObject(schema, value, at, fail)
   return value
 }
 
@@ -107,4 +88,30 @@ export function validatePatch(resource: string, value: unknown, create = false):
     }
   }
   return result
+}
+
+function validateString(schema: Schema, value: string, fail: () => never) {
+    if (value.length < (schema.minLength ?? 0) || value.length > (schema.maxLength ?? Infinity)) fail()
+    if (schema.pattern && !new RegExp(schema.pattern).test(value)) fail()
+    if (schema.format === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) fail()
+    if (schema.format === 'storage-path' && (value.startsWith('/') || value.includes('..') || /[:?#\\\x00-\x1f]/.test(value))) fail()
+    if (schema.format === 'html') return String(sanitizer.processSync(value))
+  return value
+}
+
+function validateArray(schema: Schema, value: unknown[], at: string, fail: () => never) {
+    if (value.length < (schema.minItems ?? 0) || value.length > (schema.maxItems ?? Infinity)) fail()
+    if (schema.uniqueItems && new Set(value.map(v => JSON.stringify(v))).size !== value.length) fail()
+    return value.map((v, i) => validate(schema.items!, v, `${at}[${i}]`))
+}
+
+function validateObject(schema: Schema, value: object, at: string, fail: () => never) {
+    const data = value as Record<string, unknown>
+    if (schema.required?.some(key => !(key in data))) fail()
+    const result: Record<string, unknown> = {}
+    for (const [key, val] of Object.entries(data)) {
+      if (!Object.hasOwn(schema.properties ?? {}, key)) fail()
+      result[key] = validate(schema.properties![key], val, `${at}.${key}`)
+    }
+    return result
 }

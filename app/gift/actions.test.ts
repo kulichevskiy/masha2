@@ -167,4 +167,14 @@ describe('submitGiftOrder', () => {
     expect(mockInsert).toHaveBeenCalledTimes(1)
     expect(mockSend).not.toHaveBeenCalled()
   })
+  it('reports recipient and persistence failures instead of accepting lost orders', async () => {
+    const submit = await loadAction()
+    mockRecipientMaybeSingle.mockResolvedValueOnce({data:null,error:{message:'offline'}} as never)
+    expect((await submit(fd({email:'buyer@example.com'}))).ok).toBe(false)
+    mockRecipientMaybeSingle.mockResolvedValueOnce({data:null,error:null} as never)
+    expect((await submit(fd({email:'buyer@example.com'}))).ok).toBe(false)
+    mockInsert.mockResolvedValueOnce({error:{message:'offline'}} as never)
+    expect((await submit(fd({email:'buyer@example.com'}))).ok).toBe(false)
+  })
+
 })

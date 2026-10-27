@@ -2,7 +2,7 @@
 
 import { headers } from 'next/headers'
 import { createHash } from 'node:crypto'
-import { Resend } from 'resend'
+import { notificationSender, sendNotification } from '@/lib/request-notification'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRate } from '@/lib/rate-limit'
 
@@ -103,10 +103,7 @@ export async function submitBookingRequest(
   // Stuff the applicant email into the display-name instead — inbox column
   // shows e.g. "alex@example.com via booking", while Reply-To still points at
   // the applicant so hitting Reply goes straight to them.
-  const fromAddressRaw = process.env.BOOKING_FROM_ADDRESS ?? 'onboarding@resend.dev'
-  const fromAddress = fromAddressRaw.match(/<([^>]+)>/)?.[1]?.trim() ?? fromAddressRaw.trim()
-  const displayName = email.replace(/["<>\r\n]/g, '').slice(0, 80)
-  const from = `"${displayName} via booking" <${fromAddress}>`
+  const from = notificationSender(email)
   const tierLabel = tierName ?? 'general'
 
   const body = [
@@ -121,21 +118,7 @@ export async function submitBookingRequest(
     `Received: ${new Date().toISOString()}`,
   ].join('\n')
 
-  try {
-    const resend = new Resend(apiKey)
-    const result = await resend.emails.send({
-      from,
-      to: recipient,
-      replyTo: email,
-      subject: `New booking request — ${tierLabel}`,
-      text: body,
-    })
-    if (result.error) {
-      console.error('booking: resend returned error', result.error)
-    }
-  } catch (err) {
-    console.error('booking: resend threw', err)
-  }
+  await sendNotification(apiKey, { from, to: recipient, replyTo: email, subject: `New booking request — ${tierLabel}`, text: body }, 'booking')
 
   return { ok: true }
 }

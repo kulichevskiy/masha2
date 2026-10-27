@@ -3,7 +3,7 @@
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { createHash } from 'node:crypto'
-import { Resend } from 'resend'
+import { notificationSender, sendNotification } from '@/lib/request-notification'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRate } from '@/lib/rate-limit'
@@ -53,18 +53,8 @@ export async function submitWorkshopApplication(
   const instagram = (formData.get('instagram') ?? '').toString().trim()
   const message = (formData.get('message') ?? '').toString().trim()
 
-  if (name.length < 1 || name.length > NAME_MAX) {
-    return { ok: false, error: 'Please enter your name.' }
-  }
-  if (!EMAIL_RE.test(email) || email.length > 254) {
-    return { ok: false, error: 'Please enter a valid email.' }
-  }
-  if (instagram.length > INSTAGRAM_MAX) {
-    return { ok: false, error: 'Instagram handle is too long.' }
-  }
-  if (message.length > MESSAGE_MAX) {
-    return { ok: false, error: `Message is too long (max ${MESSAGE_MAX} characters).` }
-  }
+  const invalid = validateApplication(name, email, instagram, message)
+  if (invalid) return invalid
 
   const ip = await getClientIp()
   if (!checkRate(`workshop:${ip}`)) {
@@ -102,13 +92,7 @@ export async function submitWorkshopApplication(
   // current tariffs — never store a client-provided free-text label. An
   // invalid/missing key (or a key with no matching tariff) leaves intake null
   // and the application is still accepted.
-  const intakeKey = (formData.get('intake') ?? '').toString().trim()
-  let intake: string | null = null
-  if (intakeKey === 'short' || intakeKey === 'full') {
-    const tariffs = (workshopRow.tariffs as Tariff[] | null) ?? []
-    const tariff = tariffs.find((t) => t.key === intakeKey)
-    if (tariff) intake = `${tariff.name}: ${tariff.price}`
-  }
+  const intake = resolveIntake(formData, workshopRow.tariffs as Tariff[] | null)
 
   const { data: recipientRow, error: recipientErr } = await supabase
     .from('app_settings')
@@ -150,10 +134,7 @@ export async function submitWorkshopApplication(
 
   // Same display-name-as-applicant trick the booking flow uses, so the inbox
   // shows "alex@example.com via workshop"; Reply-To still goes to the applicant.
-  const fromAddressRaw = process.env.BOOKING_FROM_ADDRESS ?? 'onboarding@resend.dev'
-  const fromAddress = fromAddressRaw.match(/<([^>]+)>/)?.[1]?.trim() ?? fromAddressRaw.trim()
-  const displayName = email.replace(/["<>\r\n]/g, '').slice(0, 80)
-  const from = `"${displayName} via workshop" <${fromAddress}>`
+  const from = notificationSender(email)
 
   const body = [
     'New workshop application',
@@ -169,21 +150,7 @@ export async function submitWorkshopApplication(
     `Received: ${new Date().toISOString()}`,
   ].join('\n')
 
-  try {
-    const resend = new Resend(apiKey)
-    const result = await resend.emails.send({
-      from,
-      to: recipient,
-      replyTo: email,
-      subject: 'New workshop application',
-      text: body,
-    })
-    if (result.error) {
-      console.error('workshop: resend returned error', result.error)
-    }
-  } catch (err) {
-    console.error('workshop: resend threw', err)
-  }
+  await sendNotification(apiKey, { from, to: recipient, replyTo: email, subject: 'New workshop application', text: body }, 'workshop')
 
   return { ok: true }
 }
@@ -261,10 +228,7 @@ export async function submitWorkshopSubscription(
 
   // Same display-name-as-sender trick the booking flow uses, so the inbox shows
   // "subscriber@example.com via workshop"; Reply-To still goes to the subscriber.
-  const fromAddressRaw = process.env.BOOKING_FROM_ADDRESS ?? 'onboarding@resend.dev'
-  const fromAddress = fromAddressRaw.match(/<([^>]+)>/)?.[1]?.trim() ?? fromAddressRaw.trim()
-  const displayName = email.replace(/["<>\r\n]/g, '').slice(0, 80)
-  const from = `"${displayName} via workshop" <${fromAddress}>`
+  const from = notificationSender(email)
 
   const body = [
     'New workshop subscriber',
@@ -276,21 +240,7 @@ export async function submitWorkshopSubscription(
     `Received: ${new Date().toISOString()}`,
   ].join('\n')
 
-  try {
-    const resend = new Resend(apiKey)
-    const result = await resend.emails.send({
-      from,
-      to: recipient,
-      replyTo: email,
-      subject: 'New workshop subscriber',
-      text: body,
-    })
-    if (result.error) {
-      console.error('workshop: resend returned error', result.error)
-    }
-  } catch (err) {
-    console.error('workshop: resend threw', err)
-  }
+  await sendNotification(apiKey, { from, to: recipient, replyTo: email, subject: 'New workshop subscriber', text: body }, 'workshop')
 
   return { ok: true }
 }
@@ -358,4 +308,33 @@ export async function deleteWorkshopSubscriber(id: string): Promise<void> {
   }
 
   revalidatePath('/admin')
+}
+
+function resolveIntake(formData: FormData, configured: Tariff[] | null) {
+  const intakeKey = (formData.get('intake') ?? '').toString().trim()
+  let intake: string | null = null
+  if (intakeKey === 'short' || intakeKey === 'full') {
+    const tariffs = configured ?? []
+    const tariff = tariffs.find((t) => t.key === intakeKey)
+    if (tariff) intake = `${tariff.name}: ${tariff.price}`
+  }
+
+  return intake
+}
+
+function validateApplication(name: string, email: string, instagram: string, message: string): {ok:false,error:string} | null {
+  if (name.length < 1 || name.length > NAME_MAX) {
+    return { ok: false, error: 'Please enter your name.' }
+  }
+  if (!EMAIL_RE.test(email) || email.length > 254) {
+    return { ok: false, error: 'Please enter a valid email.' }
+  }
+  if (instagram.length > INSTAGRAM_MAX) {
+    return { ok: false, error: 'Instagram handle is too long.' }
+  }
+  if (message.length > MESSAGE_MAX) {
+    return { ok: false, error: `Message is too long (max ${MESSAGE_MAX} characters).` }
+  }
+
+  return null
 }
