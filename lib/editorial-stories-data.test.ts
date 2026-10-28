@@ -19,27 +19,35 @@ type StoryRow = {
 }
 
 function stubClient(stories: StoryRow[], readablePhotoIds: string[], failures: Partial<Record<'stories' | 'photos', string>> = {}) {
-  const calls: { table: string; ids?: string[]; filters?: unknown[][] }[] = []
+  const calls: { table: string; ids?: string[]; filters: unknown[][] }[] = []
   const client = {
     from(table: string) {
-      const filters: unknown[][] = []
+      const call = { table, filters: [] as unknown[][], ids: undefined as string[] | undefined }
+      calls.push(call)
       const builder = {
         select: () => builder,
         order: () => builder,
         eq: (...args: unknown[]) => {
-          filters.push(args)
+          call.filters.push(['eq', ...args])
+          return builder
+        },
+        filter: (...args: unknown[]) => {
+          call.filters.push(['filter', ...args])
           return builder
         },
         in: (_column: string, ids: string[]) => {
-          calls.push({ table, ids })
-          return Promise.resolve(
-            failures.photos
-              ? { data: null, error: { message: failures.photos } }
-              : { data: readablePhotoIds.filter((id) => ids.includes(id)).map(mediaRow), error: null }
-          )
+          call.ids = ids
+          return builder
         },
         then: (resolve: (value: unknown) => void) => {
-          calls.push({ table, filters })
+          if (table === 'photos') {
+            resolve(
+              failures.photos
+                ? { data: null, error: { message: failures.photos } }
+                : { data: readablePhotoIds.filter((id) => call.ids?.includes(id)).map(mediaRow), error: null }
+            )
+            return
+          }
           resolve(failures.stories ? { data: null, error: { message: failures.stories } } : { data: stories, error: null })
         },
       }
@@ -79,8 +87,11 @@ describe('loadPublicStories', () => {
     expect(story.coverPhotoId).toBe('p2')
     expect(story.credits).toEqual([{ role: 'photography', name: 'maria chevskaya' }])
     expect([...result.photos.keys()].sort()).toEqual(['p1', 'p2', 'p3'])
-    // Every referenced photo id is asked for once, hidden ones included; RLS answers.
-    expect(calls.find((c) => c.table === 'photos')?.ids?.sort()).toEqual(['hidden', 'p1', 'p2', 'p3'])
+    // Every referenced photo id is asked for once, with the public-read
+    // predicate spelled out so the owner's session sees what visitors see.
+    const photoQuery = calls.find((c) => c.table === 'photos')!
+    expect(photoQuery.ids?.sort()).toEqual(['hidden', 'p1', 'p2', 'p3'])
+    expect(photoQuery.filters).toEqual([['filter', 'pages', 'neq', '{}']])
   })
 
   it('returns nothing to render when there are no visible stories and skips the photo query', async () => {
@@ -94,7 +105,7 @@ describe('loadPublicStories', () => {
   it('asks only for visible stories, so a signed-in admin does not see hidden ones publicly', async () => {
     const { client, calls } = stubClient([sofia], ['p3'])
     await loadPublicStories(client)
-    expect(calls[0].filters).toEqual([['visible', true]])
+    expect(calls[0].filters).toEqual([['eq', 'visible', true]])
   })
 
   it('surfaces database errors instead of rendering an empty section', async () => {

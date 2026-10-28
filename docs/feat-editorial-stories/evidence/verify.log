@@ -22,54 +22,54 @@ $ eslint
 
 $ pnpm test:coverage && node scripts/check-crap.mjs
 $ vitest run --coverage
-(node:34562) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:39068) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 
  RUN  v4.1.7 /Users/ak/Code/masha2
       Coverage enabled with source-istanbul
 
 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
-(node:34573) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39082) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34577) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39079) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34574) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39077) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34604) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39104) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34610) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39107) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34622) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39126) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34624) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39125) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34625) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39135) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34626) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39137) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34627) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39139) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34628) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39141) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34640) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39146) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34646) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39147) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34648) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39148) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34653) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39161) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34696) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39190) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:34700) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:39198) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
 
  Test Files  74 passed (74)
-      Tests  433 passed (433)
-   Start at  22:22:34
-   Duration  11.59s (transform 9.29s, setup 0ms, import 16.49s, tests 45.99s, environment 43.30s)
+      Tests  434 passed (434)
+   Start at  22:31:16
+   Duration  12.97s (transform 12.29s, setup 0ms, import 19.82s, tests 54.73s, environment 45.07s)
 
-Source Istanbul coverage: 140 files; {"lines":{"total":3180,"covered":2372,"skipped":0,"pct":74.59},"statements":{"total":3618,"covered":2676,"skipped":0,"pct":73.96},"functions":{"total":999,"covered":640,"skipped":0,"pct":64.06},"branches":{"total":2641,"covered":1953,"skipped":0,"pct":73.94},"branchesTrue":{"total":0,"covered":0,"skipped":0,"pct":"Unknown"}}
+Source Istanbul coverage: 140 files; {"lines":{"total":3182,"covered":2374,"skipped":0,"pct":74.6},"statements":{"total":3620,"covered":2678,"skipped":0,"pct":73.97},"functions":{"total":999,"covered":640,"skipped":0,"pct":64.06},"branches":{"total":2641,"covered":1953,"skipped":0,"pct":73.94},"branchesTrue":{"total":0,"covered":0,"skipped":0,"pct":"Unknown"}}
 CRAP: 999 functions in 140 files; 0 failures
 $ next build
 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
@@ -85,7 +85,7 @@ $ next build
 
    Creating an optimized production build ...
 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
-(node:34740) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:39249) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
  ✓ Compiled successfully in 2.7s
    Running TypeScript ...
@@ -107,7 +107,7 @@ $ next build
    Generating static pages using 11 workers (6/26) 
    Generating static pages using 11 workers (12/26) 
    Generating static pages using 11 workers (19/26) 
- ✓ Generating static pages using 11 workers (26/26) in 536.1ms
+ ✓ Generating static pages using 11 workers (26/26) in 533.7ms
    Finalizing page optimization ...
 
 Route (app)                Revalidate  Expire
@@ -159,9 +159,9 @@ $ next build
 
    Creating an optimized production build ...
 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
-(node:35403) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:39796) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
- ✓ Compiled successfully in 3.1s
+ ✓ Compiled successfully in 3.8s
    Running TypeScript ...
    Collecting page data using 11 workers ...
 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
@@ -181,7 +181,7 @@ $ next build
    Generating static pages using 11 workers (6/26) 
    Generating static pages using 11 workers (12/26) 
    Generating static pages using 11 workers (19/26) 
- ✓ Generating static pages using 11 workers (26/26) in 1278.1ms
+ ✓ Generating static pages using 11 workers (26/26) in 1166.5ms
    Finalizing page optimization ...
 
 Route (app)                Revalidate  Expire
@@ -234,12 +234,12 @@ Running 7 tests using 1 worker
   ✓  2 [desktop] › e2e/tests/admin.spec.ts:130:5 › non-admin cannot enter admin (404ms)
   ✓  3 [desktop] › e2e/tests/admin.spec.ts:136:5 › admin creates, fills, publishes and deletes an editorial story (1.8s)
 [WebServer] gift: RESEND_API_KEY is not set; skipping email notification
-  ✓  4 [desktop] › e2e/tests/forms.spec.ts:3:5 › gift validates input and persists selected amount (298ms)
+  ✓  4 [desktop] › e2e/tests/forms.spec.ts:3:5 › gift validates input and persists selected amount (309ms)
 [WebServer] workshop: RESEND_API_KEY is not set; skipping email notification
 [WebServer] workshop: RESEND_API_KEY is not set; skipping subscriber notification
-  ✓  5 [desktop] › e2e/tests/forms.spec.ts:20:5 › workshop application and closed-sales subscription persist (747ms)
+  ✓  5 [desktop] › e2e/tests/forms.spec.ts:20:5 › workshop application and closed-sales subscription persist (600ms)
   ✓  6 [desktop] › e2e/tests/public.spec.ts:2:5 › portfolio sections and booking navigation (2.2s)
-  ✓  7 [mobile] › e2e/tests/public.spec.ts:2:5 › portfolio sections and booking navigation (2.0s)
+  ✓  7 [mobile] › e2e/tests/public.spec.ts:2:5 › portfolio sections and booking navigation (1.9s)
 
-  7 passed (12.9s)
+  7 passed (12.8s)
 exit=0

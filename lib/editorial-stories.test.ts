@@ -44,6 +44,18 @@ describe('uniqueSlug', () => {
     expect(uniqueSlug('eva', ['eva'])).toBe('eva-2')
     expect(uniqueSlug('eva', ['eva', 'eva-2'])).toBe('eva-3')
   })
+
+  it('makes room for the suffix when the base already fills the maximum length', () => {
+    const full = 'x'.repeat(80)
+    const second = uniqueSlug(full, [full])
+    expect(second).toBe(`${'x'.repeat(78)}-2`)
+    expect(isValidSlug(second)).toBe(true)
+    expect(uniqueSlug(full, [full, second])).toBe(`${'x'.repeat(78)}-3`)
+    // A base ending right before the cut must not leave a dangling hyphen.
+    const hyphenated = `${'y'.repeat(77)}-z`
+    expect(uniqueSlug(hyphenated, [hyphenated])).toBe(`${'y'.repeat(77)}-2`)
+    expect(isValidSlug(uniqueSlug(hyphenated, [hyphenated]))).toBe(true)
+  })
 })
 
 describe('isValidSlug', () => {

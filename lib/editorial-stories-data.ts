@@ -63,9 +63,13 @@ export async function loadPublicStories(supabase: Client): Promise<PublicStories
   return { stories: renderableStories(stories), photos }
 }
 
+// The public-read predicate of the photos table (a photo is public while it
+// is tagged onto at least one section), applied explicitly for the same
+// reason as the story filter: the admin policy would otherwise hand the
+// signed-in owner photos visitors cannot see.
 async function loadMedia(supabase: Client, ids: string[]): Promise<Map<string, MediaRow>> {
   if (ids.length === 0) return new Map()
-  const { data, error } = await supabase.from('photos').select(MEDIA_COLUMNS).in('id', ids)
+  const { data, error } = await supabase.from('photos').select(MEDIA_COLUMNS).in('id', ids).filter('pages', 'neq', '{}')
   if (error) throw new Error(`Failed to load story photos: ${error.message}`)
   return new Map((data ?? []).map((photo) => [photo.id, photo]))
 }

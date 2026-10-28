@@ -45,3 +45,13 @@ Direct observation: the E2E failure screenshot of an intermediate run showed the
 ## Delivery
 
 Next: commit the scoped files on `codex/editorial-stories` (never `.claude/launch.json` or `supabase/.temp/*`), push, open the PR against `main`, request Codex review, babysit to merge (squash) once the live head is checked and reviewed.
+
+PR: https://github.com/kulichevskiy/masha2/pull/61 · implementation commit `010731c` pushed to `origin/codex/editorial-stories`, base `origin/main` = `562aae3`. The verified tree equals the committed implementation (receipt-only edits to this file follow). Next action: Codex review of the current head, external checks, fix actionable findings, then squash merge with the expected-head guard and verify `main`.
+
+## Remote review round 1
+
+Codex reviewed `010731c` and reported two P2 findings, both valid and fixed with regression tests:
+- `uniqueSlug` truncated `${base}-${n}` back to 80 characters, so a maximum-length duplicate slug would loop forever (and a 79-character base produced a trailing hyphen). The stem is now shortened to leave room for the whole suffix (`lib/editorial-stories.ts`, test "makes room for the suffix…").
+- `loadPublicStories` relied on RLS for photo readability, so the signed-in owner saw untagged photographs on public story pages. The photo query now applies the public predicate `pages <> '{}'` explicitly (`lib/editorial-stories-data.ts`, loader test asserts the filter).
+
+`pnpm verify` exit 0 on the fixed tree (74 files / 434 tests, CRAP 0 failures, build, 7 E2E executions, typecheck, whitespace); one intermediate run lost the timing-sensitive `scripts/check-crap.test.mjs` under load again and passed alone and on rerun. Next: push the fix, reply on and resolve both threads, fresh Codex review of the new head, then merge.

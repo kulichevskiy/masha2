@@ -55,12 +55,16 @@ export function slugify(input: string): string {
 }
 
 // Make `base` unique among `taken` by appending -2, -3, … Collisions are rare
-// (two stories with the same working title), so a linear probe is fine.
+// (two stories with the same working title), so a linear probe is fine. The
+// base is shortened to leave room for the whole suffix, so a maximum-length
+// slug still gets a distinct, valid candidate instead of retrying itself.
 export function uniqueSlug(base: string, taken: Iterable<string>): string {
   const set = new Set(taken)
   if (!set.has(base)) return base
   for (let n = 2; ; n += 1) {
-    const candidate = `${base}-${n}`.slice(0, STORY_SLUG_MAX_LENGTH)
+    const suffix = `-${n}`
+    const stem = base.slice(0, STORY_SLUG_MAX_LENGTH - suffix.length).replace(/-+$/g, '')
+    const candidate = `${stem}${suffix}`
     if (!set.has(candidate)) return candidate
   }
 }
