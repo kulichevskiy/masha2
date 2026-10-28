@@ -1,8 +1,10 @@
 /**
  * Contract for the bottom-right floating CTA cluster. BOOK is the primary
  * solid-black plate; GIFT CERTIFICATE is a quieter ghost-on-glass plate to its
- * left, rendered only when the gift page is visible. The whole cluster is hidden
- * on /workshop; the gift plate alone is hidden on /gift.
+ * left, rendered only when the gift page is visible. The cluster is fixed, so
+ * the gift plate also floats over the white page bottom: it is paper-tinted
+ * glass with ink text, never white-on-white. The whole cluster is hidden on
+ * /workshop; the gift plate alone is hidden on /gift.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '@testing-library/react'
@@ -28,9 +30,13 @@ describe('<FloatingBookButton />', () => {
     expect((gift?.textContent ?? '').toLowerCase()).toContain('gift')
     expect((gift?.textContent ?? '').toLowerCase()).toContain('certificate')
 
-    // BOOK stays the primary solid-black plate; gift is a quieter ghost plate.
+    // BOOK stays the primary solid-black plate; gift is a quieter ghost plate
+    // that must read over photographs and over paper alike.
     expect(book?.className).toContain('bg-black')
     expect(gift?.className).not.toContain('bg-black')
+    expect(gift?.className).toContain('bg-white/70')
+    expect(gift?.className).toContain('text-black')
+    expect(gift?.className).not.toContain('text-white')
   })
 
   it('omits the gift plate when the gift page is not visible', () => {

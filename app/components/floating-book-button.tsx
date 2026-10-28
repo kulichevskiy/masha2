@@ -5,7 +5,10 @@ import { usePathname } from "next/navigation"
 
 // Bottom-right floating CTA cluster. BOOK is the primary solid-black plate;
 // GIFT CERTIFICATE is a quieter ghost-on-glass plate to its left, shown only
-// when the gift page is visible (`giftVisible`, fetched server-side).
+// when the gift page is visible (`giftVisible`, fetched server-side). The
+// cluster is fixed, so the gift plate floats over photographs *and* over the
+// white page bottom: paper at 70% with ink text keeps it readable on both,
+// where white-on-white glass used to vanish (design system `glass-ghost`).
 export function FloatingBookButton({ giftVisible = false }: { giftVisible?: boolean }) {
   const pathname = usePathname()
   // The /workshop page has its own Apply CTA — two competing fixed buttons would
@@ -22,7 +25,7 @@ export function FloatingBookButton({ giftVisible = false }: { giftVisible?: bool
         {showGift && (
           <Link
             href="/gift"
-            className="pointer-events-auto shrink md:shrink-0 px-4 md:px-10 py-3 font-bebas-neue text-xl tracking-wider uppercase bg-white/10 text-white border border-white/30 transition-all hover:bg-white/20 hover:border-white/60 md:hover:scale-105 shadow-[0_4px_20px_rgba(0,0,0,0.45)] text-center backdrop-blur-sm whitespace-nowrap"
+            className="pointer-events-auto shrink md:shrink-0 px-4 md:px-10 py-3 font-bebas-neue text-xl tracking-wider uppercase bg-white/70 text-black border border-gray-300 transition-all hover:bg-white/90 hover:border-gray-400 md:hover:scale-105 shadow-[0_4px_20px_rgba(0,0,0,0.45)] text-center backdrop-blur-sm whitespace-nowrap"
           >
             Gift Certificate
           </Link>

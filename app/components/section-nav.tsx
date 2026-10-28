@@ -15,7 +15,8 @@ const SECTIONS = [
 ] as const
 
 export function SectionNav() {
-  const pathname = usePathname()
+  // usePathname is null when rendered without a router (static shells, tests).
+  const pathname = usePathname() ?? ''
 
   return (
     <nav
@@ -23,7 +24,8 @@ export function SectionNav() {
       className="mt-2 md:mt-3 flex items-center justify-center gap-7 md:gap-10 font-bebas-neue text-[15px] md:text-[17px] leading-none tracking-[0.1em] uppercase"
     >
       {SECTIONS.map((section) => {
-        const active = pathname === section.href
+        // A section stays lit on its nested pages (/editorial/<slug>).
+        const active = pathname === section.href || pathname.startsWith(`${section.href}/`)
         return (
           <Link
             key={section.href}

@@ -12,6 +12,22 @@ test('portfolio sections and booking navigation', async ({ page }) => {
         .toBeGreaterThan(0)
     }
   }
+  // Editorial is a feed of stories: the seeded story's cover links to its page,
+  // which shows the title, the sequence and the same chrome (nav, BOOK).
+  await page.goto('/editorial')
+  const tile = page.getByRole('link', { name: 'Seed story', exact: true })
+  await expect(tile).toHaveAttribute('href', '/editorial/seed-story')
+  await expect(tile.locator('img')).toBeVisible()
+  await tile.click()
+  await expect(page).toHaveURL(/\/editorial\/seed-story$/)
+  await expect(page.locator('h1')).toHaveText('Seed story')
+  await expect(page.locator('dd').first()).toHaveText('maria chevskaya')
+  const storyImage = page.locator('main img, img').first()
+  await expect.poll(() => storyImage.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
+  await expect(page.getByRole('link', { name: 'Editorial', exact: true }).first()).toHaveAttribute('aria-current', 'page')
+  const missing = await page.goto('/editorial/no-such-story')
+  expect(missing?.status()).toBe(404)
+  await page.goto('/editorial/seed-story')
   await page.getByRole('link', { name: 'Book', exact: true }).first().click()
   await expect(page).toHaveURL(/\/book$/)
   await expect(page.locator('h1')).toBeVisible()

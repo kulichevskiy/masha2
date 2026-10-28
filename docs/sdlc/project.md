@@ -26,7 +26,7 @@ Delegation: sequential implementation by default; independent read-only review f
 | Unit/integration | Required | `pnpm test` (included in coverage gate during verify) | All Vitest tests, including components, SQL contracts and tooling; all pass | [PASS, 2026-10-27](setup-verification.json) | Local delivery gate |
 | Production build | Required | `pnpm build` | Full Next.js application, normal production configuration; exit 0 | [PASS, 2026-10-27](setup-verification.json) | Local delivery gate |
 | Whitespace | Required | `git diff --check` | Entire intended diff; exit 0 | [PASS, 2026-10-27](setup-verification.json) | Local delivery gate |
-| E2E | Required | `pnpm test:e2e` | All six browser scenarios below; no retries, skips or failures | [PASS, 2026-10-27](setup-verification.json) | Local delivery gate |
+| E2E | Required | `pnpm test:e2e` | All browser scenarios below (seven executions: six original plus the editorial admin scenario); no retries, skips or failures | [PASS, 2026-10-27](setup-verification.json) | Local delivery gate |
 | CRAP | Required | `pnpm check:crap` | Every production TS/TSX function strictly <30; fresh complete mappings/counters | [PASS, 2026-10-27](setup-verification.json) | Local delivery gate |
 | Mutation | Explicitly not required | None | User-selected override | Deliberately disabled | Not required |
 | Independent review | Required | Separate read-only reviewer | Intent/outcomes and correctness/standards; explicit no-blockers verdict on current snapshot | [PASS, independent review](setup-review.md) | Local review gate |
@@ -55,6 +55,7 @@ Pinned Playwright 1.64.1; Chromium installed with `pnpm exec playwright install 
 3. Signed-in non-admin denial.
 4. Gift email validation and persistence of the selected amount.
 5. Workshop application validation and persistence; closed-sales subscription rejects missing preferences without writing, then persists a valid choice.
+6. Editorial stories (added 2026-10-28 by feat-editorial-stories): scenario 1 additionally opens the seeded story from the `/editorial` cover feed, checks title, credits, image loading, section highlight and a 404 for an unknown slug; a separate admin scenario creates a story, saves subtitle and credits, adds a photograph, publishes it, checks the public feed and page, and deletes it.
 
 Use the pinned Supabase CLI 2.122.0 and service resolutions in `e2e/supabase/supabase.lock`. The dedicated configuration is `e2e/supabase/config.toml`; its migrations symlink refers to the canonical application migrations. The native runtime is experimental and version-pinned; it runs services as local processes on supported macOS Apple silicon/Linux hosts. `E2E_SUPABASE_RUNTIME=docker` is an explicit alternative requiring a healthy Docker engine and sufficient disk; that alternative was not verified during setup. [Supabase runtime documentation](https://supabase.com/docs/guides/local-development/docker-and-native-runtimes).
 
