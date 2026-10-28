@@ -1,0 +1,245 @@
+$ pnpm lint && pnpm check:crap && pnpm build && pnpm test:e2e && pnpm exec tsc --noEmit && git diff --check
+$ eslint
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+
+/Users/ak/Code/masha2/app/admin/components/gift-tab.tsx
+  63:16  warning  '_drop' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/ak/Code/masha2/app/admin/components/photo-row.tsx
+  129:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/ak/Code/masha2/app/admin/components/workshop-tab.tsx
+  79:16  warning  '_drop' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/ak/Code/masha2/components/dropzone.tsx
+  132:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/ak/Code/masha2/hooks/use-supabase-upload.ts
+  210:7  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+✖ 5 problems (0 errors, 5 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+$ pnpm test:coverage && node scripts/check-crap.mjs
+$ vitest run --coverage
+(node:34562) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+ RUN  v4.1.7 /Users/ak/Code/masha2
+      Coverage enabled with source-istanbul
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+(node:34573) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34577) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34574) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34604) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34610) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34622) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34624) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34625) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34626) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34627) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34628) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34640) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34646) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34648) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34653) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34696) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34700) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  74 passed (74)
+      Tests  433 passed (433)
+   Start at  22:22:34
+   Duration  11.59s (transform 9.29s, setup 0ms, import 16.49s, tests 45.99s, environment 43.30s)
+
+Source Istanbul coverage: 140 files; {"lines":{"total":3180,"covered":2372,"skipped":0,"pct":74.59},"statements":{"total":3618,"covered":2676,"skipped":0,"pct":73.96},"functions":{"total":999,"covered":640,"skipped":0,"pct":64.06},"branches":{"total":2641,"covered":1953,"skipped":0,"pct":73.94},"branchesTrue":{"total":0,"covered":0,"skipped":0,"pct":"Unknown"}}
+CRAP: 999 functions in 140 files; 0 failures
+$ next build
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/ak/pnpm-lock.yaml as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/ak/Code/masha2/pnpm-lock.yaml
+
+   ▲ Next.js 16.0.7 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+(node:34740) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ Compiled successfully in 2.7s
+   Running TypeScript ...
+   Collecting page data using 11 workers ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   Generating static pages using 11 workers (0/26) ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   Generating static pages using 11 workers (6/26) 
+   Generating static pages using 11 workers (12/26) 
+   Generating static pages using 11 workers (19/26) 
+ ✓ Generating static pages using 11 workers (26/26) in 536.1ms
+   Finalizing page optimization ...
+
+Route (app)                Revalidate  Expire
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ○ /api/docs
+├ ƒ /api/openapi.json
+├ ƒ /api/v1/[...path]
+├ ƒ /auth/callback
+├ ƒ /auth/confirm
+├ ƒ /auth/error
+├ ○ /auth/forgot-password
+├ ○ /auth/login
+├ ○ /auth/update-password
+├ ƒ /book
+├ ƒ /editorial
+├ ƒ /editorial/[slug]
+├ ƒ /gift
+├ ƒ /kids
+├ ○ /legal                         1h      1y
+├ ○ /opengraph-image
+├ ƒ /portraits
+├ ○ /privacy                       1h      1y
+├ ƒ /protected
+├ ○ /sitemap.xml
+├ ○ /twitter-image
+├ ƒ /video
+└ ƒ /workshop
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+$ tsx e2e/run.ts
+$ next build
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/ak/pnpm-lock.yaml as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/ak/Code/masha2/pnpm-lock.yaml
+
+   ▲ Next.js 16.0.7 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+(node:35403) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ Compiled successfully in 3.1s
+   Running TypeScript ...
+   Collecting page data using 11 workers ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   Generating static pages using 11 workers (0/26) ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   Generating static pages using 11 workers (6/26) 
+   Generating static pages using 11 workers (12/26) 
+   Generating static pages using 11 workers (19/26) 
+ ✓ Generating static pages using 11 workers (26/26) in 1278.1ms
+   Finalizing page optimization ...
+
+Route (app)                Revalidate  Expire
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ○ /api/docs
+├ ƒ /api/openapi.json
+├ ƒ /api/v1/[...path]
+├ ƒ /auth/callback
+├ ƒ /auth/confirm
+├ ƒ /auth/error
+├ ○ /auth/forgot-password
+├ ○ /auth/login
+├ ○ /auth/update-password
+├ ƒ /book
+├ ƒ /editorial
+├ ƒ /editorial/[slug]
+├ ƒ /gift
+├ ƒ /kids
+├ ○ /legal                         1h      1y
+├ ○ /opengraph-image
+├ ƒ /portraits
+├ ○ /privacy                       1h      1y
+├ ƒ /protected
+├ ○ /sitemap.xml
+├ ○ /twitter-image
+├ ƒ /video
+└ ƒ /workshop
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+[WebServer] $ next start --hostname localhost --port 3107
+[WebServer] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[WebServer]  ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+[WebServer]  We detected multiple lockfiles and selected the directory of /Users/ak/pnpm-lock.yaml as the root directory.
+[WebServer]  To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+[WebServer]    See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+[WebServer]  Detected additional lockfiles: 
+[WebServer]    * /Users/ak/Code/masha2/pnpm-lock.yaml
+[WebServer] 
+
+Running 7 tests using 1 worker
+
+  ✓  1 [desktop] › e2e/tests/admin.spec.ts:4:5 › admin login, upload, edit, reorder, visibility and logout persist (3.5s)
+  ✓  2 [desktop] › e2e/tests/admin.spec.ts:130:5 › non-admin cannot enter admin (404ms)
+  ✓  3 [desktop] › e2e/tests/admin.spec.ts:136:5 › admin creates, fills, publishes and deletes an editorial story (1.8s)
+[WebServer] gift: RESEND_API_KEY is not set; skipping email notification
+  ✓  4 [desktop] › e2e/tests/forms.spec.ts:3:5 › gift validates input and persists selected amount (298ms)
+[WebServer] workshop: RESEND_API_KEY is not set; skipping email notification
+[WebServer] workshop: RESEND_API_KEY is not set; skipping subscriber notification
+  ✓  5 [desktop] › e2e/tests/forms.spec.ts:20:5 › workshop application and closed-sales subscription persist (747ms)
+  ✓  6 [desktop] › e2e/tests/public.spec.ts:2:5 › portfolio sections and booking navigation (2.2s)
+  ✓  7 [mobile] › e2e/tests/public.spec.ts:2:5 › portfolio sections and booking navigation (2.0s)
+
+  7 passed (12.9s)
+exit=0

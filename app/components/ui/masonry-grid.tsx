@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
-import { resolveImageDimensions } from "@/lib/image-dimensions"
 import type { PhotoPage } from "@/lib/photo-pages"
+import { MEDIA_COLUMNS, toLightboxPhoto } from "@/lib/lightbox-media"
 import { PhotoLightboxGrid } from "./photo-lightbox"
 
 // Placeholder aspect ratios for the loading skeleton — a fixed spread of
@@ -33,7 +33,7 @@ export async function MasonryGrid({ page = 'portraits' }: { page?: PhotoPage }) 
   // of its pages. RLS already hides rows with an empty pages array.
   const { data: photos, error } = await supabase
     .from('photos')
-    .select('id, kind, storage_path, poster_path, duration_seconds, title, alt_text, position, width, height')
+    .select(MEDIA_COLUMNS)
     .contains('pages', [page])
     .order('position', { ascending: true })
     .order('id', { ascending: true })
@@ -55,39 +55,9 @@ export async function MasonryGrid({ page = 'portraits' }: { page?: PhotoPage }) 
     )
   }
 
-  // Build media objects with public URLs and the intrinsic dimensions used to
-  // render each poster/image at its natural aspect ratio (no cropping).
-  const photosWithUrls = photos.map((photo) => {
-    const isVideo = photo.kind === 'video'
-    const bucket = isVideo ? 'videos' : 'photos'
-    const imagePath = isVideo ? photo.poster_path! : photo.storage_path
-    const { data: imageUrlData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(imagePath)
-
-    if (isVideo) {
-      const { data: videoUrlData } = supabase.storage
-        .from('videos')
-        .getPublicUrl(photo.storage_path)
-
-      return {
-        id: photo.id,
-        kind: 'video' as const,
-        src: imageUrlData.publicUrl,
-        videoSrc: videoUrlData.publicUrl,
-        alt: photo.alt_text || photo.title || photo.storage_path,
-        durationSeconds: photo.duration_seconds!,
-        ...resolveImageDimensions(photo.width, photo.height),
-      }
-    }
-
-    return {
-      id: photo.id,
-      src: imageUrlData.publicUrl,
-      alt: photo.alt_text || photo.title || photo.storage_path,
-      ...resolveImageDimensions(photo.width, photo.height),
-    }
-  })
+  // Public URLs and intrinsic dimensions come from the shared mapper so a
+  // photograph renders identically here and on an editorial story page.
+  const photosWithUrls = photos.map((photo) => toLightboxPhoto(supabase, photo))
 
   return (
     <PhotoLightboxGrid photos={photosWithUrls} columnsClassName={COLUMNS} />

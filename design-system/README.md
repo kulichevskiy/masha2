@@ -84,7 +84,7 @@ Four typefaces, loaded from Google Fonts via `next/font`. Each has exactly one j
 | **Bebas Neue** (400) | Display / wordmark / CTAs / page titles. UPPERCASE for the brand, lowercase for page titles like `booking`. | `MARIA CHEVSKAYA`, `BOOK`, `booking` |
 | **Inter** (400) | Supporting tagline and footer meta. Tracked out (`tracking-wider` / `tracking-widest`), lowercase. | `portrait and editorial photographer` |
 | **Playfair Display** | Available for editorial long-form/serif moments (OG image uses it). Not used on the primary site — held in reserve. | `Maria Chevskaya` (editorial) |
-| **Roboto Mono** | Held in reserve for metadata / technical labels (EXIF, timestamps). Loaded but unused on live pages today. | `f/1.8  1/200s  ISO 400` |
+| **Roboto Mono** | Metadata / technical labels: the credits list on editorial story pages (role · name, photo count) and video durations in the feed. | `photography  maria chevskaya` |
 
 **Geist Sans** and **Geist Mono** are also loaded as base UI typefaces (shadcn/ui defaults) — these power admin chrome and form controls where Inter/Bebas would feel wrong.
 
@@ -105,6 +105,7 @@ This is a portfolio for a portrait and editorial photographer — **the photogra
 - **No borders, no shadows, no rounded corners on photographs.** Each photo fills the column width and is shown at its **natural aspect ratio — the layout never crops it**. `overflow-hidden` on the frame clips only the hover zoom, not the image itself.
 - **Encoding favors fidelity over bytes.** The photographs are the brand, so `next/image` serves them at **`quality={90}`** (vs. the framework default of 75) with **AVIF preferred, WebP fallback** (`images.formats`) to offset the size cost. The quality lives in one constant — `lib/image-config.ts` `PHOTO_IMAGE_QUALITY` — shared by the feed, the booking portrait, and the `images.qualities` allow-list. Responsive resizing stays on (never `unoptimized`), so grain and tonal gradients survive without penalizing mobile.
 - **Hover is a 5% scale-up over 500 ms.** `transition-transform duration-500 group-hover:scale-105` — the photograph subtly breathes into the viewer's attention.
+- **Editorial stories.** `/editorial` is the one feed whose items are stories, not single frames. A story tile is the cover photograph alone — same columns, plate, radius and hover as every other tile, no title or caption — and it opens `/editorial/<slug>` instead of the lightbox. The story page puts its header and footer navigation on the same three columns as the photo grid: back link, lowercase Bebas title (56px on phones, 120px on desktop), one-line subtitle in columns 1–2, a Roboto Mono role/name credits list in column 3 (ending with the photo count), the full sequence as the usual masonry, then previous / all stories / next on the three columns above a hairline. Credits show only confirmed names; unconfirmed roles stay off the public page. Until the first story is published the section remains the flat photo feed.
 - **Masonry cadence.** A CSS multi-column flow — `columns-1 md:columns-2 lg:columns-3` — where photos flow top-to-bottom within a column, then to the next. Each photo sets its own height from its intrinsic dimensions (stored on `photos.width` / `photos.height`), so the rhythm comes from the photographs themselves, not a fixed row pattern. Column gap is `4` (16 px); each photo carries `mb-4` and `break-inside-avoid` so it never splits across columns.
 - **Color photography is permissible only on the booking page**, for the single full-width portrait of Maria herself — and even there it reads warm-neutral, not saturated.
 
@@ -116,12 +117,13 @@ This is a portfolio for a portrait and editorial photographer — **the photogra
 
 ### Borders, shadows, radii
 - **Radius: 0 on the public site.** The floating BOOK button, images, and email CTA are all hard rectangles. This is a deliberate anti-shadcn-ness. Radius > 0 only appears in admin chrome (`rounded-md` on inputs, `rounded-xl` on Card).
-- **Borders are almost invisible.** Only one: `border-t border-gray-200` above the footer. That's it.
+- **Borders are almost invisible.** Two hairlines, both `border-t border-gray-200`: above the footer, and above the previous / next navigation at the end of an editorial story page. That's it.
 - **Shadows are almost absent.** Exactly one lives on the floating BOOK button: `shadow-[0_4px_20px_rgba(0,0,0,0.3)]` — heavy and single-source, like a poster tacked to a wall, not a soft UI card shadow.
 
 ### Backgrounds, transparency, blur
 - Top nav: `bg-white/50 backdrop-blur-md` — a pane of frosted glass over the content that scrolls beneath.
 - Floating BOOK button: `bg-black/80 backdrop-blur-sm` — black, but not pure, so the image showing through at the edges reads as layered.
+- Floating GIFT CERTIFICATE plate beside it: `bg-white/70 text-black border-gray-300 backdrop-blur-sm`. The cluster is fixed and reaches the white page bottom, so this plate must read on paper as well as over photographs; white-on-white glass is not allowed here.
 - No gradients. No patterns. No textures. No illustrations. **The "pattern" of this site is the grid of photographs.**
 
 ### Motion

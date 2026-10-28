@@ -3,6 +3,8 @@ import { getApiAdminData } from './api-actions'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { PhotosTable } from './components/photos-table'
+import { StoriesTable } from './components/stories-table'
+import { orderStoryPhotos } from '@/lib/editorial-stories'
 import { PhotoUploadDropzone } from './components/photo-upload-dropzone'
 import { LogoutButton } from '@/components/logout-button'
 import { PostHogIdentify } from '@/components/posthog-identify'
@@ -19,7 +21,7 @@ import { feedPreviews, loadHomeContentForAdmin } from '@/app/components/home/hom
 import { loadHomePhotos } from '@/app/components/home/home-photos'
 import { getAdminGiftCertificate } from '@/app/gift/data'
 
-const VALID_TABS: AdminTab[] = ['photos', 'home', 'tiers', 'faq', 'workshop', 'gift', 'requests', 'settings', 'api']
+const VALID_TABS: AdminTab[] = ['photos', 'stories', 'home', 'tiers', 'faq', 'workshop', 'gift', 'requests', 'settings', 'api']
 
 type Props = {
   searchParams: Promise<{ tab?: string }>
@@ -72,6 +74,7 @@ export default async function AdminPage({ searchParams }: Props) {
       <AdminTabs active={tab} />
 
       {tab === 'photos' && <PhotosTab />}
+      {tab === 'stories' && <StoriesTab />}
       {tab === 'home' && <HomeTabSection />}
       {tab === 'tiers' && <TiersTab />}
       {tab === 'faq' && <FaqTab />}
@@ -134,6 +137,36 @@ async function PhotosTab() {
         </div>
       )}
     </>
+  )
+}
+
+// Editorial stories with their photo ids, plus the photographs they may use:
+// everything tagged onto the editorial section. The admin policy lets this
+// user-scoped client see hidden stories too.
+async function StoriesTab() {
+  const supabase = await createClient()
+  const [storiesRead, photosRead] = await Promise.all([
+    supabase
+      .from('editorial_stories')
+      .select('*, editorial_story_photos (photo_id, position)')
+      .order('position', { ascending: true })
+      .order('id', { ascending: true }),
+    supabase
+      .from('photos')
+      .select('id, kind, storage_path, poster_path, title, alt_text')
+      .contains('pages', ['editorial'])
+      .order('position', { ascending: true }),
+  ])
+  if (storiesRead.error) throw new Error(`Failed to fetch stories: ${storiesRead.error.message}`)
+  if (photosRead.error) throw new Error(`Failed to fetch editorial photos: ${photosRead.error.message}`)
+
+  const stories = (storiesRead.data ?? []).map(({ editorial_story_photos, ...story }) => ({
+    ...story,
+    photo_ids: orderStoryPhotos(editorial_story_photos),
+  }))
+
+  return (
+    <StoriesTable stories={stories} catalogue={photosRead.data ?? []} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!} />
   )
 }
 

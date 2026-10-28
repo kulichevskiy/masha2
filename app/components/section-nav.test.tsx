@@ -75,6 +75,14 @@ describe('<SectionNav />', () => {
     expect(container.querySelector('a[href="/portraits"]')?.getAttribute('aria-current')).toBeNull()
   })
 
+  it('keeps Editorial active on a story page under /editorial/', () => {
+    pathname = '/editorial/soft-structure'
+    const { container } = render(<SectionNav />)
+
+    expect(container.querySelector('a[href="/editorial"]')?.getAttribute('aria-current')).toBe('page')
+    expect(container.querySelector('a[href="/video"]')?.getAttribute('aria-current')).toBeNull()
+  })
+
   it('lights nothing on the home page — the story is not a section', () => {
     pathname = '/'
     const { container } = render(<SectionNav />)

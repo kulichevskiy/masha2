@@ -362,6 +362,89 @@ export type Database = {
         }
         Relationships: []
       }
+      editorial_stories: {
+        Row: {
+          cover_photo_id: string | null
+          created_at: string
+          credits: Json
+          id: string
+          position: number
+          slug: string
+          subtitle: string
+          title: string
+          updated_at: string
+          version: number
+          visible: boolean
+        }
+        Insert: {
+          cover_photo_id?: string | null
+          created_at?: string
+          credits?: Json
+          id?: string
+          position?: number
+          slug: string
+          subtitle?: string
+          title: string
+          updated_at?: string
+          version?: number
+          visible?: boolean
+        }
+        Update: {
+          cover_photo_id?: string | null
+          created_at?: string
+          credits?: Json
+          id?: string
+          position?: number
+          slug?: string
+          subtitle?: string
+          title?: string
+          updated_at?: string
+          version?: number
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "editorial_stories_cover_photo_id_fkey"
+            columns: ["cover_photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      editorial_story_photos: {
+        Row: {
+          photo_id: string
+          position: number
+          story_id: string
+        }
+        Insert: {
+          photo_id: string
+          position?: number
+          story_id: string
+        }
+        Update: {
+          photo_id?: string
+          position?: number
+          story_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "editorial_story_photos_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "editorial_story_photos_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "editorial_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       home_story: {
         Row: {
           content: Json

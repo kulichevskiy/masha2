@@ -87,6 +87,7 @@ async function main() {
     if (settings.error) throw settings.error
     // Clean only the dedicated stack; never use a developer's ambient credentials.
     for (const table of [
+      'editorial_stories',
       'photos',
       'gift_certificate_requests',
       'workshop_applications',
@@ -115,6 +116,27 @@ async function main() {
         position: 10,
       })
     if (seedPhoto.error) throw seedPhoto.error
+    // One visible editorial story around the seed photo, so the public run
+    // exercises the story feed and the story page rather than the fallback.
+    const seedPhotoRow = await admin.from('photos').select('id').eq('storage_path', 'seed/portfolio.png').single()
+    if (seedPhotoRow.error) throw seedPhotoRow.error
+    const seedStory = await admin
+      .from('editorial_stories')
+      .insert({
+        slug: 'seed-story',
+        title: 'Seed story',
+        subtitle: 'A seeded editorial story.',
+        credits: [{ role: 'photography', name: 'maria chevskaya' }],
+        visible: true,
+        position: 0,
+      })
+      .select('id')
+      .single()
+    if (seedStory.error) throw seedStory.error
+    const seedStoryPhoto = await admin
+      .from('editorial_story_photos')
+      .insert({ story_id: seedStory.data.id, photo_id: seedPhotoRow.data.id, position: 0 })
+    if (seedStoryPhoto.error) throw seedStoryPhoto.error
     const gift = await admin.from('gift_certificate').select('id').single()
     if (gift.error) throw gift.error
     const updated = await admin

@@ -132,3 +132,77 @@ test('non-admin cannot enter admin', async ({ page }) => {
   await expect(page).toHaveURL(/\/auth\/error/)
   await expect(page.getByRole('heading', { name: 'Личный кабинет фотографа' })).toHaveCount(0)
 })
+
+test('admin creates, fills, publishes and deletes an editorial story', async ({ page, request }) => {
+  await login(page)
+  await expect(page.getByRole('heading', { name: 'Личный кабинет фотографа' })).toBeVisible()
+  await page.goto('/admin?tab=stories')
+  await expect(page.getByText('/editorial/seed-story', { exact: false })).toBeVisible()
+  await page.getByLabel('Название новой истории').fill('E2E story')
+  await page.getByRole('button', { name: 'Добавить историю', exact: true }).click()
+  const created = page.locator('li').filter({ hasText: '/editorial/e2e-story' })
+  await expect(created).toBeVisible()
+  await expect
+    .poll(async () => (await db().from('editorial_stories').select('visible').eq('slug', 'e2e-story').single()).data?.visible)
+    .toBe(false)
+
+  await created.getByRole('button', { name: 'Редактировать' }).click()
+  await created.getByLabel('Подзаголовок').fill('An end-to-end story.')
+  await created.getByLabel('Имя 2').fill('Visitor')
+  await created.getByRole('button', { name: 'Сохранить' }).click()
+  await expect(created.getByText('Сохранено', { exact: true })).toBeVisible()
+  await expect
+    .poll(async () => (await db().from('editorial_stories').select('subtitle, credits').eq('slug', 'e2e-story').single()).data)
+    .toEqual({
+      subtitle: 'An end-to-end story.',
+      credits: [{ role: 'photography', name: 'maria chevskaya' }, { role: 'model', name: 'Visitor' }],
+    })
+
+  await created.getByRole('button', { name: 'Добавить фото' }).click()
+  await created.getByRole('button', { name: /^Добавить: / }).first().click()
+  await expect
+    .poll(async () => {
+      const story = await db().from('editorial_stories').select('id').eq('slug', 'e2e-story').single()
+      return (await db().from('editorial_story_photos').select('photo_id').eq('story_id', story.data!.id)).data?.length
+    })
+    .toBe(1)
+
+  // Still hidden: anonymous visitors (the `request` fixture carries no admin
+  // cookies) get a 404 for the page and no tile in the feed; the signed-in
+  // owner does not see it on the public pages either.
+  const hidden = await request.get('/editorial/e2e-story')
+  expect(hidden.status()).toBe(404)
+  const anonymousFeed = await (await request.get('/editorial')).text()
+  expect(anonymousFeed).not.toContain('/editorial/e2e-story')
+  await page.goto('/editorial')
+  await expect(page.getByRole('link', { name: 'E2E story', exact: true })).toHaveCount(0)
+  await page.goto('/admin?tab=stories')
+  const createdRow = page.locator('li').filter({ hasText: '/editorial/e2e-story' })
+
+  await createdRow.getByRole('switch', { name: 'Видима: E2E story' }).click()
+  await expect
+    .poll(async () => (await db().from('editorial_stories').select('visible').eq('slug', 'e2e-story').single()).data?.visible)
+    .toBe(true)
+
+  await page.goto('/editorial')
+  await expect(page.getByRole('link', { name: 'E2E story', exact: true })).toHaveAttribute('href', '/editorial/e2e-story')
+  await page.goto('/editorial/e2e-story')
+  await expect(page.locator('h1')).toHaveText('E2E story')
+  await expect(page.locator('p', { hasText: 'An end-to-end story.' })).toBeVisible()
+  await expect(page.locator('dd').nth(1)).toHaveText('visitor')
+  // Two visible stories: the footer navigation links them to each other.
+  const storiesNav = page.getByRole('navigation', { name: 'Stories' })
+  await expect(storiesNav.getByRole('link', { name: /Seed story/ }).first()).toHaveAttribute('href', '/editorial/seed-story')
+
+  await page.goto('/admin?tab=stories')
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: 'Удалить: E2E story' }).click()
+  await expect
+    .poll(async () => (await db().from('editorial_stories').select('id').eq('slug', 'e2e-story')).data?.length)
+    .toBe(0)
+  // Deleting the story leaves its photograph in the library.
+  const photos = await db().from('photos').select('id')
+  expect(photos.data?.length).toBeGreaterThan(0)
+  const gone = await page.request.get('/editorial/e2e-story')
+  expect(gone.status()).toBe(404)
+})

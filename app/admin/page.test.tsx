@@ -12,6 +12,7 @@ vi.mock('@/lib/supabase/server', () => ({
       select: () => query,
       order: () => query,
       limit: () => query,
+      contains: () => query,
       then: (done: (v: unknown) => unknown) => mock.query().then(done),
     }
     return { auth: { getClaims: mock.claims }, rpc: mock.rpc, from: () => query }
@@ -53,6 +54,14 @@ describe('admin server page', () => {
     expect(await html('workshop')).toContain('Workshop editor')
     mock.workshop.mockResolvedValue(null)
     expect(await html('workshop')).toContain('Не найдена запись воркшопа')
+  })
+  it('renders the stories tab and surfaces failed reads', async () => {
+    expect(await html('stories')).toContain('Историй пока нет')
+    mock.query.mockResolvedValueOnce({ data: null, error: { message: 'stories down' } })
+    await expect(html('stories')).rejects.toThrow('Failed to fetch stories: stories down')
+    mock.query.mockResolvedValueOnce({ data: [], error: null })
+    mock.query.mockResolvedValueOnce({ data: null, error: { message: 'photos down' } })
+    await expect(html('stories')).rejects.toThrow('Failed to fetch editorial photos: photos down')
   })
   it('rejects unauthenticated and nonadmin requests before rendering', async () => {
     mock.claims.mockResolvedValue({ data: { claims: null }, error: null })

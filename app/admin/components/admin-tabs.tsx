@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 export type AdminTab =
   | 'photos'
+  | 'stories'
   | 'home'
   | 'tiers'
   | 'faq'
@@ -13,6 +14,7 @@ export type AdminTab =
 
 const TABS: { id: AdminTab, label: string }[] = [
   { id: 'photos', label: 'Фото' },
+  { id: 'stories', label: 'Истории' },
   { id: 'home', label: 'Главная' },
   { id: 'tiers', label: 'Тарифы' },
   { id: 'faq', label: 'Вопросы' },

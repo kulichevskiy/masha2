@@ -6,15 +6,8 @@ import type { PhotoPage } from '@/lib/photo-pages'
 import { reassignSlots } from '@/lib/photo-filter'
 import type { HomeStoryContent } from '@/lib/home-story-content'
 import type { Json } from '@/lib/supabase/database.types'
+import { requireAdmin } from './require-admin'
 
-type ServerSupabase = Awaited<ReturnType<typeof createClient>>
-
-async function requireAdmin(supabase: ServerSupabase) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-  const { data: isAdmin, error } = await supabase.rpc('is_admin')
-  if (error || !isAdmin) throw new Error('Forbidden')
-}
 
 // Reorder a set of photos. `orderedIds` is the new visual order of whatever the
 // admin sees — the whole table under the `Все` filter, or just the filtered
