@@ -34,6 +34,7 @@ const NO_PREVIEWS = {
   people: [null, null, null],
   session: [null],
   work: [],
+  reviews: [],
   video: [],
   behind: ['/photos/maria.jpg'],
   workshops: [null],
@@ -58,9 +59,10 @@ describe('HomeTab', () => {
       '2 · Люди',
       '3 · Съёмка',
       '4 · Работы',
-      '5 · За камерой',
-      '6 · Воркшопы',
-      '7 · Приглашение',
+      '5 · Отзывы',
+      '6 · За камерой',
+      '7 · Воркшопы',
+      '8 · Приглашение',
     ]) {
       expect(getByText(title)).toBeTruthy()
     }
@@ -99,6 +101,24 @@ describe('HomeTab', () => {
     expect(sent.hero.heading).toBe('new\nheading')
     // Untouched sections travel unchanged.
     expect(sent.people.body).toBe(DEFAULT_CONTENT.people.body)
+  })
+
+  it('saves an edited review and its name', async () => {
+    const { container, getAllByText } = renderTab()
+    const quote = [...container.querySelectorAll('textarea')].find(
+      (t) => t.value === DEFAULT_CONTENT.reviews.quotes[1].text
+    )!
+    fireEvent.change(quote, { target: { value: 'It was easy.' } })
+    const name = [...container.querySelectorAll('input')].find(
+      (i) => i.value === DEFAULT_CONTENT.reviews.quotes[1].name
+    )!
+    fireEvent.change(name, { target: { value: 'Someone' } })
+    fireEvent.click(getAllByText('Сохранить')[0])
+
+    await waitFor(() => expect(updateHomeStory).toHaveBeenCalledTimes(1))
+    const sent = vi.mocked(updateHomeStory).mock.calls[0][0]
+    expect(sent.reviews.quotes[1]).toEqual({ text: 'It was easy.', name: 'Someone' })
+    expect(sent.reviews.quotes[0]).toEqual(DEFAULT_CONTENT.reviews.quotes[0])
   })
 
   it('gives every photo slot two sliders for the point the crop keeps', () => {

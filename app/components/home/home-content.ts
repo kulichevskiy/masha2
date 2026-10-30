@@ -71,6 +71,7 @@ export function feedFrames(slots: HomePhotoSlots): Record<StoryKey, (HomeFrame |
     people: slots.people,
     session: [slots.experience],
     work: [],
+    reviews: [],
     video: [],
     behind: [MARIA_PORTRAIT],
     workshops: [slots.workshops],

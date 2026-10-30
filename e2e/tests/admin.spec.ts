@@ -185,7 +185,8 @@ test('admin creates, fills, publishes and deletes an editorial story', async ({ 
     .toBe(true)
 
   await page.goto('/editorial')
-  await expect(page.getByRole('link', { name: 'E2E story', exact: true })).toHaveAttribute('href', '/editorial/e2e-story')
+  // The tile's name also carries its caption, so it is found by where it goes.
+  await expect(page.locator('a[href="/editorial/e2e-story"]')).toContainText('E2E story')
   await page.goto('/editorial/e2e-story')
   await expect(page.locator('h1')).toHaveText('E2E story')
   await expect(page.locator('p', { hasText: 'An end-to-end story.' })).toBeVisible()

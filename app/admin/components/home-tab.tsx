@@ -89,21 +89,28 @@ const SECTIONS: SectionSpec[] = [
     photos: [],
   },
   {
+    key: 'reviews',
+    title: '5 · Отзывы',
+    note: 'Первая цитата стоит крупно, остальные — в ленте под ней. Кавычки сайт ставит сам, в тексте их не нужно. Очищенная цитата вернётся к тексту по умолчанию — заменяйте её другой.',
+    fields: [HEADING, { key: 'link', label: 'Ссылка-стрелка (ведёт на отзывы в Google)' }],
+    photos: [],
+  },
+  {
     key: 'behind',
-    title: '5 · За камерой',
+    title: '6 · За камерой',
     fields: [LABEL, HEADING, BODY],
     photos: [{ label: 'Портрет Марии', ratio: 'aspect-[4/5]' }],
   },
   {
     key: 'workshops',
-    title: '6 · Воркшопы',
+    title: '7 · Воркшопы',
     note: 'Пока воркшоп анонсирован, под текстом сами появляются его название, даты и места, а подпись у ссылки берётся с баннера.',
     fields: [LABEL, HEADING, BODY, { key: 'link', label: 'Ссылка-стрелка, когда воркшопа нет' }],
     photos: [{ label: 'Кадр справа', ratio: 'aspect-[3/2]' }],
   },
   {
     key: 'invitation',
-    title: '7 · Приглашение',
+    title: '8 · Приглашение',
     fields: [
       LABEL,
       HEADING,
@@ -149,6 +156,16 @@ export function HomeTab({
       work: {
         ...current.work,
         categories: current.work.categories.map((c, i) => (i === index ? { ...c, ...patch } : c)),
+      },
+    }))
+  }
+
+  const patchQuote = (index: number, patch: Partial<{ text: string; name: string }>) => {
+    setState((current) => ({
+      ...current,
+      reviews: {
+        ...current.reviews,
+        quotes: current.reviews.quotes.map((q, i) => (i === index ? { ...q, ...patch } : q)),
       },
     }))
   }
@@ -218,6 +235,19 @@ export function HomeTab({
                     value={category.cta}
                     onChange={(value) => patchCategory(index, { cta: value })}
                   />
+                </div>
+              ))}
+
+            {spec.key === 'reviews' &&
+              state.reviews.quotes.map((quote, index) => (
+                <div key={index} className="border border-border rounded-md p-4 flex flex-col gap-3">
+                  <Field
+                    label={index === 0 ? 'Цитата (крупная)' : `Цитата ${index + 1}`}
+                    value={quote.text}
+                    multiline
+                    onChange={(value) => patchQuote(index, { text: value })}
+                  />
+                  <Field label="Имя" value={quote.name} onChange={(value) => patchQuote(index, { name: value })} />
                 </div>
               ))}
 

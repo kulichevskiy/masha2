@@ -6,6 +6,10 @@
 // `app_settings.booking_recipient_email`, which Maria sets in admin.
 export const CONTACT_EMAIL = 'maria@chevskaya.com'
 
+// The studio's Google Business listing, where the reviews quoted on the home
+// page live in full.
+export const GOOGLE_REVIEWS_URL = 'https://www.google.com/maps?cid=2234284246817783539'
+
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://chevskaya.com'
 
 // Absolute URLs bypass Next.js file-based social image localhost fallback in dev.

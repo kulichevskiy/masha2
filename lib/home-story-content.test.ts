@@ -26,6 +26,19 @@ describe('normaliseStoryContent', () => {
     expect(content.hero.cta).toBe(DEFAULT_CONTENT.hero.cta)
   })
 
+  it('reads review slots by position and keeps the shipped quote for a blank one', () => {
+    const content = normaliseStoryContent({
+      reviews: { quotes: [{ text: 'Stored words', name: '' }, null, { text: ' ', name: 'Only a name' }] },
+    })
+    expect(content.reviews.quotes).toHaveLength(DEFAULT_CONTENT.reviews.quotes.length)
+    expect(content.reviews.quotes[0]).toEqual({ text: 'Stored words', name: DEFAULT_CONTENT.reviews.quotes[0].name })
+    expect(content.reviews.quotes[1]).toEqual(DEFAULT_CONTENT.reviews.quotes[1])
+    expect(content.reviews.quotes[2]).toEqual({ text: DEFAULT_CONTENT.reviews.quotes[2].text, name: 'Only a name' })
+    expect(normaliseStoryContent({ reviews: { quotes: 'nope' } }).reviews.quotes).toEqual(
+      DEFAULT_CONTENT.reviews.quotes
+    )
+  })
+
   it('reads photo slots by position and never resizes a section', () => {
     const content = normaliseStoryContent({
       people: { photos: [{ path: 'home/a.jpg', alt: 'a' }] },
