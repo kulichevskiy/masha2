@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { updatePhoto, deletePhoto } from '../actions'
 import {
+  ADMIN_PHOTO_PAGES,
   PHOTO_PAGES,
   PHOTO_PAGE_LABELS,
   togglePhotoPage,
@@ -230,7 +231,7 @@ export function PhotoRow({ photo, supabaseUrl }: PhotoRowProps) {
       {/* Sections (pages[]) — empty selection hides the photo everywhere */}
       <td className="p-2">
         <div className="flex flex-wrap justify-center gap-1.5">
-          {PHOTO_PAGES.map((page) => {
+          {ADMIN_PHOTO_PAGES.map((page) => {
             const active = pages.includes(page)
             return (
               <button

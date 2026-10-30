@@ -1,7 +1,9 @@
 // Home page — design variant C ("mixed"). Full-bleed frames with white type
-// open, punctuate and close the page (hero, video, invitation); between them
-// the narrative sections sit on paper: black display type, gray body, bare
-// photographs. Eight sections, one story. Desktop values kick in at `md`.
+// open and close the page (hero, invitation); between them the narrative
+// sections sit on paper: black display type, gray body, bare photographs.
+// Seven sections, one story. Desktop values kick in at `md`. The video
+// section (./video-section) is parked while the video feed is hidden; its
+// copy stays in `home_story`.
 //
 // Two things feed it, both editable without touching this file:
 //   copy    — the `home_story` row (lib/home-story-content.ts), which falls
@@ -16,7 +18,6 @@ import { getPublicWorkshop } from '../../workshop/data'
 import { loadHomePhotos } from './home-photos'
 import { loadHomeContent, resolveFrames } from './home-content'
 import { CONTACT_EMAIL } from '@/lib/site'
-import { VideoSection } from './video-section'
 import {
   Arrow,
   Bleed,
@@ -304,7 +305,6 @@ export async function HomeStory() {
       <People content={content.people} frames={frames.people} />
       <Session content={content.session} frame={frames.session[0]} />
       <Work content={content.work} work={slots.work} />
-      <VideoSection content={content.video} video={slots.video} />
       <Behind content={content.behind} frame={frames.behind[0]} />
       <Workshops content={content.workshops} frame={frames.workshops[0]} note={workshopNote(workshop)} />
       <Invitation content={content.invitation} frame={frames.invitation[0]} />

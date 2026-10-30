@@ -58,10 +58,9 @@ describe('HomeTab', () => {
       '2 · Люди',
       '3 · Съёмка',
       '4 · Работы',
-      '5 · Видео',
-      '6 · За камерой',
-      '7 · Воркшопы',
-      '8 · Приглашение',
+      '5 · За камерой',
+      '6 · Воркшопы',
+      '7 · Приглашение',
     ]) {
       expect(getByText(title)).toBeTruthy()
     }
@@ -81,10 +80,10 @@ describe('HomeTab', () => {
     expect(getAllByText('Средний кадр')).toHaveLength(1)
     expect(getAllByText('Правый кадр')).toHaveLength(1)
     expect(getAllByText('Кадр на весь экран')).toHaveLength(2)
-    // The work rows and the video frame come from the feeds, so the sections
-    // that own them say so instead of offering an upload.
+    // The work rows come from the feeds, so the section says so instead of
+    // offering an upload. The video section is parked and not offered at all.
     expect(queryByText(/берутся из начала лент «Портреты»/)).toBeTruthy()
-    expect(queryByText(/из первого ролика/)).toBeTruthy()
+    expect(queryByText(/из первого ролика/)).toBeNull()
   })
 
   it('saves an edited heading', async () => {
