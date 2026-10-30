@@ -39,5 +39,7 @@ describe('<EditorialFeed />', () => {
     expect(html).toContain('href="/editorial/sofia"')
     expect(html).toContain('data-src="https://cdn/p3.jpg"')
     expect(html).not.toContain('p1.jpg')
+    expect(html).toContain('2 photos')
+    expect(html).toContain('1 photo<')
   })
 })

@@ -4,18 +4,17 @@
 // `reassignSlots` (how a drag-reorder within the filtered subset maps back to
 // stored positions).
 
-import { PHOTO_PAGES, PHOTO_PAGE_LABELS } from './photo-pages'
+import { ADMIN_PHOTO_PAGES, PHOTO_PAGE_LABELS } from './photo-pages'
 
 // Filter values shown across the top of the table, in display order. `all` and
 // `hidden` bracket the per-section filters; `hidden` means an empty pages array.
-export const PHOTO_FILTERS = ['all', ...PHOTO_PAGES, 'hidden'] as const
+export const PHOTO_FILTERS = ['all', ...ADMIN_PHOTO_PAGES, 'hidden'] as const
 
 export type PhotoFilter = (typeof PHOTO_FILTERS)[number]
 
 export const PHOTO_FILTER_LABELS: Record<PhotoFilter, string> = {
   all: 'Все',
   ...PHOTO_PAGE_LABELS,
-  video: 'Видео',
   hidden: 'Скрытые',
 }
 

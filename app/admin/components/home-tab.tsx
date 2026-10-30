@@ -89,28 +89,21 @@ const SECTIONS: SectionSpec[] = [
     photos: [],
   },
   {
-    key: 'video',
-    title: '5 · Видео',
-    note: 'Кадр и длительность берутся из первого ролика в ленте «Видео».',
-    fields: [HEADING, BODY, { key: 'link', label: 'Ссылка-стрелка (ведёт на /video)' }],
-    photos: [],
-  },
-  {
     key: 'behind',
-    title: '6 · За камерой',
+    title: '5 · За камерой',
     fields: [LABEL, HEADING, BODY],
     photos: [{ label: 'Портрет Марии', ratio: 'aspect-[4/5]' }],
   },
   {
     key: 'workshops',
-    title: '7 · Воркшопы',
+    title: '6 · Воркшопы',
     note: 'Пока воркшоп анонсирован, под текстом сами появляются его название, даты и места, а подпись у ссылки берётся с баннера.',
     fields: [LABEL, HEADING, BODY, { key: 'link', label: 'Ссылка-стрелка, когда воркшопа нет' }],
     photos: [{ label: 'Кадр справа', ratio: 'aspect-[3/2]' }],
   },
   {
     key: 'invitation',
-    title: '8 · Приглашение',
+    title: '7 · Приглашение',
     fields: [
       LABEL,
       HEADING,

@@ -6,12 +6,12 @@ import { usePathname } from "next/navigation"
 // Site sections, in header order — the same order the home story walks them.
 // The home page itself is the story, not a section, so nothing lights up there.
 // Workshop is intentionally absent — the page still lives at /workshop and is
-// reachable by direct link, just not advertised in the header.
+// reachable by direct link, just not advertised in the header. Video is
+// hidden the same way for now: /video still renders, nothing links to it here.
 const SECTIONS = [
   { href: "/portraits", label: "Portraits" },
   { href: "/kids", label: "Kids" },
   { href: "/editorial", label: "Editorial" },
-  { href: "/video", label: "Video" },
 ] as const
 
 export function SectionNav() {

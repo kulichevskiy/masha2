@@ -9,6 +9,12 @@ export type PhotoPage = (typeof PHOTO_PAGES)[number]
 // spelling the routes out.
 export const PHOTO_PAGE_PATHS = PHOTO_PAGES.map((page) => `/${page}`)
 
+// The sections the admin offers as toggles and filters. Video is parked: the
+// route and the stored tags stay, but the admin no longer shows it, so a photo
+// already tagged `video` keeps that tag untouched.
+export type AdminPhotoPage = Exclude<PhotoPage, 'video'>
+export const ADMIN_PHOTO_PAGES = PHOTO_PAGES.filter((page): page is AdminPhotoPage => page !== 'video')
+
 // Admin-facing labels for each section.
 export const PHOTO_PAGE_LABELS: Record<PhotoPage, string> = {
   portraits: 'Portraits',

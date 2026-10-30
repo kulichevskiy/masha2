@@ -1,11 +1,11 @@
 /**
- * Story tiles on /editorial: one link per story carrying only the cover image
- * (no visible text), the story title as the accessible name, and the same
- * masonry column flow as the photo feeds. Expectations are the spec's R2.
+ * Story tiles on /editorial: one link per story with the cover image and a
+ * caption under it — title, subtitle and photo count — in the same masonry
+ * column flow as the photo feeds.
  */
 import { describe, expect, it, vi } from 'vitest'
 import { render } from '@testing-library/react'
-import { StoryTiles, type StoryTile } from './editorial-feed'
+import { photoCountLabel, StoryTiles, type StoryTile } from './editorial-feed'
 
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {
@@ -16,23 +16,24 @@ vi.mock('next/image', () => ({
 }))
 
 const tiles: StoryTile[] = [
-  { slug: 'soft-structure', title: 'soft structure', src: 'https://cdn/eva.jpg', alt: 'Eva', width: 933, height: 1400 },
-  { slug: 'city-interlude', title: 'city interlude', src: 'https://cdn/sofia.jpg', alt: 'Sofia', width: 933, height: 1400 },
+  { slug: 'soft-structure', title: 'soft structure', subtitle: 'linen and late light', photoCount: 12, src: 'https://cdn/eva.jpg', alt: 'Eva', width: 933, height: 1400 },
+  { slug: 'city-interlude', title: 'city interlude', subtitle: '', photoCount: 1, src: 'https://cdn/sofia.jpg', alt: 'Sofia', width: 933, height: 1400 },
 ]
 
 describe('<StoryTiles />', () => {
   it('links each cover to its story page and names the link after the story', () => {
     const { container } = render(<StoryTiles tiles={tiles} />)
     const links = Array.from(container.querySelectorAll('a'))
-    expect(links.map((a) => [a.getAttribute('href'), a.getAttribute('aria-label')])).toEqual([
-      ['/editorial/soft-structure', 'soft structure'],
-      ['/editorial/city-interlude', 'city interlude'],
-    ])
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/editorial/soft-structure', '/editorial/city-interlude'])
   })
 
-  it('shows the cover alone — no title, count or caption text on the tile', () => {
+  it('captions each cover with the title, the subtitle when set, and the photo count', () => {
     const { container } = render(<StoryTiles tiles={tiles} />)
-    expect(container.textContent).toBe('')
+    const links = Array.from(container.querySelectorAll('a'))
+    expect(links.map((a) => Array.from(a.querySelectorAll('span')).map((span) => span.textContent))).toEqual([
+      ['soft structure', 'linen and late light', '12 photos'],
+      ['city interlude', '1 photo'],
+    ])
     const images = Array.from(container.querySelectorAll('img'))
     expect(images.map((img) => [img.getAttribute('src'), img.getAttribute('width'), img.getAttribute('height')])).toEqual([
       ['https://cdn/eva.jpg', '933', '1400'],
@@ -46,8 +47,17 @@ describe('<StoryTiles />', () => {
     expect(columns?.className).toContain('lg:columns-3')
     const link = container.querySelector('a')
     expect(link?.className).toContain('break-inside-avoid')
-    expect(link?.className).toContain('overflow-hidden')
-    expect(link?.className).not.toContain('rounded')
+    const plate = container.querySelector('a > div')
+    expect(plate?.className).toContain('overflow-hidden')
+    expect(plate?.className).not.toContain('rounded')
     expect(container.querySelector('img')?.className).toContain('group-hover:scale-105')
+  })
+})
+
+describe('photoCountLabel', () => {
+  it('pluralises the count', () => {
+    expect(photoCountLabel(1)).toBe('1 photo')
+    expect(photoCountLabel(0)).toBe('0 photos')
+    expect(photoCountLabel(7)).toBe('7 photos')
   })
 })
