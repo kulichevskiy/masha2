@@ -41,3 +41,15 @@ it('shows current workshop promotion and switches CTA when sales close', async (
   html = await new Response(await renderToReadableStream(await HomeStory())).text()
   expect(html).not.toContain('Studio practice')
 })
+
+it('quotes the reviews with hanging marks, names only and a link to Google', async () => {
+  mock.workshop.mockResolvedValue(null)
+  const html = (await new Response(await renderToReadableStream(await HomeStory())).text()).replaceAll('\u00a0', ' ')
+  expect(html).toContain('the other side')
+  expect(html).toContain('href="https://www.google.com/maps?cid=2234284246817783539"')
+  for (const quote of DEFAULT_CONTENT.reviews.quotes) {
+    expect(html).toContain(quote.name)
+  }
+  expect(html).toContain('<span aria-hidden="true" class="absolute right-full">“</span>Maria has a unique ability')
+  expect(html).not.toContain('·')
+})

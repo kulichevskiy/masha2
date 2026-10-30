@@ -1,7 +1,7 @@
 // Home page — design variant C ("mixed"). Full-bleed frames with white type
 // open and close the page (hero, invitation); between them the narrative
 // sections sit on paper: black display type, gray body, bare photographs.
-// Seven sections, one story. Desktop values kick in at `md`. The video
+// Eight sections, one story. Desktop values kick in at `md`. The video
 // section (./video-section) is parked while the video feed is hidden; its
 // copy stays in `home_story`.
 //
@@ -17,7 +17,9 @@ import { focusPosition, type HomeStoryContent, type StorySection } from '@/lib/h
 import { getPublicWorkshop } from '../../workshop/data'
 import { loadHomePhotos } from './home-photos'
 import { loadHomeContent, resolveFrames } from './home-content'
-import { CONTACT_EMAIL } from '@/lib/site'
+import { CONTACT_EMAIL, GOOGLE_REVIEWS_URL } from '@/lib/site'
+import { typeset } from '@/lib/typography'
+import { ReviewsRail } from './reviews-rail'
 import {
   Arrow,
   Bleed,
@@ -186,6 +188,65 @@ function Work({ content, work }: { content: HomeStoryContent['work']; work: Home
   )
 }
 
+// ── 5 · reviews ───────────────────────────────────────────────
+
+// A quotation with its opening mark hung outside the column, so the first
+// letters of every line share one vertical.
+function Quote({ text, className }: { text: string; className: string }) {
+  return (
+    <p className={`relative m-0 [text-wrap:pretty] ${className}`}>
+      <span aria-hidden="true" className="absolute right-full">
+        {'\u201C'}
+      </span>
+      {typeset(text)}
+      <span aria-hidden="true">{'\u201D'}</span>
+    </p>
+  )
+}
+
+function Reviewer({ name }: { name: string }) {
+  return <p className="font-roboto-mono text-xs lowercase text-gray-500 m-0">{name}</p>
+}
+
+function Reviews({ content }: { content: HomeStoryContent['reviews'] }) {
+  const [lead, ...rest] = content.quotes
+  return (
+    <Section>
+      <div className="grid md:grid-cols-2 gap-8 md:gap-24 items-end">
+        <Display>
+          <Lines text={content.heading} />
+        </Display>
+        <figure className="m-0">
+          <blockquote className="m-0">
+            <Quote text={lead.text} className="font-inter text-[22px] md:text-3xl leading-[1.45] text-black" />
+          </blockquote>
+          <figcaption className="mt-5 md:mt-6">
+            <Reviewer name={lead.name} />
+          </figcaption>
+        </figure>
+      </div>
+      <ReviewsRail
+        footer={
+          <Arrow href={GOOGLE_REVIEWS_URL} tone="paper">
+            {content.link}
+          </Arrow>
+        }
+      >
+        {rest.map((quote, index) => (
+          <figure key={index} className="m-0 snap-start border-t border-gray-200 pt-5">
+            <blockquote className="m-0 mb-4">
+              <Quote text={quote.text} className="font-inter text-base leading-[1.65] text-gray-600" />
+            </blockquote>
+            <figcaption>
+              <Reviewer name={quote.name} />
+            </figcaption>
+          </figure>
+        ))}
+      </ReviewsRail>
+    </Section>
+  )
+}
+
 // ── 6 · behind the camera ─────────────────────────────────────
 
 function Behind({ content, frame }: { content: StorySection; frame: HomeFrame | null }) {
@@ -305,6 +366,7 @@ export async function HomeStory() {
       <People content={content.people} frames={frames.people} />
       <Session content={content.session} frame={frames.session[0]} />
       <Work content={content.work} work={slots.work} />
+      <Reviews content={content.reviews} />
       <Behind content={content.behind} frame={frames.behind[0]} />
       <Workshops content={content.workshops} frame={frames.workshops[0]} note={workshopNote(workshop)} />
       <Invitation content={content.invitation} frame={frames.invitation[0]} />

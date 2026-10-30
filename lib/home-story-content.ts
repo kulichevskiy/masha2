@@ -32,6 +32,13 @@ export type StoryCategory = {
   cta: string
 }
 
+// One review on the home page: the words and who said them. The page sets the
+// quotation marks itself, so the text is stored without them.
+export type StoryQuote = {
+  text: string
+  name: string
+}
+
 export type StorySection = {
   label: string
   heading: string
@@ -48,6 +55,7 @@ export type HomeStoryContent = {
   people: StorySection
   session: StorySection
   work: StorySection & { categories: StoryCategory[] }
+  reviews: StorySection & { quotes: StoryQuote[] }
   video: StorySection
   behind: StorySection
   workshops: StorySection
@@ -118,6 +126,49 @@ export const DEFAULT_CONTENT: HomeStoryContent = {
         title: 'Editorial',
         text: 'Editorial stories, model tests and long collaborations with magazines, artists and authors.',
         cta: 'See editorial',
+      },
+    ],
+  },
+  reviews: {
+    // The first quote is set large; the rest run in the rail beneath it.
+    // Excerpts from the Google reviews, cut to one sentence, wording kept.
+    label: '',
+    heading: 'the other side\nof the camera',
+    body: '',
+    cta: '',
+    link: 'All reviews on Google',
+    photos: [],
+    quotes: [
+      {
+        text: 'Maria has a unique ability to bring out the real you in her photographs: your personality, your emotions, your mood and even something deeper.',
+        name: 'Tatiana Sviridova',
+      },
+      {
+        text: 'Everything felt so easy and relaxed that at some point I completely forgot about the camera.',
+        name: 'Evgenia Huber',
+      },
+      {
+        text: 'Maria doesn’t just photograph what you look like… she captures something of who you are.',
+        name: 'Nikol Gridchuk',
+      },
+      { text: 'It truly feels like I’ve walked into my own photo exhibition.', name: 'Alina Elizarova' },
+      { text: 'Even the little ones quickly warmed to Masha and felt at ease.', name: 'Natalia Tikhonova' },
+      {
+        text: 'Working with Maria is a real pleasure and it feels like a therapy session.',
+        name: 'Darianna Oleinikova',
+      },
+      {
+        text: 'Maria has this amazing ability to make both adults and kids feel comfortable and relaxed.',
+        name: 'Katuhinskii',
+      },
+      { text: 'Masha has such a beautiful, unconventional way of seeing things.', name: 'Anna Shkarina' },
+      {
+        text: 'After working with her, you might just meet a whole new version of yourself.',
+        name: 'Z H',
+      },
+      {
+        text: 'Maria took care of everything before the shoot, from finding the perfect spot to helping me figure out what to wear.',
+        name: 'Alexey Kulichevskiy',
       },
     ],
   },
@@ -207,6 +258,15 @@ function categories(value: unknown, fallback: StoryCategory[]): StoryCategory[] 
   })
 }
 
+function quotes(value: unknown, fallback: StoryQuote[]): StoryQuote[] {
+  if (!Array.isArray(value)) return fallback
+  return fallback.map((slot, index) => {
+    const stored = value[index] as Partial<StoryQuote> | undefined
+    if (!stored || typeof stored !== 'object') return slot
+    return { text: text(stored.text, slot.text), name: text(stored.name, slot.name) }
+  })
+}
+
 function section(value: unknown, fallback: StorySection): StorySection {
   const stored = (value ?? {}) as Partial<StorySection>
   return {
@@ -224,6 +284,7 @@ function section(value: unknown, fallback: StorySection): StorySection {
 export function normaliseStoryContent(value: unknown): HomeStoryContent {
   const stored = (value ?? {}) as Partial<Record<StoryKey, unknown>>
   const work = (stored.work ?? {}) as { categories?: unknown }
+  const reviews = (stored.reviews ?? {}) as { quotes?: unknown }
   return {
     hero: section(stored.hero, DEFAULT_CONTENT.hero),
     people: section(stored.people, DEFAULT_CONTENT.people),
@@ -231,6 +292,10 @@ export function normaliseStoryContent(value: unknown): HomeStoryContent {
     work: {
       ...section(stored.work, DEFAULT_CONTENT.work),
       categories: categories(work.categories, DEFAULT_CONTENT.work.categories),
+    },
+    reviews: {
+      ...section(stored.reviews, DEFAULT_CONTENT.reviews),
+      quotes: quotes(reviews.quotes, DEFAULT_CONTENT.reviews.quotes),
     },
     video: section(stored.video, DEFAULT_CONTENT.video),
     behind: section(stored.behind, DEFAULT_CONTENT.behind),

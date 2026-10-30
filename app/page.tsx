@@ -3,7 +3,7 @@ import { TopNav } from "./components/top-nav";
 import { Footer } from "./components/footer";
 import { HomeStory, HomeStorySkeleton } from "./components/home/home-story";
 
-// The home page (design variant C): hero, people, the session, the work,
+// The home page (design variant C): hero, people, the session, the work, reviews,
 // behind the camera, workshops, invitation. Title, description and
 // OpenGraph come from the root layout. The story carries its own CTAs (hero,
 // session, work rows, invitation) and a live workshops section, so the

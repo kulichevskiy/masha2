@@ -15,8 +15,9 @@ test('portfolio sections and booking navigation', async ({ page }) => {
   // Editorial is a feed of stories: the seeded story's cover links to its page,
   // which shows the title, the sequence and the same chrome (nav, BOOK).
   await page.goto('/editorial')
-  const tile = page.getByRole('link', { name: 'Seed story', exact: true })
-  await expect(tile).toHaveAttribute('href', '/editorial/seed-story')
+  // The tile's name also carries its caption, so it is found by where it goes.
+  const tile = page.locator('a[href="/editorial/seed-story"]')
+  await expect(tile).toContainText('Seed story')
   await expect(tile.locator('img')).toBeVisible()
   await tile.click()
   await expect(page).toHaveURL(/\/editorial\/seed-story$/)
