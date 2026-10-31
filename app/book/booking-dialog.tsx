@@ -7,6 +7,7 @@
 // on a dark scrim, full-width from the bottom on a phone, centered on desktop.
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import posthog from 'posthog-js'
 import { BookingForm, type BookingTier } from './booking-form'
 
 type DialogState = { open: (tier: BookingTier) => void }
@@ -33,8 +34,15 @@ export function BookingDialogProvider({ children }: { children: ReactNode }) {
     dialogRef.current?.close()
   }
 
+  // One event per opening, with the tier, so the funnel can count who reached
+  // the form and the submit event can be read against it.
+  const open = (next: BookingTier) => {
+    posthog.capture('booking_dialog_opened', { tier: next.name, price: next.price_text })
+    setTier(next)
+  }
+
   return (
-    <DialogContext.Provider value={{ open: setTier }}>
+    <DialogContext.Provider value={{ open }}>
       {children}
       <dialog
         ref={dialogRef}

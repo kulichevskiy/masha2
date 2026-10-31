@@ -43,6 +43,7 @@ describe('booking dialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /book mini/ }))
     await waitFor(() => expect(dialog.open).toBe(true))
     expect(screen.getByRole('heading', { name: 'mini — 300 €' })).toBeTruthy()
+    expect(posthog.capture).toHaveBeenCalledWith('booking_dialog_opened', { tier: 'mini', price: '300 €' })
 
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     await waitFor(() => expect(dialog.open).toBe(false))
@@ -72,7 +73,7 @@ describe('booking dialog', () => {
     expect(sent.get('tier_id')).toBe('t1')
     expect(sent.get('email')).toBe('me@example.com')
     expect(sent.get('message')).toBe('hello')
-    expect(posthog.capture).toHaveBeenCalledWith('booking_request_submitted', { tier_selected: true })
+    expect(posthog.capture).toHaveBeenCalledWith('booking_request_submitted', { tier: 'mini', price: '300 €' })
 
     fireEvent.click(screen.getByRole('button', { name: 'Send another request' }))
     expect((screen.getByLabelText('your email') as HTMLInputElement).value).toBe('')
@@ -86,7 +87,7 @@ describe('booking dialog', () => {
     fireEvent.change(screen.getByLabelText('your email'), { target: { value: 'me@example.com' } })
     fireEvent.click(screen.getByRole('button', { name: 'Send request' }))
     await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('Too many requests'))
-    expect(posthog.capture).not.toHaveBeenCalled()
+    expect(posthog.capture).not.toHaveBeenCalledWith('booking_request_submitted', expect.anything())
   })
 
   it('does not count a honeypot submission', async () => {
@@ -99,7 +100,7 @@ describe('booking dialog', () => {
     fireEvent.change(honeypot, { target: { value: 'http://spam' } })
     fireEvent.click(screen.getByRole('button', { name: 'Send request' }))
     await waitFor(() => expect(screen.getByRole('status')).toBeTruthy())
-    expect(posthog.capture).not.toHaveBeenCalled()
+    expect(posthog.capture).not.toHaveBeenCalledWith('booking_request_submitted', expect.anything())
   })
 
   it('refuses the link outside the provider', () => {
