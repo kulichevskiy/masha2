@@ -56,7 +56,7 @@ export function BookingForm({ tier }: { tier: BookingTier }) {
     startTransition(async () => {
       const result = await submitBookingRequest(fd)
       if (result.ok) {
-        if (!isHoneypotFilled(fd)) posthog.capture('booking_request_submitted', { tier_selected: true })
+        if (!isHoneypotFilled(fd)) posthog.capture('booking_request_submitted', { tier: tier.name, price: tier.price_text })
         setStatus({ kind: 'success' })
         setEmail('')
         setMessage('')
