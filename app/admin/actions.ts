@@ -211,8 +211,10 @@ export async function updateTier(
   data: {
     name?: string
     subtitle?: string | null
+    summary?: string | null
     description?: string | null
     price_text?: string
+    photo_path?: string | null
     is_active?: boolean
     is_accent?: boolean
   }

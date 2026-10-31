@@ -24,7 +24,7 @@ import type { Tables } from '@/lib/supabase/database.types'
 
 type Tier = Tables<'booking_tiers'>
 
-export function TiersTable({ tiers: initialTiers }: { tiers: Tier[] }) {
+export function TiersTable({ tiers: initialTiers, supabaseUrl }: { tiers: Tier[]; supabaseUrl: string }) {
   const [tiers, setTiers] = useState(initialTiers)
   const [, startTransition] = useTransition()
 
@@ -88,11 +88,17 @@ export function TiersTable({ tiers: initialTiers }: { tiers: Tier[] }) {
                   <th className="hidden lg:table-cell p-2 text-left text-sm font-medium text-muted-foreground">
                     Подзаголовок
                   </th>
+                  <th className="hidden lg:table-cell p-2 text-left text-sm font-medium text-muted-foreground">
+                    Факты
+                  </th>
                   <th className="p-2 text-left text-sm font-medium text-muted-foreground">
                     Цена
                   </th>
                   <th className="hidden md:table-cell p-2 text-left text-sm font-medium text-muted-foreground">
                     Описание
+                  </th>
+                  <th className="hidden md:table-cell p-2 text-left text-sm font-medium text-muted-foreground">
+                    Фото
                   </th>
                   <th className="p-2 text-center text-sm font-medium text-muted-foreground">
                     Активен
@@ -111,7 +117,7 @@ export function TiersTable({ tiers: initialTiers }: { tiers: Tier[] }) {
                   strategy={verticalListSortingStrategy}
                 >
                   {tiers.map((tier) => (
-                    <TierRow key={tier.id} tier={tier} />
+                    <TierRow key={tier.id} tier={tier} supabaseUrl={supabaseUrl} />
                   ))}
                 </SortableContext>
               </tbody>

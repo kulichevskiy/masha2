@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booking redesign, round three</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e9e9ea; font-family: Inter, sans-serif; color: #252525; }
+  .board { max-width: 1400px; margin: 0 auto; padding: 40px 20px 120px; }
+  .tag { font-family: 'Roboto Mono', monospace; font-size: 12px; color: #6b7280; margin: 72px 0 12px; }
+  .tag b { font-weight: 400; color: #000; }
+  .frame { background: #fff; overflow: hidden; position: relative; }
+  .note { font-size: 14px; line-height: 1.6; color: #4b5563; max-width: 560px; margin: 16px 0 0; }
+
+  .nav { text-align: center; padding: 28px 0 22px; }
+  .nav .wm { font-family: 'Bebas Neue', sans-serif; font-size: 40px; line-height: 1; color: #000; letter-spacing: .01em; }
+  .nav .tl { font-size: 13px; letter-spacing: .18em; color: #6b7280; margin-top: 8px; text-transform: lowercase; }
+  .nav .links { font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: .14em; color: #000; margin-top: 18px; opacity: .55; word-spacing: 2em; }
+  .footer { max-width: 1280px; margin: 96px auto 0; padding: 32px 40px 48px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: baseline; opacity: .5; }
+  .footer .wm { font-family: 'Bebas Neue', sans-serif; font-size: 24px; }
+  .footer .m { font-family: 'Roboto Mono', monospace; font-size: 12px; }
+
+  .sec { max-width: 1280px; margin: 0 auto; padding: 112px 40px 0; }
+  .display { font-family: 'Bebas Neue', sans-serif; font-weight: 400; text-transform: lowercase; line-height: .95; margin: 0; color: #000; letter-spacing: -.005em; text-wrap: pretty; }
+  .d-hero { font-size: 104px; line-height: .92; }
+  .d-sec { font-size: 68px; }
+  .d-mid { font-size: 44px; line-height: 1; }
+  .body { font-size: 18px; line-height: 1.7; color: #4b5563; margin: 0; max-width: 520px; text-wrap: pretty; }
+  .mono { font-family: 'Roboto Mono', monospace; font-size: 12px; color: #6b7280; text-transform: lowercase; }
+  .arrow { display: inline-block; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: .1em; text-transform: uppercase; color: #000; border-bottom: 1px solid #000; padding-bottom: 4px; text-decoration: none; white-space: nowrap; }
+  .plate { display: inline-block; background: #000; color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: .12em; text-transform: uppercase; padding: 16px 56px; text-decoration: none; }
+  .ph { background: #f3f4f6; overflow: hidden; position: relative; }
+  .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s; }
+  .tier:hover .ph img { transform: scale(1.05); }
+  .q { border-top: 1px solid #e5e7eb; padding: 18px 0; display: flex; justify-content: space-between; font-size: 16px; color: #000; font-weight: 500; }
+  .q span:last-child { color: #9ca3af; font-weight: 400; }
+  .q:last-child { border-bottom: 1px solid #e5e7eb; }
+  .faq { margin-top: 112px; display: grid; grid-template-columns: 5fr 7fr; gap: 96px; }
+  .intro { display: grid; grid-template-columns: 6fr 6fr; gap: 96px; align-items: end; }
+  .price { font-family: 'Bebas Neue', sans-serif; line-height: 1; color: #000; white-space: nowrap; }
+  .price.muted { color: #6b7280; }
+  .det { display: inline-block; margin-top: 18px; font-family: 'Roboto Mono', monospace; font-size: 12px; color: #6b7280; border-bottom: 1px solid #d1d5db; padding-bottom: 2px; }
+
+  /* ── G · the rows ── photo left, words right, a hairline between tiers */
+  .g-tiers { margin-top: 96px; border-top: 1px solid #e5e7eb; }
+  .g-tier { display: grid; grid-template-columns: 5fr 7fr; gap: 80px; padding: 48px 0; border-bottom: 1px solid #e5e7eb; align-items: center; }
+  .g-tier .ph { aspect-ratio: 4/5; }
+  .g-tier .head { display: flex; justify-content: space-between; align-items: baseline; gap: 32px; }
+  .g-tier .head .display { font-size: 68px; }
+  .g-tier .head .price { font-size: 68px; }
+  .g-tier .head .price.muted { font-size: 32px; }
+  .g-tier .tagl { margin: 24px 0 0; font-size: 20px; line-height: 1.5; color: #000; max-width: 520px; }
+  .g-tier .facts { margin-top: 12px; font-size: 13px; }
+  .g-tier .arrow { margin-top: 40px; }
+
+  /* ── H · the alternating spread ── bigger photos, sides swap, no hairlines */
+  .h-tiers { margin-top: 112px; display: grid; gap: 128px; }
+  .h-tier { display: grid; grid-template-columns: 7fr 5fr; gap: 96px; align-items: end; }
+  .h-tier.flip { grid-template-columns: 5fr 7fr; }
+  .h-tier.flip .ph { order: 2; }
+  .h-tier .ph { aspect-ratio: 3/2; }
+  .h-tier.flip .ph { aspect-ratio: 4/5; }
+  .h-tier .display { font-size: 68px; }
+  .h-tier .price { font-size: 44px; margin-top: 10px; display: block; }
+  .h-tier .price.muted { font-size: 32px; }
+  .h-tier .tagl { margin: 28px 0 0; font-size: 18px; color: #4b5563; }
+  .h-tier .facts { margin-top: 10px; }
+  .h-tier .arrow { margin-top: 36px; }
+
+  /* ── I · the strip ── small square photo, one row per tier */
+  .i-tiers { margin-top: 96px; border-top: 1px solid #e5e7eb; }
+  .i-tier { display: grid; grid-template-columns: 200px 1fr auto auto; gap: 48px; align-items: center; padding: 32px 0; border-bottom: 1px solid #e5e7eb; }
+  .i-tier .ph { aspect-ratio: 1; }
+  .i-tier .display { font-size: 44px; }
+  .i-tier .tagl { margin: 12px 0 0; font-size: 17px; color: #4b5563; max-width: 480px; }
+  .i-tier .facts { margin-top: 8px; }
+  .i-tier .price { font-size: 44px; }
+  .i-tier .price.muted { font-size: 26px; }
+
+  /* ── modal ── */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 40px; }
+  .sheet { background: #fff; width: 560px; padding: 56px 56px 48px; position: relative; }
+  .sheet .x { position: absolute; top: 22px; right: 24px; width: 20px; height: 20px; }
+  .sheet .x::before, .sheet .x::after { content: ''; position: absolute; left: 0; top: 9px; width: 20px; height: 1px; background: #000; transform: rotate(45deg); }
+  .sheet .x::after { transform: rotate(-45deg); }
+  .sheet .display { font-size: 44px; line-height: 1; }
+  .sheet .sub { margin: 14px 0 0; font-size: 16px; color: #4b5563; line-height: 1.6; }
+  .fld { display: block; width: 100%; border: 0; border-bottom: 1px solid #d1d5db; background: transparent; font: 400 18px/1.4 Inter, sans-serif; color: #000; padding: 14px 0; outline: none; }
+  .fld::placeholder { color: #9ca3af; }
+  .flabel { display: block; font-size: 12px; letter-spacing: .3em; text-transform: lowercase; color: #6b7280; margin-top: 36px; }
+  .sheet .plate { display: block; text-align: center; margin-top: 44px; }
+
+  /* ── phones ── */
+  .phones { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start; margin-top: 12px; }
+  .phone { width: 390px; background: #fff; overflow: hidden; position: relative; }
+  .phone .nav .wm { font-size: 30px; }
+  .phone .sec { padding: 64px 20px 0; }
+  .phone .d-hero { font-size: 54px; }
+  .phone .body { font-size: 16px; }
+  .phone .intro { grid-template-columns: 1fr; gap: 20px; }
+  .phone .g-tiers { margin-top: 56px; }
+  .phone .g-tier { grid-template-columns: 1fr; gap: 24px; padding: 32px 0; }
+  .phone .g-tier .head .display, .phone .g-tier .head .price { font-size: 44px; }
+  .phone .g-tier .tagl { font-size: 17px; margin-top: 16px; }
+  .phone .g-tier .arrow { margin-top: 24px; }
+  .phone .h-tiers { margin-top: 56px; gap: 72px; }
+  .phone .h-tier, .phone .h-tier.flip { grid-template-columns: 1fr; gap: 20px; }
+  .phone .h-tier.flip .ph { order: 0; }
+  .phone .h-tier .ph, .phone .h-tier.flip .ph { aspect-ratio: 4/5; }
+  .phone .h-tier .display { font-size: 44px; }
+  .phone .i-tiers { margin-top: 56px; }
+  .phone .i-tier { grid-template-columns: 96px 1fr; gap: 20px; padding: 20px 0; }
+  .phone .i-tier .display { font-size: 32px; }
+  .phone .i-tier .tagl { font-size: 15px; margin-top: 6px; }
+  .phone .i-tier .price { font-size: 32px; grid-column: 2; }
+  .phone .i-tier .arrow { grid-column: 2; }
+  .phone .footer { margin-top: 64px; padding: 24px 20px 32px; }
+</style>
+</head>
+<body>
+<div class="board">
+
+<p class="note" style="margin:0 0 8px"><b>Третий круг.</b> Кикеров нет нигде, страница начинается с заголовка. У каждого тарифа своя чёрно-белая фотография из портфолио (в коде это кадр, закреплённый в админке, как слоты на главной). Портрета Маши нет. Стрелка открывает ту же модалку, что во втором круге.</p>
+
+<!-- ═══════════════════════════════ G ═══════════════════════════════ -->
+<p class="tag"><b>G · the rows</b> — как на скриншоте, но тише: фото слева, название и цена на одной строке, одна фраза, одна моно-строка, стрелка</p>
+<div class="frame">
+  <div class="nav"><div class="wm">MARIA CHEVSKAYA</div><div class="tl">portrait and editorial photographer in berlin</div><div class="links">PORTRAITS KIDS EDITORIAL</div></div>
+  <section class="sec">
+    <div class="intro">
+      <h1 class="display d-hero">a session<br>with maria</h1>
+      <p class="body">People I work with are seen, not just photographed. Each session is built around presence, character and rhythm, not poses or time slots. It is a collaborative process, calm and attentive, with space to arrive into yourself.</p>
+    </div>
+    <div class="g-tiers">
+      <div class="g-tier tier">
+        <div class="ph"><img src="../../public/photos/DSC_0123.jpg" alt=""></div>
+        <div>
+          <div class="head"><h2 class="display">mini</h2><span class="price">300 €</span></div>
+          <p class="tagl">A little time, something to keep. A short, relaxed session for a fresh set of portraits or a moment with someone close.</p>
+          <p class="mono facts">up to 30 minutes, one look, 20 final images</p>
+          <br><span class="det">what’s included +</span>
+          <div><a class="arrow" href="#">book mini&nbsp;→</a></div>
+        </div>
+      </div>
+      <div class="g-tier tier">
+        <div class="ph"><img src="../../public/photos/DSC_1113.jpg" alt=""></div>
+        <div>
+          <div class="head"><h2 class="display">signature</h2><span class="price">500 €</span></div>
+          <p class="tagl">Time to feel at ease, room for your story. For yourself, the two of you, or your family, at home, outdoors or in a studio.</p>
+          <p class="mono facts">up to 1.5 hours, 1–2 looks, 45 final images</p>
+          <br><span class="det">what’s included +</span>
+          <div><a class="arrow" href="#">book signature&nbsp;→</a></div>
+        </div>
+      </div>
+      <div class="g-tier tier">
+        <div class="ph"><img src="../../public/photos/DSC_6812.jpg" alt=""></div>
+        <div>
+          <div class="head"><h2 class="display">extended</h2><span class="price">700 €</span></div>
+          <p class="tagl">A story we imagine together. A visual direction created around you, with a moodboard, several looks and a short film of the session.</p>
+          <p class="mono facts">up to 2 hours, 2–3 looks, 70 final images, a film up to 1 minute</p>
+          <br><span class="det">what’s included +</span>
+          <div><a class="arrow" href="#">book extended&nbsp;→</a></div>
+        </div>
+      </div>
+      <div class="g-tier tier">
+        <div class="ph"><img src="../../public/photos/DSC_4176.jpg" alt=""></div>
+        <div>
+          <div class="head"><h2 class="display">brand &amp; commercial</h2><span class="price muted">upon request</span></div>
+          <p class="tagl">Images that give your brand a character of its own. Campaigns, launches and ongoing content, shaped around your identity.</p>
+          <div><a class="arrow" href="#">write to me&nbsp;→</a></div>
+        </div>
+      </div>
+    </div>
+    <div class="faq">
+      <h2 class="display d-sec">questions</h2>
+      <div>
+        <div class="q"><span>How do I book a photoshoot?</span><span>+</span></div>
+        <div class="q"><span>Do I need modeling experience?</span><span>+</span></div>
+        <div class="q"><span>What should I wear for the shoot?</span><span>+</span></div>
+        <div class="q"><span>Where do photoshoots take place?</span><span>+</span></div>
+        <div class="q"><span>How many photos will I receive?</span><span>+</span></div>
+      </div>
+    </div>
+  </section>
+  <div class="footer"><span class="wm">MARIA CHEVSKAYA</span><span class="m">berlin &nbsp;&nbsp; hello@mariachevskaya.com</span></div>
+</div>
+
+<!-- ═══════════════════════════════ H ═══════════════════════════════ -->
+<p class="tag"><b>H · the spread</b> — как разделы главной: крупные кадры, стороны чередуются, воздух вместо линий</p>
+<div class="frame">
+  <div class="nav"><div class="wm">MARIA CHEVSKAYA</div><div class="tl">portrait and editorial photographer in berlin</div><div class="links">PORTRAITS KIDS EDITORIAL</div></div>
+  <section class="sec">
+    <div class="intro">
+      <h1 class="display d-hero">a session<br>with maria</h1>
+      <p class="body">People I work with are seen, not just photographed. Each session is built around presence, character and rhythm, not poses or time slots. It is a collaborative process, calm and attentive, with space to arrive into yourself.</p>
+    </div>
+    <div class="h-tiers">
+      <div class="h-tier tier">
+        <div class="ph"><img src="../../public/photos/DSC_8898-Edit.jpg" alt=""></div>
+        <div>
+          <h2 class="display">mini</h2><span class="price">300 €</span>
+          <p class="tagl">A little time, something to keep. A short, relaxed session for a fresh set of portraits or a moment with someone close.</p>
+          <p class="mono facts">up to 30 minutes, one look, 20 final images</p>
+          <div><a class="arrow" href="#">book mini&nbsp;→</a></div>
+        </div>
+      </div>
+      <div class="h-tier flip tier">
+        <div class="ph"><img src="../../public/photos/DSC_1113.jpg" alt=""></div>
+        <div>
+          <h2 class="display">signature</h2><span class="price">500 €</span>
+          <p class="tagl">Time to feel at ease, room for your story. For yourself, the two of you, or your family, at home, outdoors or in a studio.</p>
+          <p class="mono facts">up to 1.5 hours, 1–2 looks, 45 final images</p>
+          <div><a class="arrow" href="#">book signature&nbsp;→</a></div>
+        </div>
+      </div>
+      <div class="h-tier tier">
+        <div class="ph"><img src="../../public/photos/DSC_2777.jpg" alt=""></div>
+        <div>
+          <h2 class="display">extended</h2><span class="price">700 €</span>
+          <p class="tagl">A story we imagine together. A visual direction created around you, with a moodboard, several looks and a short film of the session.</p>
+          <p class="mono facts">up to 2 hours, 2–3 looks, 70 final images, a film up to 1 minute</p>
+          <div><a class="arrow" href="#">book extended&nbsp;→</a></div>
+        </div>
+      </div>
+      <div class="h-tier flip tier">
+        <div class="ph"><img src="../../public/photos/DSC_6812.jpg" alt=""></div>
+        <div>
+          <h2 class="display">brand &amp; commercial</h2><span class="price muted">upon request</span>
+          <p class="tagl">Images that give your brand a character of its own. Campaigns, launches and ongoing content, shaped around your identity.</p>
+          <div><a class="arrow" href="#">write to me&nbsp;→</a></div>
+        </div>
+      </div>
+    </div>
+    <div class="faq">
+      <h2 class="display d-sec">questions</h2>
+      <div>
+        <div class="q"><span>How do I book a photoshoot?</span><span>+</span></div>
+        <div class="q"><span>Do I need modeling experience?</span><span>+</span></div>
+        <div class="q"><span>What should I wear for the shoot?</span><span>+</span></div>
+        <div class="q"><span>Where do photoshoots take place?</span><span>+</span></div>
+        <div class="q"><span>How many photos will I receive?</span><span>+</span></div>
+      </div>
+    </div>
+  </section>
+  <div class="footer"><span class="wm">MARIA CHEVSKAYA</span><span class="m">berlin &nbsp;&nbsp; hello@mariachevskaya.com</span></div>
+</div>
+
+<!-- ═══════════════════════════════ I ═══════════════════════════════ -->
+<p class="tag"><b>I · the strip</b> — компактный прайс: маленький квадратный кадр, тариф в одну строку</p>
+<div class="frame">
+  <div class="nav"><div class="wm">MARIA CHEVSKAYA</div><div class="tl">portrait and editorial photographer in berlin</div><div class="links">PORTRAITS KIDS EDITORIAL</div></div>
+  <section class="sec">
+    <div class="intro">
+      <h1 class="display d-hero">a session<br>with maria</h1>
+      <p class="body">People I work with are seen, not just photographed. Each session is built around presence, character and rhythm, not poses or time slots. It is a collaborative process, calm and attentive, with space to arrive into yourself.</p>
+    </div>
+    <div class="i-tiers">
+      <div class="i-tier tier"><div class="ph"><img src="../../public/photos/DSC_0123.jpg" alt=""></div><div><h2 class="display">mini</h2><p class="tagl">A little time, something to keep. A short, relaxed session for a fresh set of portraits or a moment with someone close.</p><p class="mono facts">up to 30 minutes, one look, 20 final images</p></div><span class="price">300 €</span><a class="arrow" href="#">book&nbsp;→</a></div>
+      <div class="i-tier tier"><div class="ph"><img src="../../public/photos/DSC_1113.jpg" alt=""></div><div><h2 class="display">signature</h2><p class="tagl">Time to feel at ease, room for your story. For yourself, the two of you, or your family, at home, outdoors or in a studio.</p><p class="mono facts">up to 1.5 hours, 1–2 looks, 45 final images</p></div><span class="price">500 €</span><a class="arrow" href="#">book&nbsp;→</a></div>
+      <div class="i-tier tier"><div class="ph"><img src="../../public/photos/DSC_6812.jpg" alt=""></div><div><h2 class="display">extended</h2><p class="tagl">A story we imagine together. A visual direction created around you, with a moodboard, several looks and a short film.</p><p class="mono facts">up to 2 hours, 2–3 looks, 70 final images, a film up to 1 minute</p></div><span class="price">700 €</span><a class="arrow" href="#">book&nbsp;→</a></div>
+      <div class="i-tier tier"><div class="ph"><img src="../../public/photos/DSC_4176.jpg" alt=""></div><div><h2 class="display">brand &amp; commercial</h2><p class="tagl">Images that give your brand a character of its own. Campaigns, launches and ongoing content.</p></div><span class="price muted">upon request</span><a class="arrow" href="#">write&nbsp;→</a></div>
+    </div>
+    <div class="faq">
+      <h2 class="display d-sec">questions</h2>
+      <div>
+        <div class="q"><span>How do I book a photoshoot?</span><span>+</span></div>
+        <div class="q"><span>Do I need modeling experience?</span><span>+</span></div>
+        <div class="q"><span>What should I wear for the shoot?</span><span>+</span></div>
+        <div class="q"><span>Where do photoshoots take place?</span><span>+</span></div>
+        <div class="q"><span>How many photos will I receive?</span><span>+</span></div>
+      </div>
+    </div>
+  </section>
+  <div class="footer"><span class="wm">MARIA CHEVSKAYA</span><span class="m">berlin &nbsp;&nbsp; hello@mariachevskaya.com</span></div>
+</div>
+
+<!-- ═══════════════════════════════ modal ═══════════════════════════════ -->
+<p class="tag"><b>modal</b> — та же, что во втором круге, поверх варианта G</p>
+<div class="frame" style="height:720px">
+  <div class="nav"><div class="wm">MARIA CHEVSKAYA</div><div class="tl">portrait and editorial photographer in berlin</div><div class="links">PORTRAITS KIDS EDITORIAL</div></div>
+  <section class="sec">
+    <div class="intro"><h1 class="display d-hero">a session<br>with maria</h1><p class="body">People I work with are seen, not just photographed. Each session is built around presence, character and rhythm.</p></div>
+    <div class="g-tiers"><div class="g-tier"><div class="ph"><img src="../../public/photos/DSC_0123.jpg" alt=""></div><div><div class="head"><h2 class="display">mini</h2><span class="price">300 €</span></div></div></div></div>
+  </section>
+  <div class="scrim">
+    <div class="sheet">
+      <span class="x"></span>
+      <h2 class="display">signature — 500 €</h2>
+      <p class="sub">Leave your email and a few words. Maria writes back personally within a few days.</p>
+      <label class="flabel" for="m-e">your email</label><input class="fld" id="m-e" placeholder="you@example.com">
+      <label class="flabel" for="m-m">a few words about yourself or your idea</label><input class="fld" id="m-m" placeholder="optional">
+      <a class="plate" href="#">send request</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ phones ═══════════════════════════════ -->
+<p class="tag"><b>phone</b> — G, H, I</p>
+<div class="phones">
+  <div class="phone">
+    <div class="nav"><div class="wm">MARIA CHEVSKAYA</div></div>
+    <section class="sec">
+      <div class="intro"><h1 class="display d-hero">a session<br>with maria</h1><p class="body">People I work with are seen, not just photographed. Each session is built around presence, character and rhythm.</p></div>
+      <div class="g-tiers">
+        <div class="g-tier"><div class="ph"><img src="../../public/photos/DSC_0123.jpg" alt=""></div><div><div class="head"><h2 class="display">mini</h2><span class="price">300 €</span></div><p class="tagl">A little time, something to keep.</p><p class="mono facts">up to 30 minutes, one look, 20 images</p><div><a class="arrow" href="#">book mini&nbsp;→</a></div></div></div>
+        <div class="g-tier"><div class="ph"><img src="../../public/photos/DSC_1113.jpg" alt=""></div><div><div class="head"><h2 class="display">signature</h2><span class="price">500 €</span></div><p class="tagl">Time to feel at ease, room for your story.</p><p class="mono facts">up to 1.5 hours, 1–2 looks, 45 images</p><div><a class="arrow" href="#">book signature&nbsp;→</a></div></div></div>
+      </div>
+    </section>
+  </div>
+  <div class="phone">
+    <div class="nav"><div class="wm">MARIA CHEVSKAYA</div></div>
+    <section class="sec">
+      <div class="intro"><h1 class="display d-hero">a session<br>with maria</h1><p class="body">People I work with are seen, not just photographed. Each session is built around presence, character and rhythm.</p></div>
+      <div class="h-tiers">
+        <div class="h-tier"><div class="ph"><img src="../../public/photos/DSC_8898-Edit.jpg" alt=""></div><div><h2 class="display">mini</h2><span class="price">300 €</span><p class="tagl">A little time, something to keep.</p><p class="mono facts">up to 30 minutes, one look, 20 images</p><div><a class="arrow" href="#">book mini&nbsp;→</a></div></div></div>
+        <div class="h-tier flip"><div class="ph"><img src="../../public/photos/DSC_1113.jpg" alt=""></div><div><h2 class="display">signature</h2><span class="price">500 €</span><p class="tagl">Time to feel at ease, room for your story.</p></div></div>
+      </div>
+    </section>
+  </div>
+  <div class="phone">
+    <div class="nav"><div class="wm">MARIA CHEVSKAYA</div></div>
+    <section class="sec">
+      <div class="intro"><h1 class="display d-hero">a session<br>with maria</h1><p class="body">People I work with are seen, not just photographed. Each session is built around presence, character and rhythm.</p></div>
+      <div class="i-tiers">
+        <div class="i-tier"><div class="ph"><img src="../../public/photos/DSC_0123.jpg" alt=""></div><div><h2 class="display">mini</h2><p class="tagl">A little time, something to keep.</p><p class="mono facts">30 minutes, 20 images</p></div><span class="price">300 €</span><a class="arrow" href="#">book&nbsp;→</a></div>
+        <div class="i-tier"><div class="ph"><img src="../../public/photos/DSC_1113.jpg" alt=""></div><div><h2 class="display">signature</h2><p class="tagl">Time to feel at ease, room for your story.</p><p class="mono facts">1.5 hours, 45 images</p></div><span class="price">500 €</span><a class="arrow" href="#">book&nbsp;→</a></div>
+        <div class="i-tier"><div class="ph"><img src="../../public/photos/DSC_6812.jpg" alt=""></div><div><h2 class="display">extended</h2><p class="tagl">A story we imagine together.</p><p class="mono facts">2 hours, 70 images, a film</p></div><span class="price">700 €</span><a class="arrow" href="#">book&nbsp;→</a></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

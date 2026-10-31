@@ -181,7 +181,7 @@ async function TiersTab() {
     throw new Error(`Failed to fetch tiers: ${error.message}`)
   }
 
-  return <TiersTable tiers={tiers ?? []} />
+  return <TiersTable tiers={tiers ?? []} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} />
 }
 
 async function WorkshopTabSection() {

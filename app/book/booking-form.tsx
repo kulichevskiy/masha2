@@ -5,7 +5,7 @@ import posthog from 'posthog-js'
 import { isHoneypotFilled } from '@/lib/analytics'
 import { submitBookingRequest } from './actions'
 
-type Tier = {
+export type BookingTier = {
   id: string
   name: string
   price_text: string
@@ -32,8 +32,15 @@ function CheckSharp() {
   )
 }
 
-export function BookingForm({ tiers }: { tiers: Tier[] }) {
-  const [tierId, setTierId] = useState('')
+// Fields are a hairline under the text, nothing else; labels are the small
+// tracked lowercase of the home story.
+const FIELD =
+  'block w-full border-0 border-b border-gray-300 rounded-none bg-transparent px-0 py-3 text-lg text-black placeholder:text-gray-400 focus:border-black outline-none'
+const LABEL = 'block font-inter text-xs tracking-[0.3em] lowercase text-gray-500'
+
+// The form for one tier: the tier is already chosen when the dialog opens, so
+// the visitor only leaves an email and a few words.
+export function BookingForm({ tier }: { tier: BookingTier }) {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<
@@ -49,11 +56,8 @@ export function BookingForm({ tiers }: { tiers: Tier[] }) {
     startTransition(async () => {
       const result = await submitBookingRequest(fd)
       if (result.ok) {
-        if (!isHoneypotFilled(fd)) posthog.capture('booking_request_submitted', {
-          tier_selected: Boolean(tierId),
-        })
+        if (!isHoneypotFilled(fd)) posthog.capture('booking_request_submitted', { tier_selected: true })
         setStatus({ kind: 'success' })
-        setTierId('')
         setEmail('')
         setMessage('')
       } else {
@@ -64,17 +68,13 @@ export function BookingForm({ tiers }: { tiers: Tier[] }) {
 
   if (status.kind === 'success') {
     return (
-      <div
-        role="status"
-        aria-live="polite"
-        className="border border-gray-200 px-8 py-10 font-inter"
-      >
+      <div role="status" aria-live="polite" className="font-inter">
         <div className="flex flex-col items-start gap-4">
           <div className="text-black">
             <CheckSharp />
           </div>
-          <h3 className="font-bebas-neue text-black uppercase tracking-wide text-xl leading-none">
-            Your request is in
+          <h3 className="font-bebas-neue text-black lowercase text-[32px] md:text-[44px] leading-none">
+            your request is in
           </h3>
           <p className="text-gray-700 leading-relaxed">
             Maria will write back to you personally within a few days —
@@ -93,7 +93,7 @@ export function BookingForm({ tiers }: { tiers: Tier[] }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 font-inter">
+    <form onSubmit={handleSubmit} className="font-inter">
       {/* Honeypot — hidden from humans, bots happily fill it and get silently dropped server-side. */}
       <input
         type="text"
@@ -103,30 +103,18 @@ export function BookingForm({ tiers }: { tiers: Tier[] }) {
         aria-hidden="true"
         className="hidden"
       />
+      <input type="hidden" name="tier_id" value={tier.id} />
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="tier_id" className="text-sm text-black">
-          What are you booking?
-        </label>
-        <select
-          id="tier_id"
-          name="tier_id"
-          value={tierId}
-          onChange={(e) => setTierId(e.target.value)}
-          className="h-11 border border-gray-200 rounded-none px-3 bg-white text-black focus:border-black outline-none"
-        >
-          <option value="">Select a tier</option>
-          {tiers.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name} — {t.price_text}
-            </option>
-          ))}
-        </select>
-      </div>
+      <h2 className="font-bebas-neue text-black lowercase text-[32px] md:text-[44px] leading-none">
+        {tier.name} — {tier.price_text}
+      </h2>
+      <p className="mt-3 text-gray-600 leading-relaxed">
+        Leave your email and a few words. Maria writes back personally within a few days.
+      </p>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-sm text-black">
-          Your email
+      <div className="mt-8">
+        <label htmlFor="email" className={LABEL}>
+          your email
         </label>
         <input
           id="email"
@@ -136,37 +124,36 @@ export function BookingForm({ tiers }: { tiers: Tier[] }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="h-11 border border-gray-200 rounded-none px-3 bg-white text-black focus:border-black outline-none"
+          className={FIELD}
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="message" className="text-sm text-black">
-          A few words about yourself or your idea (optional)
+      <div className="mt-8">
+        <label htmlFor="message" className={LABEL}>
+          a few words about yourself or your idea
         </label>
         <textarea
           id="message"
           name="message"
-          rows={5}
+          rows={3}
           maxLength={2000}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="border border-gray-200 rounded-none px-3 py-2 bg-white text-black focus:border-black outline-none resize-y"
+          placeholder="optional"
+          className={`${FIELD} resize-none`}
         />
       </div>
 
-      <div className="mt-2">
-        <button
-          type="submit"
-          disabled={isPending}
-          className="inline-block bg-black text-white rounded-none px-14 py-3 font-bebas-neue text-xl tracking-wider uppercase hover:bg-gray-800 transition-colors disabled:opacity-60"
-        >
-          {isPending ? 'Sending…' : 'Send request'}
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={isPending}
+        className="mt-10 block w-full bg-black text-white rounded-none px-14 py-4 font-bebas-neue text-xl tracking-[0.12em] uppercase hover:bg-gray-800 transition-colors disabled:opacity-60 cursor-pointer"
+      >
+        {isPending ? 'Sending…' : 'Send request'}
+      </button>
 
       {status.kind === 'error' && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="mt-4 text-sm text-red-600" role="alert">
           {status.message}
         </p>
       )}

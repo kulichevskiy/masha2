@@ -30,7 +30,7 @@ const tariff = object({ key: { type: 'string', enum: ['short', 'full'] }, name: 
 
 export const patches: Record<string, Schema> = {
   media: object({ title: nullableString, description: nullableString, alt_text: nullableString, pages: { type: 'array', items: { type: 'string', enum: [...PHOTO_PAGES] }, uniqueItems: true, maxItems: PHOTO_PAGES.length } }),
-  tiers: object({ name: string, price_text: string, subtitle: nullableString, description: nullableHtml, is_active: boolean, is_accent: boolean }),
+  tiers: object({ name: string, price_text: string, subtitle: nullableString, summary: nullableString, description: nullableHtml, photo_path: { ...path, type: ['string', 'null'] }, is_active: boolean, is_accent: boolean }),
   faq: object({ question: string, answer: html, is_visible: boolean }),
   workshop: object({
     banner_visible: boolean, sales_open: boolean, workshop_number: nullableString, title: nullableString,
