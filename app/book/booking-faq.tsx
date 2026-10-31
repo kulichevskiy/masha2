@@ -25,6 +25,8 @@ function htmlToText(html: string): string {
     .trim()
 }
 
+// The heading sits in the left column and the questions in the right, on the
+// same two columns as the tier rows above.
 export function BookingFaq({ entries }: { entries: FaqEntry[] }) {
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -40,8 +42,8 @@ export function BookingFaq({ entries }: { entries: FaqEntry[] }) {
   }
 
   return (
-    <section className="mt-16">
-      <h2 className="text-3xl font-bebas-neue text-black lowercase mb-6">
+    <section className="mt-20 md:mt-32 grid md:grid-cols-[5fr_7fr] gap-8 md:gap-20 items-start">
+      <h2 className="font-bebas-neue font-normal lowercase tracking-[-0.005em] text-[44px] md:text-[68px] leading-[0.95] text-black m-0">
         questions
       </h2>
 

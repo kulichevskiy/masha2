@@ -18,6 +18,15 @@ vi.mock('@/components/rich-text-editor', () => ({
     <textarea aria-label="Editor" value={value} onChange={(e) => onChange(e.target.value)} />
   ),
 }))
+vi.mock('./photo-uploader', () => ({
+  PhotoUploader: ({ currentPath, onUploaded, onClear }: { currentPath: string | null; onUploaded: (p: string) => void; onClear: () => void }) => (
+    <div>
+      <span>{currentPath ?? 'no photo'}</span>
+      <button type="button" onClick={() => onUploaded('tiers/x/a.jpg')}>Загрузить фото</button>
+      <button type="button" onClick={onClear}>Убрать фото</button>
+    </div>
+  ),
+}))
 vi.mock('../actions', () => ({
   updateTier: vi.fn(),
   deleteTier: vi.fn(),
@@ -36,6 +45,8 @@ describe('admin row editing', () => {
               id: 'tier',
               name: 'Portrait',
               subtitle: null,
+              summary: null,
+              photo_path: null,
               price_text: '450',
               description: null,
               is_active: true,
@@ -44,6 +55,7 @@ describe('admin row editing', () => {
               created_at: '',
               updated_at: '',
             }}
+            supabaseUrl="http://supabase.test"
           />
         </tbody>
       </table>,
@@ -51,6 +63,7 @@ describe('admin row editing', () => {
     for (const [label, field] of [
       ['Portrait', 'name'],
       ['Подзаголовок', 'subtitle'],
+      ['Факты одной строкой', 'summary'],
       ['450', 'price_text'],
     ]) {
       fireEvent.click(screen.getByText(label, { exact: true }))
@@ -69,6 +82,11 @@ describe('admin row editing', () => {
     await waitFor(() =>
       expect(updateTier).toHaveBeenCalledWith('tier', { description: 'Studio portrait' }),
     )
+    fireEvent.click(screen.getByRole('button', { name: 'Загрузить фото' }))
+    await waitFor(() => expect(updateTier).toHaveBeenCalledWith('tier', { photo_path: 'tiers/x/a.jpg' }))
+    expect(screen.getByText('tiers/x/a.jpg')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Убрать фото' }))
+    await waitFor(() => expect(updateTier).toHaveBeenCalledWith('tier', { photo_path: null }))
   })
   it('renders FAQ answer editing and visibility controls', () => {
     render(

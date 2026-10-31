@@ -2,7 +2,7 @@
 
 > Portrait and editorial photographer crafting luminous, cinematic stories for thoughtful brands and people.
 
-This design system documents the visual language, components, and content voice of **Maria Chevskaya**'s portfolio site — a quiet, image-first presence that lets the photography do the talking. The chrome is intentionally thin: a centered name plate, a home page that tells the story in eight image-led sections, four black-and-white masonry feeds (`/portraits`, `/kids`, `/editorial`, `/video`) with a floating `BOOK` button, and a minimal booking page. Everything else gets out of the way.
+This design system documents the visual language, components, and content voice of **Maria Chevskaya**'s portfolio site — a quiet, image-first presence that lets the photography do the talking. The chrome is intentionally thin: a centered name plate, a home page that tells the story in eight image-led sections, four black-and-white masonry feeds (`/portraits`, `/kids`, `/editorial`, `/video`) with a floating `BOOK` button, and a booking page that lists the sessions as photographed rows. Everything else gets out of the way.
 
 ## Sources
 
@@ -52,11 +52,11 @@ This design system documents the visual language, components, and content voice 
 **Example copy — booking:**
 > People I work with are seen, not just photographed. Each session is built around presence, character and rhythm, not poses or time slots. It is a collaborative process, calm and attentive, with space to arrive into yourself.
 >
-> *Portrait sessions — from 450 €*
-> For personal portraits, moments of transition, inner shifts and quiet confidence.
->
-> *Editorial / personal projects — upon request*
-> For magazines, artists, authors and long-term collaborations.
+> **mini** — 300 €
+> A little time, something to keep. A short, relaxed session for a fresh set of portraits, a moment with someone close, or your first experience in front of my camera.
+> `up to 30 minutes, one look, 20 final images`
+
+Tier names are one word where they can be (`mini`, `signature`, `extended`); the word "session" is never repeated in them. A price is a number with a space before the euro sign; a tier without one reads `upon request`, smaller and gray.
 
 **CTAs.** One per page, always. Solid black block, white text, condensed display caps, generous horizontal padding (`px-14` on booking, `px-20` on the floating button). Never stroked, never outline, never ghost — the button is a plate. The one exception is the home story: it opens and closes on a plate (white on the full-bleed frames), because the page is a single scroll with a beginning and an end; everything between them is an underlined arrow link, never a second plate.
 
@@ -91,7 +91,7 @@ Four typefaces, loaded from Google Fonts via `next/font`. Each has exactly one j
 **Scale** (home + booking, measured from the live site):
 - Wordmark: `text-3xl` → `md:text-4xl` → `lg:text-5xl` (30 → 36 → 48 px)
 - Footer wordmark: `text-2xl` (24 px) at 50% opacity
-- Booking title: `text-3xl` (30 px)
+- Booking heading: `text-[54px]` → `md:text-[104px]`, the home hero size; tier names and prices `text-[44px]` → `md:text-[68px]`
 - Body: default (16 px) `gray-600`
 - Tagline / meta: `text-sm` (14 px), `tracking-wider`, lowercase
 - Floating BOOK button: `text-xl` (20 px)
@@ -107,12 +107,13 @@ This is a portfolio for a portrait and editorial photographer — **the photogra
 - **Hover is a 5% scale-up over 500 ms.** `transition-transform duration-500 group-hover:scale-105` — the photograph subtly breathes into the viewer's attention.
 - **Editorial stories.** `/editorial` is the one feed whose items are stories, not single frames. A story tile is the cover photograph — same columns, plate, radius and hover as every other tile — captioned underneath with the lowercase Bebas title (26px), the subtitle in gray body text, and the photo count in Roboto Mono; it opens `/editorial/<slug>` instead of the lightbox. The story page puts its header and footer navigation on the same three columns as the photo grid: back link, lowercase Bebas title (56px on phones, 120px on desktop), one-line subtitle in columns 1–2, a Roboto Mono role/name credits list in column 3 (ending with the photo count), the full sequence as the usual masonry, then previous / all stories / next on the three columns above a hairline. Credits show only confirmed names; unconfirmed roles stay off the public page. Until the first story is published the section remains the flat photo feed.
 - **Reviews on the home page.** Between "the work" and "behind the camera" sits one section of client words: the lowercase Bebas heading in the left half, one large quote (Inter, black) in the right, then a horizontally scrolling rail of short quotes (Inter, gray) on hairlines, four in view on a desktop and one on a phone, with no arrows and no autoplay. A row of hairline segments under the rail marks the quotes in view; beside it the underlined arrow link goes to the Google reviews. Opening quote marks hang outside the text column so every line starts on one vertical. Under a quote there is only the reviewer's name in lowercase Roboto Mono: no source, no rating, no "translated from", no kicker above the heading and never a middle dot as a separator.
+- **Booking page.** No kicker, no portrait of Maria: the page opens on the heading `a session with maria` in the left half and one paragraph in the right. Every active tier is a row on hairlines — its own black-and-white frame (`aspect-[4/5]`, pinned in admin or taken from the top of the portraits feed) in the left five columns; name and price on one baseline, the subtitle in black, a lowercase Roboto Mono line of facts, the included list folded under a mono `what's included +`, and the underlined arrow `book mini →` in the right seven. The arrow opens the one booking dialog: a white sheet with no radius on a 55% black scrim, centered at 560px on desktop and rising from the bottom edge on a phone; the tier is already in its heading, so the form asks only for an email and a few words under hairline fields, then a full-width black plate. Questions close the page on the same two columns, heading left and the `<details>` list right.
 - **Masonry cadence.** A CSS multi-column flow — `columns-1 md:columns-2 lg:columns-3` — where photos flow top-to-bottom within a column, then to the next. Each photo sets its own height from its intrinsic dimensions (stored on `photos.width` / `photos.height`), so the rhythm comes from the photographs themselves, not a fixed row pattern. Column gap is `4` (16 px); each photo carries `mb-4` and `break-inside-avoid` so it never splits across columns.
-- **Color photography is permissible only on the booking page**, for the single full-width portrait of Maria herself — and even there it reads warm-neutral, not saturated.
+- **Color photography is permissible only for the portrait of Maria herself** (the "behind the camera" slot on the home page), and even there it reads warm-neutral, not saturated.
 
 ### Spacing & layout
-- **Single content column, centered.** `max-w-7xl` on home, `max-w-xl` on booking (tight editorial column).
-- **Generous vertical rhythm.** `py-8` on the grid; `py-16` → `md:py-24` on the booking page; `mt-24` before the footer.
+- **Single content column, centered.** `max-w-7xl` on home and booking.
+- **Generous vertical rhythm.** `py-8` on the grid; `pt-16` → `md:pt-28` above the booking heading; `mt-24` before the footer.
 - **Horizontal padding scales.** `px-4` mobile → `px-6` tablet+. Never zero — there's always a breathing margin.
 - **The page never feels full.** If in doubt, add more top/bottom padding and less density.
 

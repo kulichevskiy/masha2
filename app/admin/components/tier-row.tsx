@@ -9,17 +9,20 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { RichTextEditor } from '@/components/rich-text-editor'
 import { RichText } from '@/components/rich-text'
+import { PhotoUploader } from './photo-uploader'
 import { updateTier, deleteTier } from '../actions'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Tier = Tables<'booking_tiers'>
 
-type Field = 'name' | 'subtitle' | 'price_text' | 'description'
+type Field = 'name' | 'subtitle' | 'summary' | 'price_text' | 'description'
 
-export function TierRow({ tier }: { tier: Tier }) {
+export function TierRow({ tier, supabaseUrl }: { tier: Tier; supabaseUrl: string }) {
   const [editingField, setEditingField] = useState<Field | null>(null)
   const [name, setName] = useState(tier.name)
   const [subtitle, setSubtitle] = useState(tier.subtitle ?? '')
+  const [summary, setSummary] = useState(tier.summary ?? '')
+  const [photoPath, setPhotoPath] = useState(tier.photo_path ?? null)
   const [priceText, setPriceText] = useState(tier.price_text)
   const [description, setDescription] = useState(tier.description ?? '')
   const [isActive, setIsActive] = useState(tier.is_active)
@@ -47,6 +50,8 @@ export function TierRow({ tier }: { tier: Tier }) {
         await updateTier(tier.id, { name: name.trim() || tier.name })
       } else if (field === 'subtitle') {
         await updateTier(tier.id, { subtitle: subtitle.trim() || null })
+      } else if (field === 'summary') {
+        await updateTier(tier.id, { summary: summary.trim() || null })
       } else if (field === 'price_text') {
         await updateTier(tier.id, { price_text: priceText.trim() || tier.price_text })
       } else if (field === 'description') {
@@ -59,6 +64,7 @@ export function TierRow({ tier }: { tier: Tier }) {
   const cancel = (field: Field) => {
     if (field === 'name') setName(tier.name)
     if (field === 'subtitle') setSubtitle(tier.subtitle ?? '')
+    if (field === 'summary') setSummary(tier.summary ?? '')
     if (field === 'price_text') setPriceText(tier.price_text)
     if (field === 'description') setDescription(tier.description ?? '')
     setEditingField(null)
@@ -76,6 +82,13 @@ export function TierRow({ tier }: { tier: Tier }) {
     setIsActive(checked)
     startTransition(async () => {
       await updateTier(tier.id, { is_active: checked })
+    })
+  }
+
+  const handlePhoto = (path: string | null) => {
+    setPhotoPath(path)
+    startTransition(async () => {
+      await updateTier(tier.id, { photo_path: path })
     })
   }
 
@@ -149,6 +162,30 @@ export function TierRow({ tier }: { tier: Tier }) {
         )}
       </td>
 
+      <td className="hidden lg:table-cell p-2 min-w-[220px]">
+        {editingField === 'summary' ? (
+          <Input
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            onBlur={() => save('summary')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') save('summary')
+              if (e.key === 'Escape') cancel('summary')
+            }}
+            disabled={isPending}
+            autoFocus
+            placeholder="up to 30 minutes, one look, 20 final images"
+          />
+        ) : (
+          <div
+            onClick={() => setEditingField('summary')}
+            className="cursor-text hover:bg-muted/50 p-1 rounded min-h-[2rem] flex items-center text-sm font-mono"
+          >
+            {summary || <span className="text-muted-foreground font-sans">Факты одной строкой</span>}
+          </div>
+        )}
+      </td>
+
       <td className="p-2 min-w-[140px]">
         {editingField === 'price_text' ? (
           <Input
@@ -213,6 +250,16 @@ export function TierRow({ tier }: { tier: Tier }) {
             )}
           </div>
         )}
+      </td>
+
+      <td className="hidden md:table-cell p-2 min-w-[220px]">
+        <PhotoUploader
+          currentPath={photoPath}
+          onUploaded={handlePhoto}
+          onClear={() => handlePhoto(null)}
+          supabaseUrl={supabaseUrl}
+          folder="tiers"
+        />
       </td>
 
       <td className="p-2 text-center">

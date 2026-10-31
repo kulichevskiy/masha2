@@ -9,7 +9,7 @@ An interactive recreation of Maria Chevskaya's public portfolio + booking page, 
 - `FloatingBookButton.jsx` — fixed bottom-right black CTA with poster shadow.
 - `MasonryGrid.jsx` — 3-column grid with row-span cadence, grayscale, slow hover scale.
 - `Footer.jsx` — dimmed wordmark + 3 lucide icons + copyright.
-- `BookPage.jsx` — tight max-w-xl column, single portrait, text blocks, EMAIL ME CTA.
+- `BookPage.jsx` — the original tight-column booking page, kept for the prototype; the current booking design is `../../preview/booking-rows.html` (photographed tier rows and the booking dialog).
 - `LoginCard.jsx` — shadcn Card with Russian labels, email + password inputs, Google button.
 - `AdminShell.jsx` — photographer CMS: upload dropzone + sortable photos table.
 
