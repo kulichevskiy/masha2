@@ -173,7 +173,7 @@ describe('admin API database contract', () => {
       .toEqual([{ status: 'succeeded', resource_id: created.id }])
     await expect(mutate('tiers', 'create', '', null, { name: 'Missing price' })).rejects.toThrow('invalid_request')
     // the booking rows need a photograph and a facts line per tier
-    expect(await mutate('tiers', 'update', created.id, 1, { summary: 'up to 30 minutes', photo_path: 'tiers/a.jpg' }))
+    expect(await mutate('tiers', 'update', String(created.id), 1, { summary: 'up to 30 minutes', photo_path: 'tiers/a.jpg' }))
       .toMatchObject({ summary: 'up to 30 minutes', photo_path: 'tiers/a.jpg', version: 2 })
   })
 
